@@ -53,6 +53,12 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
   const [form, setForm] = useState({ ...EMPTY_FORM })
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
+
+  function copyShareLink(post: any) {
+    if (!post?.share_token) return
+    const url = `${window.location.origin}/review/${post.share_token}`
+    navigator.clipboard.writeText(url).then(() => showToast('Link gekopieerd! ✓'))
+  }
   const [activityTab, setActivityTab] = useState<'privaat' | 'publiek'>('privaat')
   const [activityMsg, setActivityMsg] = useState('')
   const [dragId, setDragId] = useState<string | null>(null)
@@ -706,6 +712,15 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                 {editingPost && isAdmin && (
                   <button onClick={() => deletePost(editingPost.id)} title="Verwijderen" style={{ padding: '9px 12px', background: 'rgba(229,57,53,.08)', color: '#e53935', border: '1px solid rgba(229,57,53,.2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem' }}>
                     🗑️
+                  </button>
+                )}
+                {editingPost && editingPost.share_token && (
+                  <button
+                    onClick={() => copyShareLink(editingPost)}
+                    title="Kopieer review link"
+                    style={{ padding: '9px 12px', background: 'rgba(26,63,228,.07)', color: 'var(--accent1)', border: '1px solid rgba(26,63,228,.2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem', whiteSpace: 'nowrap' }}
+                  >
+                    🔗 Deel
                   </button>
                 )}
                 {editingPost && isAdmin && (

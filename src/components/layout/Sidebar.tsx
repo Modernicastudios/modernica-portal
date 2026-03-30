@@ -180,6 +180,7 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
           {isAdmin ? 'Werkruimte' : 'Mijn portaal'}
         </div>
         <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
+        <NavLink href="/taken" label="Taken" icon="✓" active={pathname.startsWith('/taken')} />
         <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content') && !pathname.includes('compose')} />
         <NavLink href="/approve" label="Goedkeuringen" icon="✅" active={pathname.startsWith('/approve')} />
         <NavLink href="/planning" label="Planning Kalender" icon="🗓️" active={pathname.startsWith('/planning')} />

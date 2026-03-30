@@ -17,6 +17,7 @@ interface Post {
   status: string
   client_id: string
   agency_id: string
+  share_token?: string
   clients?: { company_name: string }
 }
 
@@ -564,6 +565,14 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
   const [rejectNote, setRejectNote] = useState('')
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ msg: string; type: 'success' | 'error' } | null>(null)
+
+  function copyShareLink(post: Post) {
+    if (!post.share_token) return
+    const url = `${window.location.origin}/review/${post.share_token}`
+    navigator.clipboard.writeText(url).then(() => {
+      showToast('Link gekopieerd! ✓')
+    })
+  }
 
   function showToast(msg: string, type: 'success' | 'error' = 'success') {
     setToast({ msg, type })
@@ -1168,6 +1177,20 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                     )}
                   </span>
                   <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+                    {selectedPost.share_token && (
+                      <button
+                        onClick={() => copyShareLink(selectedPost)}
+                        style={{
+                          padding: '9px 18px',
+                          background: 'rgba(26,63,228,.07)', color: 'var(--accent1)',
+                          border: '1px solid rgba(26,63,228,.2)',
+                          borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                          fontWeight: 700, fontSize: '.82rem',
+                        }}
+                      >
+                        🔗 Deel goedkeuringslink
+                      </button>
+                    )}
                     <button
                       onClick={() => handleAdminChange(selectedPost, 'scheduled')}
                       style={{

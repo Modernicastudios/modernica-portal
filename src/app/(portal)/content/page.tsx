@@ -16,7 +16,7 @@ export default async function ContentPage() {
 
   const { data: posts } = await supabase
     .from('content_posts')
-    .select('*, clients(company_name)')
+    .select('*, share_token, clients(company_name)')
     .eq('agency_id', agencyId)
     .gte('scheduled_at', startOfMonth)
     .lte('scheduled_at', endOfMonth)

@@ -20,7 +20,7 @@ export default async function ApprovePage() {
 
   let postsQuery = supabase
     .from('content_posts')
-    .select('*, clients(company_name)')
+    .select('*, share_token, clients(company_name)')
     .eq('agency_id', agencyId)
     .eq('status', 'pending_approval')
     .order('created_at', { ascending: false })
