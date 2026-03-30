@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
@@ -34,11 +34,13 @@ interface Props {
   agencyId: string
 }
 
+type PreviewTab = 'preview' | 'details'
+
 // ─── Constants ────────────────────────────────────────────────────────────────
 
 const PLATFORM_COLORS: Record<string, string> = {
   instagram: '#e1306c',
-  tiktok: '#222',
+  tiktok: '#010101',
   linkedin: '#0077b5',
   youtube: '#ff0000',
   facebook: '#1877f2',
@@ -54,6 +56,501 @@ const PLATFORM_ICONS: Record<string, string> = {
   twitter: '🐦',
 }
 
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  linkedin: 'LinkedIn',
+  youtube: 'YouTube',
+  facebook: 'Facebook',
+  twitter: 'Twitter',
+}
+
+// ─── Platform Preview Components ─────────────────────────────────────────────
+
+function InstagramPreview({ post }: { post: Post }) {
+  const hashtagList = post.hashtags
+    ? post.hashtags.split(/\s+/).filter(Boolean)
+    : []
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '12px',
+      border: '1px solid #dbdbdb',
+      maxWidth: '468px',
+      margin: '0 auto',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      overflow: 'hidden',
+      boxShadow: '0 2px 16px rgba(0,0,0,.10)',
+    }}>
+      {/* Header */}
+      <div style={{
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '12px 14px',
+      }}>
+        <div style={{
+          width: '36px', height: '36px', borderRadius: '50%',
+          background: 'linear-gradient(45deg, #f09433, #e6683c, #dc2743, #cc2366, #bc1888)',
+          flexShrink: 0,
+        }} />
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: '13px', color: '#262626' }}>
+            @{post.clients?.company_name?.toLowerCase().replace(/\s+/g, '_') || 'jouwbedrijf'}
+          </div>
+          <div style={{ fontSize: '11px', color: '#737373' }}>Gesponsord</div>
+        </div>
+        <div style={{ fontSize: '18px', color: '#262626', cursor: 'pointer' }}>···</div>
+      </div>
+
+      {/* Image placeholder */}
+      <div style={{
+        width: '100%', aspectRatio: '1 / 1',
+        background: 'linear-gradient(135deg, #ffecd2 0%, #fcb69f 50%, #e1306c22 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+      }}>
+        <div style={{ textAlign: 'center', opacity: 0.45 }}>
+          <div style={{ fontSize: '3rem', marginBottom: '8px' }}>📸</div>
+          <div style={{ fontSize: '12px', fontWeight: 500, color: '#555' }}>Mediabestand</div>
+        </div>
+      </div>
+
+      {/* Action bar */}
+      <div style={{ padding: '10px 14px 6px' }}>
+        <div style={{ display: 'flex', gap: '14px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '24px', cursor: 'pointer' }}>🤍</span>
+          <span style={{ fontSize: '24px', cursor: 'pointer' }}>💬</span>
+          <span style={{ fontSize: '24px', cursor: 'pointer' }}>📤</span>
+          <span style={{ fontSize: '24px', marginLeft: 'auto', cursor: 'pointer' }}>🔖</span>
+        </div>
+        <div style={{ fontSize: '13px', fontWeight: 700, color: '#262626', marginBottom: '5px' }}>
+          1.234 vind-ik-leuks
+        </div>
+        {post.caption && (
+          <div style={{ fontSize: '13px', color: '#262626', lineHeight: 1.5 }}>
+            <span style={{ fontWeight: 600 }}>
+              {post.clients?.company_name?.toLowerCase().replace(/\s+/g, '_') || 'jouwbedrijf'}
+            </span>
+            {' '}
+            <span style={{ color: '#262626' }}>{post.caption}</span>
+          </div>
+        )}
+        {hashtagList.length > 0 && (
+          <div style={{ marginTop: '4px' }}>
+            {hashtagList.map((tag, i) => (
+              <span key={i} style={{ color: '#00376b', fontSize: '13px' }}>{tag} </span>
+            ))}
+          </div>
+        )}
+        <div style={{ fontSize: '11px', color: '#737373', marginTop: '6px', textTransform: 'uppercase' }}>
+          Zojuist
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function LinkedInPreview({ post }: { post: Post }) {
+  const hashtagList = post.hashtags
+    ? post.hashtags.split(/\s+/).filter(Boolean)
+    : []
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '8px',
+      border: '1px solid #e0e0e0',
+      maxWidth: '552px',
+      margin: '0 auto',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      overflow: 'hidden',
+      boxShadow: '0 2px 12px rgba(0,0,0,.08)',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', padding: '12px 16px 8px' }}>
+        <div style={{
+          width: '48px', height: '48px', borderRadius: '50%',
+          background: 'linear-gradient(135deg, #0077b5, #00a0dc)',
+          flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 700, fontSize: '18px',
+        }}>
+          {(post.clients?.company_name || 'B')[0].toUpperCase()}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: '14px', color: '#000000e6' }}>
+            {post.clients?.company_name || 'Jouw Bedrijf'}
+          </div>
+          <div style={{ fontSize: '12px', color: '#00000099' }}>Marketing · 2.341 volgers</div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#00000099', marginTop: '2px' }}>
+            <span>Zojuist</span>
+            <span>·</span>
+            <span>🌐</span>
+          </div>
+        </div>
+        <div style={{ color: '#0a66c2', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>+ Volgen</div>
+      </div>
+
+      {/* Caption */}
+      {post.caption && (
+        <div style={{ padding: '4px 16px 10px', fontSize: '14px', color: '#000000e6', lineHeight: 1.6 }}>
+          {post.caption}
+          {hashtagList.length > 0 && (
+            <div style={{ marginTop: '6px' }}>
+              {hashtagList.map((tag, i) => (
+                <span key={i} style={{ color: '#0a66c2', fontWeight: 400 }}>{tag} </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Image placeholder */}
+      <div style={{
+        width: '100%', aspectRatio: '1.91 / 1',
+        background: 'linear-gradient(135deg, #e8f0fe 0%, #c2d4f8 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{ textAlign: 'center', opacity: 0.5 }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💼</div>
+          <div style={{ fontSize: '12px', fontWeight: 500, color: '#555' }}>Mediabestand</div>
+        </div>
+      </div>
+
+      {/* Action bar */}
+      <div style={{ padding: '6px 16px 10px', borderTop: '1px solid #e0e0e0', marginTop: '4px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-around', padding: '4px 0' }}>
+          {['👍 Vind ik leuk', '💬 Reageren', '🔄 Delen', '📤 Sturen'].map((action) => (
+            <button key={action} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '13px', color: '#00000099', fontWeight: 500,
+              padding: '6px 10px', borderRadius: '4px',
+            }}>
+              {action}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function FacebookPreview({ post }: { post: Post }) {
+  const hashtagList = post.hashtags
+    ? post.hashtags.split(/\s+/).filter(Boolean)
+    : []
+
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '8px',
+      border: '1px solid #dddfe2',
+      maxWidth: '500px',
+      margin: '0 auto',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      overflow: 'hidden',
+      boxShadow: '0 1px 8px rgba(0,0,0,.10)',
+    }}>
+      {/* Header */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 16px 8px' }}>
+        <div style={{
+          width: '40px', height: '40px', borderRadius: '50%',
+          background: '#1877f2',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 700, fontSize: '16px', flexShrink: 0,
+        }}>
+          {(post.clients?.company_name || 'B')[0].toUpperCase()}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontWeight: 600, fontSize: '14px', color: '#050505' }}>
+            {post.clients?.company_name || 'Jouw Bedrijf'}
+          </div>
+          <div style={{ fontSize: '12px', color: '#65676b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <span>Gesponsord</span>
+            <span>·</span>
+            <span>🌐</span>
+          </div>
+        </div>
+        <div style={{ fontSize: '20px', color: '#65676b', cursor: 'pointer' }}>···</div>
+      </div>
+
+      {post.caption && (
+        <div style={{ padding: '4px 16px 10px', fontSize: '14px', color: '#050505', lineHeight: 1.5 }}>
+          {post.caption}
+          {hashtagList.length > 0 && (
+            <div style={{ marginTop: '4px' }}>
+              {hashtagList.map((tag, i) => (
+                <span key={i} style={{ color: '#1877f2' }}>{tag} </span>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Image */}
+      <div style={{
+        width: '100%', aspectRatio: '1.91 / 1',
+        background: 'linear-gradient(135deg, #e8f0fe 0%, #bfd5ff 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+      }}>
+        <div style={{ textAlign: 'center', opacity: 0.5 }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📘</div>
+          <div style={{ fontSize: '12px', color: '#555' }}>Mediabestand</div>
+        </div>
+      </div>
+
+      {/* Reactions bar */}
+      <div style={{ padding: '8px 16px', borderTop: '1px solid #dddfe2', marginTop: '4px' }}>
+        <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
+          <span style={{ fontSize: '14px' }}>👍❤️😂</span>
+          <span style={{ fontSize: '13px', color: '#65676b', marginLeft: '4px' }}>234</span>
+          <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#65676b' }}>12 reacties</span>
+        </div>
+        <div style={{
+          display: 'flex', justifyContent: 'space-around',
+          borderTop: '1px solid #dddfe2', paddingTop: '4px',
+        }}>
+          {['👍 Vind ik leuk', '💬 Reageren', '↗️ Delen'].map((action) => (
+            <button key={action} style={{
+              background: 'none', border: 'none', cursor: 'pointer',
+              fontSize: '13px', color: '#65676b', fontWeight: 600,
+              padding: '6px 10px',
+            }}>
+              {action}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function TikTokPreview({ post }: { post: Post }) {
+  return (
+    <div style={{
+      background: '#000',
+      borderRadius: '16px',
+      maxWidth: '320px',
+      margin: '0 auto',
+      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+      overflow: 'hidden',
+      position: 'relative',
+      boxShadow: '0 8px 40px rgba(0,0,0,.5)',
+    }}>
+      {/* Video area */}
+      <div style={{
+        width: '100%', aspectRatio: '9 / 16',
+        background: 'linear-gradient(180deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+      }}>
+        <div style={{ textAlign: 'center', opacity: 0.5 }}>
+          <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🎵</div>
+          <div style={{ fontSize: '12px', color: '#fff', fontWeight: 500 }}>Video</div>
+        </div>
+
+        {/* Right action bar */}
+        <div style={{
+          position: 'absolute', right: '10px', bottom: '100px',
+          display: 'flex', flexDirection: 'column', gap: '18px', alignItems: 'center',
+        }}>
+          <div style={{ textAlign: 'center' }}>
+            <div style={{
+              width: '42px', height: '42px', borderRadius: '50%',
+              background: 'linear-gradient(45deg, #fe2c55, #25f4ee)',
+              marginBottom: '4px',
+            }} />
+            <span style={{ fontSize: '10px', color: '#fff' }}>+</span>
+          </div>
+          {['🤍', '💬', '↗️', '🎵'].map((icon, i) => (
+            <div key={i} style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: '28px', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.5))' }}>{icon}</div>
+              <div style={{ fontSize: '10px', color: '#fff', marginTop: '2px' }}>
+                {['1.2K', '89', '24', ''][i]}
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Bottom caption overlay */}
+        <div style={{
+          position: 'absolute', bottom: 0, left: 0, right: '60px',
+          padding: '40px 12px 16px',
+          background: 'linear-gradient(transparent, rgba(0,0,0,.7))',
+        }}>
+          <div style={{ fontWeight: 700, fontSize: '13px', color: '#fff', marginBottom: '4px' }}>
+            @{post.clients?.company_name?.toLowerCase().replace(/\s+/g, '') || 'jouwbedrijf'}
+          </div>
+          {post.caption && (
+            <div style={{ fontSize: '12px', color: '#fff', lineHeight: 1.4, marginBottom: '6px' }}>
+              {post.caption.slice(0, 120)}{post.caption.length > 120 ? '...' : ''}
+            </div>
+          )}
+          {post.hashtags && (
+            <div style={{ fontSize: '11px', color: '#fff', opacity: 0.85 }}>
+              {post.hashtags.split(/\s+/).slice(0, 4).join(' ')}
+            </div>
+          )}
+          <div style={{
+            display: 'flex', alignItems: 'center', gap: '6px', marginTop: '6px',
+          }}>
+            <div style={{
+              width: '24px', height: '24px', borderRadius: '50%',
+              background: '#333', border: '1px solid #fff',
+              animation: 'spin 3s linear infinite',
+            }} />
+            <span style={{ fontSize: '11px', color: '#fff' }}>
+              {post.title || 'Originele audio'}
+            </span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function YouTubePreview({ post }: { post: Post }) {
+  return (
+    <div style={{
+      background: '#fff',
+      borderRadius: '8px',
+      maxWidth: '560px',
+      margin: '0 auto',
+      fontFamily: 'Roboto, -apple-system, sans-serif',
+      overflow: 'hidden',
+      boxShadow: '0 2px 12px rgba(0,0,0,.10)',
+    }}>
+      {/* Thumbnail */}
+      <div style={{
+        width: '100%', aspectRatio: '16 / 9',
+        background: 'linear-gradient(135deg, #1a1a1a 0%, #333 100%)',
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        position: 'relative',
+      }}>
+        <div style={{
+          width: '68px', height: '48px',
+          background: 'rgba(255,0,0,.9)', borderRadius: '10px',
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+        }}>
+          <div style={{
+            width: 0, height: 0,
+            borderTop: '12px solid transparent',
+            borderBottom: '12px solid transparent',
+            borderLeft: '20px solid #fff',
+            marginLeft: '4px',
+          }} />
+        </div>
+        <div style={{
+          position: 'absolute', bottom: '8px', right: '8px',
+          background: 'rgba(0,0,0,.8)', color: '#fff',
+          fontSize: '12px', fontWeight: 700, padding: '2px 6px',
+          borderRadius: '3px',
+        }}>
+          1:23
+        </div>
+      </div>
+
+      {/* Info */}
+      <div style={{ display: 'flex', gap: '12px', padding: '12px' }}>
+        <div style={{
+          width: '36px', height: '36px', borderRadius: '50%',
+          background: '#ff0000', flexShrink: 0,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          color: '#fff', fontWeight: 700, fontSize: '14px',
+        }}>
+          {(post.clients?.company_name || 'B')[0].toUpperCase()}
+        </div>
+        <div style={{ flex: 1 }}>
+          <div style={{
+            fontWeight: 600, fontSize: '14px', color: '#0f0f0f',
+            lineHeight: 1.4, marginBottom: '4px',
+          }}>
+            {post.title || post.caption?.slice(0, 80) || 'Videotitel hier'}
+          </div>
+          <div style={{ fontSize: '12px', color: '#606060' }}>
+            {post.clients?.company_name || 'Jouw Kanaal'}
+          </div>
+          <div style={{ fontSize: '12px', color: '#606060' }}>
+            1,2K weergaven · Zojuist
+          </div>
+        </div>
+        <div style={{ fontSize: '18px', color: '#606060', cursor: 'pointer' }}>⋮</div>
+      </div>
+    </div>
+  )
+}
+
+function PlatformPreview({ post }: { post: Post }) {
+  const platform = post.platform?.toLowerCase()
+
+  const wrapperStyle: CSSProperties = {
+    padding: '24px',
+    borderRadius: '12px',
+    background: platform === 'tiktok' ? '#111' : 'linear-gradient(160deg, var(--bg) 0%, var(--card) 100%)',
+    minHeight: '300px',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+  }
+
+  if (platform === 'instagram') return (
+    <div style={wrapperStyle}><InstagramPreview post={post} /></div>
+  )
+  if (platform === 'linkedin') return (
+    <div style={wrapperStyle}><LinkedInPreview post={post} /></div>
+  )
+  if (platform === 'facebook') return (
+    <div style={wrapperStyle}><FacebookPreview post={post} /></div>
+  )
+  if (platform === 'tiktok') return (
+    <div style={wrapperStyle}><TikTokPreview post={post} /></div>
+  )
+  if (platform === 'youtube') return (
+    <div style={wrapperStyle}><YouTubePreview post={post} /></div>
+  )
+
+  // Fallback generic preview
+  const color = PLATFORM_COLORS[platform] || 'var(--accent1)'
+  return (
+    <div style={wrapperStyle}>
+      <div style={{
+        background: 'var(--card)', border: `1px solid ${color}30`,
+        borderRadius: '12px', maxWidth: '480px', width: '100%',
+        overflow: 'hidden', boxShadow: '0 4px 20px rgba(0,0,0,.10)',
+      }}>
+        <div style={{ height: '5px', background: color }} />
+        <div style={{ padding: '16px' }}>
+          <div style={{ display: 'flex', gap: '10px', alignItems: 'center', marginBottom: '12px' }}>
+            <div style={{
+              width: '40px', height: '40px', borderRadius: '50%',
+              background: `${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '20px',
+            }}>
+              {PLATFORM_ICONS[platform] || '📄'}
+            </div>
+            <div>
+              <div style={{ fontWeight: 600, fontSize: '14px' }}>
+                {post.clients?.company_name || 'Jouw Bedrijf'}
+              </div>
+              <div style={{ fontSize: '12px', color: 'var(--muted)' }}>Zojuist</div>
+            </div>
+          </div>
+          {post.caption && (
+            <div style={{ fontSize: '14px', lineHeight: 1.6, color: 'var(--text)', marginBottom: '12px' }}>
+              {post.caption}
+            </div>
+          )}
+          <div style={{
+            height: '180px', background: `${color}14`,
+            borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+          }}>
+            <span style={{ fontSize: '3rem', opacity: 0.4 }}>{PLATFORM_ICONS[platform] || '🖼️'}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 // ─── Main Component ───────────────────────────────────────────────────────────
 
 export default function ApproveClient({ posts: initial, clients, isAdmin, clientId, userId, agencyId }: Props) {
@@ -62,6 +559,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
   const [posts, setPosts] = useState<Post[]>(initial)
   const [selectedPost, setSelectedPost] = useState<Post | null>(initial[0] || null)
   const [filterClient, setFilterClient] = useState('all')
+  const [activeTab, setActiveTab] = useState<PreviewTab>('preview')
   const [showRejectModal, setShowRejectModal] = useState(false)
   const [rejectNote, setRejectNote] = useState('')
   const [loading, setLoading] = useState(false)
@@ -93,7 +591,6 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
       .eq('id', post.id)
 
     if (!error) {
-      // Insert notification — skip if table doesn't exist yet
       await supabase.from('notifications').insert({
         agency_id: agencyId,
         user_id: userId,
@@ -157,25 +654,45 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
     }
   }
 
-  // ─── Render ───────────────────────────────────────────────────────────────
+  // ─── Derived values ───────────────────────────────────────────────────────
 
   const platformColor = selectedPost
     ? (PLATFORM_COLORS[selectedPost.platform?.toLowerCase()] || 'var(--accent1)')
     : 'var(--accent1)'
 
+  const platformLabel = selectedPost
+    ? (PLATFORM_LABELS[selectedPost.platform?.toLowerCase()] || selectedPost.platform)
+    : ''
+
+  // ─── Render ───────────────────────────────────────────────────────────────
+
   return (
-    <div className="animate-fade-up" style={{
-      display: 'flex', gap: '0',
-      height: 'calc(100vh - 80px)', overflow: 'hidden',
+    <div style={{
+      display: 'flex',
+      height: 'calc(100vh - 80px)',
+      overflow: 'hidden',
       margin: '-24px',
+      background: 'var(--bg)',
     }}>
       <style>{`
         @keyframes fadeSlideUp {
           from { opacity: 0; transform: translateY(10px); }
           to   { opacity: 1; transform: translateY(0); }
         }
-        .approve-list-item:hover { background: var(--bg) !important; }
-        .approve-action-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,.18) !important; }
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to   { transform: rotate(360deg); }
+        }
+        .approve-list-item:hover {
+          background: var(--bg) !important;
+        }
+        .approve-action-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 8px 24px rgba(0,0,0,.18) !important;
+        }
+        .tab-btn:hover {
+          color: var(--text) !important;
+        }
       `}</style>
 
       {/* ── TOAST ──────────────────────────────────────────────────────── */}
@@ -192,27 +709,30 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
         </div>
       )}
 
-      {/* ── LEFT PANEL ─────────────────────────────────────────────────── */}
+      {/* ── LEFT PANEL (320px fixed) ─────────────────────────────────── */}
       <div style={{
-        width: '340px', flexShrink: 0,
+        width: '320px',
+        flexShrink: 0,
         borderRight: '1px solid var(--border)',
-        display: 'flex', flexDirection: 'column',
+        display: 'flex',
+        flexDirection: 'column',
         background: 'var(--card)',
       }}>
         {/* Header */}
         <div style={{
-          padding: '20px 18px 14px',
+          padding: '20px 16px 14px',
           borderBottom: '1px solid var(--border)',
         }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '14px' }}>
             <h1 style={{
               fontFamily: 'var(--font-syne), sans-serif',
-              fontWeight: 800, fontSize: '1.05rem', flex: 1,
+              fontWeight: 800, fontSize: '1rem', flex: 1, margin: 0,
+              color: 'var(--text)',
             }}>
-              Wachten op goedkeuring
+              Goedkeuringen
             </h1>
             <span style={{
-              background: filteredPosts.length > 0 ? 'rgba(255,122,48,1)' : '#00b89c',
+              background: filteredPosts.length > 0 ? '#ff7a30' : '#00b89c',
               color: '#fff', borderRadius: '50px', padding: '2px 10px',
               fontSize: '.72rem', fontWeight: 700, minWidth: '24px', textAlign: 'center',
             }}>
@@ -222,9 +742,10 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
 
           {!isAdmin && filteredPosts.length > 0 && (
             <div style={{
-              background: 'rgba(255,122,48,.08)', border: '1px solid rgba(255,122,48,.25)',
-              borderRadius: 'var(--radius-sm)', padding: '10px 12px',
-              fontSize: '.78rem', color: '#ff7a30', fontWeight: 600,
+              background: 'rgba(255,122,48,.08)',
+              border: '1px solid rgba(255,122,48,.25)',
+              borderRadius: 'var(--radius-sm)', padding: '9px 12px',
+              fontSize: '.76rem', color: '#ff7a30', fontWeight: 600,
               marginBottom: '10px',
             }}>
               ⏳ {filteredPosts.length} item{filteredPosts.length !== 1 ? 's' : ''} wacht op jouw goedkeuring
@@ -255,82 +776,91 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
           {filteredPosts.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>
               <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>🎉</div>
-              <div style={{ fontWeight: 700, fontSize: '.92rem', color: 'var(--text)', marginBottom: '6px' }}>
+              <div style={{ fontWeight: 700, fontSize: '.9rem', color: 'var(--text)', marginBottom: '6px' }}>
                 Alles bijgewerkt!
               </div>
-              <div style={{ fontSize: '.82rem' }}>
+              <div style={{ fontSize: '.8rem' }}>
                 Geen content wacht op goedkeuring
               </div>
             </div>
           ) : filteredPosts.map(post => {
             const color = PLATFORM_COLORS[post.platform?.toLowerCase()] || 'var(--accent1)'
             const icon = PLATFORM_ICONS[post.platform?.toLowerCase()] || '📄'
+            const label = PLATFORM_LABELS[post.platform?.toLowerCase()] || post.platform
             const isSelected = selectedPost?.id === post.id
 
             return (
               <div
                 key={post.id}
                 className="approve-list-item"
-                onClick={() => setSelectedPost(post)}
+                onClick={() => { setSelectedPost(post); setActiveTab('preview') }}
                 style={{
                   borderBottom: '1px solid var(--border)',
-                  padding: '14px 16px',
+                  padding: '12px 14px 12px 0',
                   cursor: 'pointer',
-                  background: isSelected ? `${color}0e` : 'transparent',
+                  background: isSelected ? `${color}0d` : 'transparent',
                   borderLeft: isSelected ? `3px solid ${color}` : '3px solid transparent',
+                  paddingLeft: isSelected ? '12px' : '14px',
                   transition: 'all .12s',
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '10px',
                 }}
               >
-                {/* Color strip */}
+                {/* Platform icon box */}
                 <div style={{
-                  display: 'flex', alignItems: 'flex-start', gap: '10px',
+                  width: '36px', height: '36px', borderRadius: 'var(--radius-sm)',
+                  background: `${color}18`,
+                  border: `1px solid ${color}28`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1.05rem', flexShrink: 0,
                 }}>
+                  {icon}
+                </div>
+
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  {/* Title */}
                   <div style={{
-                    width: '34px', height: '34px', borderRadius: 'var(--radius-sm)',
-                    background: `${color}20`, display: 'flex', alignItems: 'center',
-                    justifyContent: 'center', fontSize: '1rem', flexShrink: 0,
-                    border: `1px solid ${color}30`,
+                    fontWeight: 700, fontSize: '.84rem', color: 'var(--text)',
+                    overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    marginBottom: '4px',
                   }}>
-                    {icon}
+                    {post.title || post.content_type || 'Geen titel'}
                   </div>
-                  <div style={{ flex: 1, minWidth: 0 }}>
-                    <div style={{
-                      fontWeight: 700, fontSize: '.86rem', color: 'var(--text)',
-                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
-                      marginBottom: '3px',
+
+                  {/* Platform chip + client */}
+                  <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '4px' }}>
+                    <span style={{
+                      fontSize: '.64rem', fontWeight: 700, padding: '1px 7px',
+                      borderRadius: '50px', background: `${color}18`, color,
+                      border: `1px solid ${color}22`,
                     }}>
-                      {post.title || post.content_type || 'Geen titel'}
-                    </div>
-                    <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
-                      <span style={{
-                        fontSize: '.68rem', fontWeight: 700, padding: '1px 7px',
-                        borderRadius: '50px', background: `${color}18`, color,
-                        border: `1px solid ${color}25`,
-                      }}>
-                        {post.platform?.charAt(0).toUpperCase() + post.platform?.slice(1)}
+                      {label}
+                    </span>
+                    {post.clients?.company_name && (
+                      <span style={{ fontSize: '.7rem', color: 'var(--muted)' }}>
+                        {post.clients.company_name}
                       </span>
-                      {post.clients?.company_name && (
-                        <span style={{ fontSize: '.7rem', color: 'var(--muted)' }}>
-                          {post.clients.company_name}
-                        </span>
-                      )}
-                    </div>
-                    {post.scheduled_at && (
-                      <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginTop: '4px' }}>
-                        📅 {new Date(post.scheduled_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                      </div>
                     )}
                   </div>
-                </div>
-                <div style={{
-                  marginTop: '8px',
-                  display: 'inline-flex', alignItems: 'center', gap: '4px',
-                  fontSize: '.65rem', fontWeight: 700, padding: '2px 8px',
-                  borderRadius: '50px',
-                  background: 'rgba(255,122,48,.1)', color: '#ff7a30',
-                  border: '1px solid rgba(255,122,48,.2)',
-                }}>
-                  ⏳ WACHT OP GOEDKEURING
+
+                  {/* Date + status */}
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                    {post.scheduled_at && (
+                      <span style={{ fontSize: '.67rem', color: 'var(--muted)' }}>
+                        📅 {new Date(post.scheduled_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: '.62rem', fontWeight: 700, padding: '1px 7px',
+                      borderRadius: '50px',
+                      background: 'rgba(255,122,48,.10)', color: '#ff7a30',
+                      border: '1px solid rgba(255,122,48,.18)',
+                      marginLeft: 'auto',
+                    }}>
+                      WACHT
+                    </span>
+                  </div>
                 </div>
               </div>
             )
@@ -339,247 +869,334 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
       </div>
 
       {/* ── RIGHT PANEL ────────────────────────────────────────────────── */}
-      <div style={{ flex: 1, overflowY: 'auto', background: 'var(--bg)' }}>
+      <div style={{
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+        background: 'var(--bg)',
+      }}>
         {!selectedPost ? (
+          /* Empty state */
           <div style={{
-            height: '100%', display: 'flex', flexDirection: 'column',
+            flex: 1, display: 'flex', flexDirection: 'column',
             alignItems: 'center', justifyContent: 'center',
             color: 'var(--muted)', gap: '14px', padding: '40px',
           }}>
-            <div style={{ fontSize: '4rem', opacity: .4 }}>📋</div>
-            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)', opacity: .6 }}>
-              {filteredPosts.length === 0
-                ? 'Geen items te beoordelen'
-                : 'Selecteer een item om te beoordelen'}
+            <div style={{ fontSize: '4rem', opacity: .35 }}>📋</div>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)', opacity: .5 }}>
+              Selecteer een post om te bekijken
             </div>
           </div>
         ) : (
-          <div style={{ maxWidth: '720px', margin: '0 auto', padding: '32px 28px' }}>
-
-            {/* Color accent strip */}
+          <>
+            {/* Top bar: title + tabs */}
             <div style={{
-              height: '5px', borderRadius: '3px', marginBottom: '28px',
-              background: `linear-gradient(90deg, ${platformColor}, ${platformColor}44)`,
-            }} />
-
-            {/* Header */}
-            <div style={{ marginBottom: '24px' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '10px', flexWrap: 'wrap' }}>
-                {/* Platform badge */}
-                <span style={{
-                  fontSize: '.78rem', fontWeight: 700, padding: '4px 12px',
-                  borderRadius: '50px', background: `${platformColor}18`,
-                  color: platformColor, border: `1px solid ${platformColor}30`,
-                  display: 'inline-flex', alignItems: 'center', gap: '5px',
-                }}>
-                  {PLATFORM_ICONS[selectedPost.platform?.toLowerCase()] || '📄'}
-                  {selectedPost.platform?.charAt(0).toUpperCase() + selectedPost.platform?.slice(1)}
-                  {selectedPost.content_type ? ` · ${selectedPost.content_type}` : ''}
-                </span>
-                {/* Status chip */}
-                <span style={{
-                  fontSize: '.72rem', padding: '4px 12px', borderRadius: '50px',
-                  background: 'rgba(255,122,48,.1)', color: '#ff7a30',
-                  fontWeight: 700, border: '1px solid rgba(255,122,48,.2)',
-                }}>
-                  ⏳ Wacht op goedkeuring
-                </span>
-              </div>
-
-              <h2 style={{
-                fontFamily: 'var(--font-syne), sans-serif',
-                fontWeight: 800, fontSize: '1.45rem', marginBottom: '10px',
-                color: 'var(--text)',
-              }}>
-                {selectedPost.title || 'Zonder titel'}
-              </h2>
-
-              <div style={{ display: 'flex', gap: '16px', fontSize: '.82rem', color: 'var(--muted)', flexWrap: 'wrap', alignItems: 'center' }}>
-                {selectedPost.clients?.company_name && (
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    👤 <strong style={{ color: 'var(--text)' }}>{selectedPost.clients.company_name}</strong>
-                  </span>
-                )}
-                {selectedPost.scheduled_at && (
-                  <span>
-                    📅 {new Date(selectedPost.scheduled_at).toLocaleString('nl-NL', {
-                      weekday: 'long', day: 'numeric', month: 'long',
-                      hour: '2-digit', minute: '2-digit',
-                    })}
-                  </span>
-                )}
-              </div>
-            </div>
-
-            {/* Media placeholder */}
-            <div style={{
-              background: `linear-gradient(135deg, ${platformColor}18, ${platformColor}06)`,
-              borderRadius: 'var(--radius)', height: '220px',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              marginBottom: '24px',
-              border: `1px solid ${platformColor}22`,
+              borderBottom: '1px solid var(--border)',
+              background: 'var(--card)',
+              padding: '0 24px',
+              flexShrink: 0,
+              display: 'flex',
+              alignItems: 'stretch',
+              gap: '0',
             }}>
-              <div style={{ textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: '3.5rem', marginBottom: '8px', opacity: .6 }}>
-                  {PLATFORM_ICONS[selectedPost.platform?.toLowerCase()] || '🖼️'}
-                </div>
-                <div style={{ fontSize: '.8rem', fontWeight: 500 }}>Mediabestand wordt hier getoond</div>
+              {/* Post info */}
+              <div style={{ flex: 1, padding: '14px 0', display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
+                <span style={{
+                  fontSize: '.76rem', fontWeight: 700, padding: '3px 11px',
+                  borderRadius: '50px', background: `${platformColor}18`,
+                  color: platformColor, border: `1px solid ${platformColor}28`,
+                  display: 'inline-flex', alignItems: 'center', gap: '5px', flexShrink: 0,
+                }}>
+                  {PLATFORM_ICONS[selectedPost.platform?.toLowerCase()] || '📄'} {platformLabel}
+                </span>
+                <h2 style={{
+                  fontFamily: 'var(--font-syne), sans-serif',
+                  fontWeight: 800, fontSize: '.95rem',
+                  color: 'var(--text)', margin: 0,
+                  overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                }}>
+                  {selectedPost.title || 'Zonder titel'}
+                </h2>
+                {selectedPost.clients?.company_name && (
+                  <span style={{ fontSize: '.78rem', color: 'var(--muted)', flexShrink: 0 }}>
+                    · {selectedPost.clients.company_name}
+                  </span>
+                )}
+              </div>
+
+              {/* Preview / Details tabs */}
+              <div style={{ display: 'flex', alignItems: 'stretch', gap: '0', marginLeft: '16px' }}>
+                {(['preview', 'details'] as PreviewTab[]).map(tab => (
+                  <button
+                    key={tab}
+                    className="tab-btn"
+                    onClick={() => setActiveTab(tab)}
+                    style={{
+                      background: 'none', border: 'none', cursor: 'pointer',
+                      padding: '0 18px',
+                      fontSize: '.84rem', fontWeight: activeTab === tab ? 700 : 500,
+                      color: activeTab === tab ? platformColor : 'var(--muted)',
+                      borderBottom: activeTab === tab ? `2px solid ${platformColor}` : '2px solid transparent',
+                      transition: 'all .15s',
+                      textTransform: 'capitalize',
+                    }}
+                  >
+                    {tab === 'preview' ? '👁 Preview' : '📋 Details'}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {/* Caption */}
-            {selectedPost.caption && (
-              <div style={{
-                background: 'var(--card)',
-                border: '1px solid var(--border)',
-                borderLeft: `4px solid ${platformColor}`,
-                borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
-                padding: '16px 18px',
-                marginBottom: '16px',
-              }}>
-                <div style={{
-                  fontSize: '.68rem', fontWeight: 700, color: 'var(--muted)',
-                  marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em',
-                }}>
-                  Caption
-                </div>
-                <p style={{
-                  fontSize: '.9rem', lineHeight: 1.75,
-                  whiteSpace: 'pre-wrap', color: 'var(--text)', margin: 0,
-                }}>
-                  {selectedPost.caption}
-                </p>
-              </div>
-            )}
+            {/* Scrollable content area */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '28px 28px 100px' }}>
 
-            {/* Hashtags */}
-            {selectedPost.hashtags && (
-              <div style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
-                {selectedPost.hashtags.split(/\s+/).map((tag, i) =>
-                  tag.trim() ? (
-                    <span key={i} style={{
-                      fontSize: '.75rem', padding: '3px 10px', borderRadius: '50px',
-                      background: 'rgba(26,63,228,.08)', color: 'var(--accent1)',
-                      fontWeight: 600, border: '1px solid rgba(26,63,228,.15)',
+              {activeTab === 'preview' ? (
+                /* ── PREVIEW TAB ───────────────────────────────────── */
+                <div>
+                  {/* Platform preview label */}
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    marginBottom: '20px',
+                  }}>
+                    <div style={{
+                      height: '1px', flex: 1, background: 'var(--border)',
+                    }} />
+                    <span style={{
+                      fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)',
+                      padding: '4px 12px', borderRadius: '50px',
+                      border: '1px solid var(--border)',
+                      background: 'var(--card)',
+                      textTransform: 'uppercase', letterSpacing: '.06em',
                     }}>
-                      {tag}
+                      {platformLabel} preview
                     </span>
-                  ) : null
-                )}
-              </div>
-            )}
+                    <div style={{
+                      height: '1px', flex: 1, background: 'var(--border)',
+                    }} />
+                  </div>
 
-            {/* Agency notes */}
-            {selectedPost.notes && (
-              <div style={{
-                background: 'rgba(255,122,48,.06)', border: '1px solid rgba(255,122,48,.22)',
-                borderRadius: 'var(--radius-sm)', padding: '14px 18px',
-                marginBottom: '28px',
-              }}>
-                <div style={{
-                  fontSize: '.68rem', fontWeight: 700, color: '#ff7a30',
-                  marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em',
-                }}>
-                  📌 Notitie van agency
-                </div>
-                <p style={{ fontSize: '.88rem', lineHeight: 1.65, color: 'var(--text)', margin: 0 }}>
-                  {selectedPost.notes}
-                </p>
-              </div>
-            )}
+                  <PlatformPreview post={selectedPost} />
 
-            {/* ── CLIENT ACTION BUTTONS ───────────────────────────────── */}
-            {!isAdmin ? (
-              <div style={{ display: 'flex', gap: '14px' }}>
-                <button
-                  onClick={() => handleApprove(selectedPost)}
-                  disabled={loading}
-                  className="approve-action-btn"
-                  style={{
-                    flex: 1, padding: '18px 12px',
-                    background: loading ? 'var(--border)' : 'linear-gradient(135deg, #00b89c, #00a388)',
-                    color: '#fff', border: 'none',
-                    borderRadius: 'var(--radius-sm)',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontWeight: 800, fontSize: '1.05rem',
-                    fontFamily: 'var(--font-syne), sans-serif',
-                    boxShadow: loading ? 'none' : '0 4px 20px rgba(0,184,156,.35)',
-                    transition: 'all .2s',
-                  }}
-                >
-                  ✅ Goedkeuren
-                </button>
-                <button
-                  onClick={() => setShowRejectModal(true)}
-                  disabled={loading}
-                  className="approve-action-btn"
-                  style={{
-                    flex: 1, padding: '18px 12px',
-                    background: 'transparent',
-                    color: '#e53e3e',
-                    border: '2px solid rgba(229,62,62,.35)',
-                    borderRadius: 'var(--radius-sm)',
-                    cursor: loading ? 'not-allowed' : 'pointer',
-                    fontWeight: 800, fontSize: '1.05rem',
-                    fontFamily: 'var(--font-syne), sans-serif',
-                    transition: 'all .2s',
-                  }}
-                >
-                  ✏️ Aanpassen nodig
-                </button>
-              </div>
-            ) : (
-              /* ── ADMIN STATUS PANEL ────────────────────────────────── */
-              <div style={{
-                background: 'var(--card)', border: '1px solid var(--border)',
-                borderRadius: 'var(--radius-sm)', padding: '18px 20px',
-              }}>
-                <div style={{
-                  fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)',
-                  marginBottom: '12px', textTransform: 'uppercase', letterSpacing: '.08em',
-                }}>
-                  Status beheren
-                </div>
-                <div style={{
-                  padding: '10px 14px', borderRadius: 'var(--radius-sm)',
-                  background: 'rgba(255,122,48,.07)', border: '1px solid rgba(255,122,48,.2)',
-                  fontSize: '.84rem', color: '#ff7a30', fontWeight: 600,
-                  marginBottom: '14px',
-                }}>
-                  ⏳ Wacht op goedkeuring
-                  {selectedPost.clients?.company_name && (
-                    <> van <strong>{selectedPost.clients.company_name}</strong></>
+                  {/* Scheduled date below preview */}
+                  {selectedPost.scheduled_at && (
+                    <div style={{
+                      textAlign: 'center', marginTop: '20px',
+                      fontSize: '.8rem', color: 'var(--muted)',
+                    }}>
+                      📅 Ingepland op{' '}
+                      <strong style={{ color: 'var(--text)' }}>
+                        {new Date(selectedPost.scheduled_at).toLocaleString('nl-NL', {
+                          weekday: 'long', day: 'numeric', month: 'long',
+                          hour: '2-digit', minute: '2-digit',
+                        })}
+                      </strong>
+                    </div>
                   )}
                 </div>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
+              ) : (
+                /* ── DETAILS TAB ───────────────────────────────────── */
+                <div style={{ maxWidth: '640px' }}>
+
+                  {/* Meta row */}
+                  <div style={{
+                    display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px',
+                  }}>
+                    <span style={{
+                      fontSize: '.78rem', fontWeight: 700, padding: '5px 13px',
+                      borderRadius: '50px', background: `${platformColor}18`,
+                      color: platformColor, border: `1px solid ${platformColor}28`,
+                    }}>
+                      {PLATFORM_ICONS[selectedPost.platform?.toLowerCase()] || '📄'} {platformLabel}
+                    </span>
+                    {selectedPost.content_type && (
+                      <span style={{
+                        fontSize: '.78rem', fontWeight: 600, padding: '5px 13px',
+                        borderRadius: '50px', background: 'var(--card)',
+                        color: 'var(--muted)', border: '1px solid var(--border)',
+                      }}>
+                        {selectedPost.content_type}
+                      </span>
+                    )}
+                    <span style={{
+                      fontSize: '.78rem', fontWeight: 700, padding: '5px 13px',
+                      borderRadius: '50px',
+                      background: 'rgba(255,122,48,.10)', color: '#ff7a30',
+                      border: '1px solid rgba(255,122,48,.20)',
+                    }}>
+                      ⏳ Wacht op goedkeuring
+                    </span>
+                  </div>
+
+                  {/* Caption */}
+                  {selectedPost.caption && (
+                    <div style={{
+                      background: 'var(--card)',
+                      border: '1px solid var(--border)',
+                      borderLeft: `4px solid ${platformColor}`,
+                      borderRadius: '0 var(--radius-sm) var(--radius-sm) 0',
+                      padding: '16px 18px',
+                      marginBottom: '16px',
+                    }}>
+                      <div style={{
+                        fontSize: '.65rem', fontWeight: 700, color: 'var(--muted)',
+                        marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em',
+                      }}>
+                        Caption
+                      </div>
+                      <p style={{
+                        fontSize: '.9rem', lineHeight: 1.75,
+                        whiteSpace: 'pre-wrap', color: 'var(--text)', margin: 0,
+                      }}>
+                        {selectedPost.caption}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Hashtags */}
+                  {selectedPost.hashtags && (
+                    <div style={{ marginBottom: '20px', display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                      {selectedPost.hashtags.split(/\s+/).map((tag, i) =>
+                        tag.trim() ? (
+                          <span key={i} style={{
+                            fontSize: '.75rem', padding: '3px 10px', borderRadius: '50px',
+                            background: 'rgba(26,63,228,.08)', color: 'var(--accent1)',
+                            fontWeight: 600, border: '1px solid rgba(26,63,228,.15)',
+                          }}>
+                            {tag}
+                          </span>
+                        ) : null
+                      )}
+                    </div>
+                  )}
+
+                  {/* Agency notes */}
+                  {selectedPost.notes && (
+                    <div style={{
+                      background: 'rgba(255,122,48,.06)', border: '1px solid rgba(255,122,48,.22)',
+                      borderRadius: 'var(--radius-sm)', padding: '14px 18px',
+                      marginBottom: '20px',
+                    }}>
+                      <div style={{
+                        fontSize: '.65rem', fontWeight: 700, color: '#ff7a30',
+                        marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em',
+                      }}>
+                        📌 Notitie van agency
+                      </div>
+                      <p style={{ fontSize: '.88rem', lineHeight: 1.65, color: 'var(--text)', margin: 0 }}>
+                        {selectedPost.notes}
+                      </p>
+                    </div>
+                  )}
+
+                  {/* Scheduled date */}
+                  {selectedPost.scheduled_at && (
+                    <div style={{
+                      background: 'var(--card)', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)', padding: '12px 16px',
+                      fontSize: '.84rem', color: 'var(--text)',
+                    }}>
+                      📅 <strong>Ingepland:</strong>{' '}
+                      {new Date(selectedPost.scheduled_at).toLocaleString('nl-NL', {
+                        weekday: 'long', day: 'numeric', month: 'long',
+                        hour: '2-digit', minute: '2-digit',
+                      })}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* ── FIXED ACTION BAR ─────────────────────────────────── */}
+            <div style={{
+              borderTop: '1px solid var(--border)',
+              background: 'var(--card)',
+              padding: '14px 24px',
+              flexShrink: 0,
+            }}>
+              {!isAdmin ? (
+                /* Client actions */
+                <div style={{ display: 'flex', gap: '12px' }}>
                   <button
-                    onClick={() => handleAdminChange(selectedPost, 'scheduled')}
+                    onClick={() => handleApprove(selectedPost)}
+                    disabled={loading}
+                    className="approve-action-btn"
                     style={{
-                      padding: '9px 18px',
-                      background: 'rgba(0,184,156,.1)', color: '#00b89c',
-                      border: '1px solid rgba(0,184,156,.3)',
-                      borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                      fontWeight: 700, fontSize: '.82rem',
+                      flex: 1, padding: '14px 12px',
+                      background: loading ? 'var(--border)' : 'linear-gradient(135deg, #00b89c, #00a388)',
+                      color: '#fff', border: 'none',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontWeight: 800, fontSize: '1rem',
+                      fontFamily: 'var(--font-syne), sans-serif',
+                      boxShadow: loading ? 'none' : '0 4px 20px rgba(0,184,156,.35)',
+                      transition: 'all .2s',
                     }}
                   >
-                    ✅ Goedkeuren & inplannen
+                    ✅ Goedkeuren
                   </button>
                   <button
-                    onClick={() => handleAdminChange(selectedPost, 'concept')}
+                    onClick={() => setShowRejectModal(true)}
+                    disabled={loading}
+                    className="approve-action-btn"
                     style={{
-                      padding: '9px 18px',
-                      background: 'rgba(229,62,62,.07)', color: '#e53e3e',
-                      border: '1px solid rgba(229,62,62,.25)',
-                      borderRadius: 'var(--radius-sm)', cursor: 'pointer',
-                      fontWeight: 700, fontSize: '.82rem',
+                      flex: 1, padding: '14px 12px',
+                      background: 'transparent',
+                      color: '#e53e3e',
+                      border: '2px solid rgba(229,62,62,.35)',
+                      borderRadius: 'var(--radius-sm)',
+                      cursor: loading ? 'not-allowed' : 'pointer',
+                      fontWeight: 800, fontSize: '1rem',
+                      fontFamily: 'var(--font-syne), sans-serif',
+                      transition: 'all .2s',
                     }}
                   >
-                    ↩️ Terug naar concept
+                    ✏️ Aanpassingen nodig
                   </button>
                 </div>
-              </div>
-            )}
-          </div>
+              ) : (
+                /* Admin status panel */
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                  <span style={{
+                    fontSize: '.78rem', fontWeight: 600, color: '#ff7a30',
+                    padding: '6px 12px', borderRadius: 'var(--radius-sm)',
+                    background: 'rgba(255,122,48,.07)', border: '1px solid rgba(255,122,48,.2)',
+                  }}>
+                    ⏳ Wacht op goedkeuring
+                    {selectedPost.clients?.company_name && (
+                      <> — {selectedPost.clients.company_name}</>
+                    )}
+                  </span>
+                  <div style={{ display: 'flex', gap: '8px', marginLeft: 'auto', flexWrap: 'wrap' }}>
+                    <button
+                      onClick={() => handleAdminChange(selectedPost, 'scheduled')}
+                      style={{
+                        padding: '9px 18px',
+                        background: 'rgba(0,184,156,.10)', color: '#00b89c',
+                        border: '1px solid rgba(0,184,156,.3)',
+                        borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                        fontWeight: 700, fontSize: '.82rem',
+                      }}
+                    >
+                      ✅ Goedkeuren & inplannen
+                    </button>
+                    <button
+                      onClick={() => handleAdminChange(selectedPost, 'concept')}
+                      style={{
+                        padding: '9px 18px',
+                        background: 'rgba(229,62,62,.07)', color: '#e53e3e',
+                        border: '1px solid rgba(229,62,62,.25)',
+                        borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                        fontWeight: 700, fontSize: '.82rem',
+                      }}
+                    >
+                      ↩️ Terug naar concept
+                    </button>
+                  </div>
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 
@@ -602,7 +1219,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
           }}>
             <h3 style={{
               fontFamily: 'var(--font-syne), sans-serif',
-              fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px',
+              fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px', margin: '0 0 6px',
             }}>
               ✏️ Aanpassingen doorgeven
             </h3>
@@ -648,7 +1265,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                   fontWeight: 700, fontSize: '.86rem',
                 }}
               >
-                {loading ? 'Versturen…' : 'Feedback versturen'}
+                {loading ? 'Versturen…' : 'Verstuur'}
               </button>
             </div>
           </div>
