@@ -4,11 +4,13 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 
 const STATUSES = [
-  { key: 'backlog', label: 'Backlog', color: 'var(--muted)' },
-  { key: 'in_progress', label: 'In uitvoering', color: 'var(--accent1)' },
-  { key: 'review', label: 'Review', color: 'var(--accent4)' },
-  { key: 'approved', label: 'Goedgekeurd', color: 'var(--accent3)' },
-  { key: 'archived', label: 'Archief', color: 'var(--muted)' },
+  { key: 'backlog', label: 'Backlog', color: '#8b95a8', icon: '📋' },
+  { key: 'in_progress', label: 'In uitvoering', color: 'var(--accent1)', icon: '⚡' },
+  { key: 'waiting_feedback', label: 'Wachten op reactie', color: 'var(--accent4)', icon: '⏳' },
+  { key: 'blocked', label: 'Geblokkeerd', color: '#e53935', icon: '🔴' },
+  { key: 'review', label: 'Review', color: '#9c27b0', icon: '🔍' },
+  { key: 'approved', label: 'Goedgekeurd', color: 'var(--accent3)', icon: '✅' },
+  { key: 'archived', label: 'Archief', color: '#8b95a8', icon: '📦' },
 ]
 
 const PRIORITIES = ['normal', 'high', 'urgent']
