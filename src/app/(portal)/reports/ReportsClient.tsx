@@ -1,28 +1,14 @@
 'use client'
 
 import { useState } from 'react'
+import { Upload } from 'lucide-react'
+import { PlatformIcon, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 interface Props {
   projects: any[]
   posts: any[]
   clients: { count: number }
   agency: any
-}
-
-const PLATFORM_COLORS: Record<string, string> = {
-  instagram: '#e1306c',
-  tiktok: '#010101',
-  linkedin: '#0077b5',
-  youtube: '#ff0000',
-  facebook: '#1877f2',
-}
-
-const PLATFORM_LABELS: Record<string, string> = {
-  instagram: 'Instagram',
-  tiktok: 'TikTok',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
-  facebook: 'Facebook',
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -291,7 +277,7 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
           </button>
 
           <button
-            onClick={() => showToast('📤 Export komt binnenkort!')}
+            onClick={() => showToast('Export komt binnenkort')}
             style={{
               padding: '8px 18px',
               border: 'none',
@@ -306,7 +292,7 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
               gap: '6px',
             }}
           >
-            📤 Exporteer
+            <Upload size={15} /> Exporteer
           </button>
         </div>
       </div>
@@ -381,7 +367,8 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
             const pct = Math.round((count / maxPlatformCount) * 100)
             return (
               <div key={pl} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{ width: '80px', fontSize: '.78rem', fontWeight: 500, color: 'var(--text)', flexShrink: 0 }}>
+                <div style={{ width: '80px', fontSize: '.78rem', fontWeight: 500, color: 'var(--text)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+                  <PlatformIcon platform={pl} size={13} />
                   {PLATFORM_LABELS[pl]}
                 </div>
                 <div style={{ flex: 1, height: '22px', background: 'var(--bg)', borderRadius: '6px', overflow: 'hidden' }}>

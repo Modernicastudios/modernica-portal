@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { ClipboardList, CalendarDays, User, Users, Wand2, Pencil, Trash2, X, ArrowRight, CheckSquare } from 'lucide-react'
 
 interface Meeting {
   id: string
@@ -172,7 +173,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
     }
     setSyncing(false)
     setShowSync(false)
-    showToast(`${toCreate.length} actiepunten gesynchroniseerd naar taken! ✅`)
+    showToast(`${toCreate.length} actiepunten gesynchroniseerd naar taken`)
   }
 
   const upcoming = meetings.filter(m => m.status === 'gepland').length
@@ -227,7 +228,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {filtered.length === 0 ? (
             <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📋</div>
+              <ClipboardList size={32} style={{ marginBottom: '8px', opacity: 0.35 }} />
               <div style={{ fontSize: '.85rem' }}>Geen vergaderingen</div>
             </div>
           ) : filtered.map(meeting => {
@@ -252,15 +253,15 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                     {sc.label}
                   </span>
                 </div>
-                <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
-                  📅 {formatDate(meeting.meeting_date)}
+                <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <CalendarDays size={11} /> {formatDate(meeting.meeting_date)}
                 </div>
                 {meeting.clients?.company_name && (
-                  <div style={{ fontSize: '.7rem', color: 'var(--muted)' }}>👤 {meeting.clients.company_name}</div>
+                  <div style={{ fontSize: '.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '4px' }}><User size={11} /> {meeting.clients.company_name}</div>
                 )}
                 {meeting.summary && (
                   <div style={{ fontSize: '.68rem', color: '#00b89c', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                    ✓ Samenvatting beschikbaar
+                    Samenvatting beschikbaar
                   </div>
                 )}
               </div>
@@ -273,7 +274,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--bg)' }}>
         {!selected ? (
           <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', gap: '12px' }}>
-            <div style={{ fontSize: '3rem' }}>📋</div>
+            <ClipboardList size={40} style={{ opacity: 0.3 }} />
             <div style={{ fontWeight: 600, fontSize: '1rem' }}>Selecteer een vergadering</div>
             <div style={{ fontSize: '.85rem' }}>of maak een nieuwe aan</div>
             {isAdmin && (
@@ -298,9 +299,9 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                     <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.3rem', marginBottom: '4px' }}>{selected.title}</h2>
                   )}
                   <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '6px' }}>
-                    <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>📅 {formatDate(selected.meeting_date)}</span>
-                    {selected.clients?.company_name && <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>👤 {selected.clients.company_name}</span>}
-                    {selected.attendees && <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>👥 {selected.attendees}</span>}
+                    <span style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CalendarDays size={13} /> {formatDate(selected.meeting_date)}</span>
+                    {selected.clients?.company_name && <span style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><User size={13} /> {selected.clients.company_name}</span>}
+                    {selected.attendees && <span style={{ fontSize: '.8rem', color: 'var(--muted)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Users size={13} /> {selected.attendees}</span>}
                   </div>
                 </div>
                 <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
@@ -311,19 +312,19 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                         disabled={summarizing}
                         style={{ padding: '8px 14px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.3)', borderRadius: '8px', cursor: summarizing ? 'not-allowed' : 'pointer', fontSize: '.8rem', fontWeight: 700, opacity: summarizing ? 0.7 : 1 }}
                       >
-                        {summarizing ? '⏳ Genereren...' : '✨ Samenvatten'}
+                        {summarizing ? 'Genereren...' : <><Wand2 size={14} style={{ marginRight: 5 }} />Samenvatten</>}
                       </button>
                       <button
                         onClick={() => { setEditMode(true); setEditForm({ ...selected, client_id: selected.client_id || '' }) }}
                         style={{ padding: '8px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600 }}
                       >
-                        ✏️ Bewerken
+                        <Pencil size={14} style={{ marginRight: 5 }} />Bewerken
                       </button>
                       <button
                         onClick={() => deleteMeeting(selected.id)}
                         style={{ padding: '8px 12px', background: 'rgba(229,57,53,.1)', color: '#e53935', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '.85rem' }}
                       >
-                        🗑️
+                        <Trash2 size={14} />
                       </button>
                     </>
                   )}
@@ -357,9 +358,9 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
               {/* Tabs */}
               <div style={{ display: 'flex', gap: '0', marginTop: '8px' }}>
                 {([
-                  { key: 'agenda', label: '📋 Agenda' },
-                  { key: 'notities', label: '📝 Notities' },
-                  { key: 'actiepunten', label: '✅ Actiepunten' },
+                  { key: 'agenda', label: 'Agenda' },
+                  { key: 'notities', label: 'Notities' },
+                  { key: 'actiepunten', label: 'Actiepunten' },
                 ] as const).map(tab => (
                   <button key={tab.key} onClick={() => setActiveTab(tab.key)} style={{
                     padding: '8px 16px', border: 'none', background: 'none', cursor: 'pointer',
@@ -381,7 +382,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
               {selected.summary && (
                 <div style={{ background: 'linear-gradient(135deg, rgba(26,63,228,.06), rgba(0,184,156,.06))', border: '1px solid rgba(26,63,228,.2)', borderRadius: '12px', padding: '18px 20px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                    <span style={{ fontSize: '1rem' }}>✨</span>
+                    <Wand2 size={15} style={{ color: '#1a3fe4' }} />
                     <span style={{ fontWeight: 700, fontSize: '.88rem', color: '#1a3fe4' }}>Automatische samenvatting</span>
                     {isAdmin && (
                       <button
@@ -464,7 +465,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                         onClick={openSync}
                         style={{ padding: '6px 14px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.3)', borderRadius: '8px', cursor: 'pointer', fontSize: '.78rem', fontWeight: 700 }}
                       >
-                        ➡️ Synchroniseer naar taken
+                        <ArrowRight size={13} style={{ marginRight: 5 }} />Synchroniseer naar taken
                       </button>
                     )}
                   </div>
@@ -522,8 +523,8 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
           onClick={e => e.target === e.currentTarget && setShowSync(false)}>
           <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '28px', width: '100%', maxWidth: '560px', boxShadow: '0 24px 60px rgba(0,0,0,.22)', maxHeight: '80vh', display: 'flex', flexDirection: 'column' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-              <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1rem' }}>➡️ Actiepunten naar taken</h3>
-              <button onClick={() => setShowSync(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--muted)' }}>✕</button>
+              <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px' }}><ArrowRight size={16} /> Actiepunten naar taken</h3>
+              <button onClick={() => setShowSync(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex' }}><X size={18} /></button>
             </div>
             <p style={{ fontSize: '.82rem', color: 'var(--muted)', marginBottom: '16px' }}>
               Koppel elk actiepunt aan een project. Afgeronde items worden overgeslagen.
@@ -532,7 +533,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
               {syncItems.map((item, i) => (
                 <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '12px 14px', background: 'var(--bg)', borderRadius: '8px', border: `1px solid ${item.done ? 'var(--border)' : 'var(--accent3)'}`, opacity: item.done ? 0.5 : 1 }}>
                   <div style={{ width: '18px', height: '18px', borderRadius: '5px', border: `2px solid ${item.done ? '#00b89c' : 'var(--border)'}`, background: item.done ? '#00b89c' : 'none', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-                    {item.done && <span style={{ color: '#fff', fontSize: '.65rem' }}>✓</span>}
+                    {item.done && <span style={{ color: '#fff', fontSize: '.65rem', fontWeight: 900 }}>✓</span>}
                   </div>
                   <span style={{ flex: 1, fontSize: '.85rem', textDecoration: item.done ? 'line-through' : 'none', color: 'var(--text)' }}>{item.text}</span>
                   {!item.done && (
@@ -551,7 +552,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
             <div style={{ display: 'flex', gap: '10px' }}>
               <button onClick={() => setShowSync(false)} style={{ flex: 1, padding: '10px', border: '1px solid var(--border)', borderRadius: '8px', background: 'none', cursor: 'pointer', fontSize: '.88rem' }}>Annuleren</button>
               <button onClick={syncToTasks} disabled={syncing} style={{ flex: 2, padding: '10px', background: '#00b89c', color: '#fff', border: 'none', borderRadius: '8px', cursor: syncing ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: '.88rem', opacity: syncing ? 0.7 : 1 }}>
-                {syncing ? 'Synchroniseren...' : `✅ ${syncItems.filter(i => !i.done).length} taken aanmaken`}
+                {syncing ? 'Synchroniseren...' : `${syncItems.filter(i => !i.done).length} taken aanmaken`}
               </button>
             </div>
           </div>
@@ -565,7 +566,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
           <div style={{ background: 'var(--card)', borderRadius: '12px', padding: '32px', width: '100%', maxWidth: '520px', boxShadow: '0 24px 60px rgba(0,0,0,.22)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '22px' }}>
               <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.1rem' }}>Nieuwe vergadering</h3>
-              <button onClick={() => setShowNew(false)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: 'var(--muted)' }}>✕</button>
+              <button onClick={() => setShowNew(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex' }}><X size={20} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>

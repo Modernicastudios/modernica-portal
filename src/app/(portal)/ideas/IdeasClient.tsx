@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Lightbulb, User, Pencil, Trash2, Copy, Check, Plus, X } from 'lucide-react'
+import { PlatformIcon, PlatformBadge, PLATFORM_COLORS as IMPORTED_PLATFORM_COLORS } from '@/components/ui/PlatformIcon'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
 
@@ -39,7 +41,7 @@ interface Template {
   id: number
   category: 'reels' | 'posts' | 'carousels' | 'linkedin' | 'campagnes'
   categoryLabel: string
-  categoryEmoji: string
+  categoryEmoji?: string
   title: string
   description: string
   body: string
@@ -284,7 +286,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
     setIdeas(prev => [data, ...prev])
     setShowModal(false)
     setForm({ ...EMPTY_FORM })
-    showToast('Idee opgeslagen 💡')
+    showToast('Idee opgeslagen')
   }
 
   async function handleDelete(id: string) {
@@ -298,7 +300,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
   function copyTemplate(t: Template) {
     navigator.clipboard.writeText(t.body).then(() => {
       setCopiedId(t.id)
-      showToast('Template gekopieerd naar klembord 📋')
+      showToast('Template gekopieerd naar klembord')
       setTimeout(() => setCopiedId(null), 2500)
     })
   }
@@ -589,8 +591,8 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
 
         {/* ── Tab bar ────────────────────────────────────────────────────── */}
         <div style={tabBarStyle}>
-          <button style={tabBtnStyle(tab === 'ideas')}     onClick={() => setTab('ideas')}>💡 Ideeën</button>
-          <button style={tabBtnStyle(tab === 'templates')} onClick={() => setTab('templates')}>📋 Script Templates</button>
+          <button style={tabBtnStyle(tab === 'ideas')}     onClick={() => setTab('ideas')}>Ideeën</button>
+          <button style={tabBtnStyle(tab === 'templates')} onClick={() => setTab('templates')}>Script Templates</button>
         </div>
 
         {/* ════════════════════════════════════════════════════════════════ */}
@@ -603,9 +605,10 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
               {PLATFORM_FILTERS.map(f => (
                 <button
                   key={f.key}
-                  style={pillStyle(platformFilter === f.key, f.key !== 'all' ? platformColor(f.key) : undefined)}
+                  style={{ ...pillStyle(platformFilter === f.key, f.key !== 'all' ? platformColor(f.key) : undefined), display: 'inline-flex', alignItems: 'center', gap: '5px' }}
                   onClick={() => setPlatformFilter(f.key)}
                 >
+                  {f.key !== 'all' && <PlatformIcon platform={f.key} size={13} color={platformFilter === f.key ? platformColor(f.key) : undefined} />}
                   {f.label}
                 </button>
               ))}
@@ -620,7 +623,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
             {/* Masonry grid */}
             {filteredIdeas.length === 0 ? (
               <div style={emptyStyle}>
-                <div style={{ fontSize: '3rem', marginBottom: '16px' }}>💡</div>
+                <Lightbulb size={40} style={{ marginBottom: '16px', opacity: 0.3 }} />
                 <div style={{ fontSize: '1.1rem', fontWeight: 600, color: 'var(--text)', marginBottom: '8px' }}>
                   Nog geen ideeën
                 </div>
@@ -646,9 +649,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                     <div style={{ padding: '14px' }}>
                       {/* Platform badge */}
                       <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                        <span style={platformBadgeStyle(idea.platform)}>
-                          {PLATFORMS[idea.platform]?.label || idea.platform}
-                        </span>
+                        <PlatformBadge platform={idea.platform} />
                         {idea.content_type && (
                           <span style={{
                             padding: '2px 8px',
@@ -686,8 +687,8 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
 
                       {/* Client */}
                       {idea.clients?.company_name && (
-                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '6px' }}>
-                          👤 {idea.clients.company_name}
+                        <div style={{ fontSize: '0.75rem', color: 'var(--muted)', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <User size={11} /> {idea.clients.company_name}
                         </div>
                       )}
 
@@ -717,15 +718,17 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                             className="icon-btn"
                             title="Naar post"
                             onClick={() => window.location.href = `/content?idea=${idea.id}`}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            ✍️
+                            <Pencil size={14} />
                           </button>
                           <button
                             className="icon-btn"
                             title="Verwijderen"
                             onClick={() => handleDelete(idea.id)}
+                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            🗑️
+                            <Trash2 size={14} />
                           </button>
                         </div>
                       </div>
@@ -761,7 +764,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                 <div key={t.id} style={templateCardStyle()} className="template-card">
                   {/* Category badge */}
                   <div style={categoryBadgeStyle(t.category)}>
-                    {t.categoryEmoji} {t.categoryLabel}
+                    {t.categoryLabel}
                   </div>
 
                   {/* Title */}
@@ -837,7 +840,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                       gap: '6px',
                     }}
                   >
-                    {copiedId === t.id ? '✅ Gekopieerd!' : '📋 Kopiëren'}
+                    {copiedId === t.id ? <><Check size={14} style={{ marginRight: 5 }} />Gekopieerd!</> : <><Copy size={14} style={{ marginRight: 5 }} />Kopiëren</>}
                   </button>
                 </div>
               ))}
@@ -852,13 +855,13 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
           <div style={modalStyle}>
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '24px' }}>
               <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>
-                💡 Nieuw idee
+                Nieuw idee
               </h2>
               <button
                 onClick={() => setShowModal(false)}
-                style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: 'var(--muted)', lineHeight: 1 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex' }}
               >
-                ×
+                <X size={20} />
               </button>
             </div>
 
@@ -976,7 +979,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                     transition: 'all .15s',
                   }}
                 >
-                  {saving ? 'Opslaan…' : '💾 Idee opslaan'}
+                  {saving ? 'Opslaan…' : 'Idee opslaan'}
                 </button>
               </div>
             </div>

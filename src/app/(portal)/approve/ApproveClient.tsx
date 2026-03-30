@@ -2,7 +2,8 @@
 
 import { useState, useMemo, CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Check, Pencil, Share2, Clock, Eye, FileText, Pin } from 'lucide-react'
+import { Check, Pencil, Share2, Clock, Eye, FileText, Pin, Heart, MessageCircle, Send, Bookmark, ThumbsUp, Repeat2, Music2, Globe, PartyPopper } from 'lucide-react'
+import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -39,33 +40,6 @@ interface Props {
 type PreviewTab = 'preview' | 'details'
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-
-const PLATFORM_COLORS: Record<string, string> = {
-  instagram: '#e1306c',
-  tiktok: '#010101',
-  linkedin: '#0077b5',
-  youtube: '#ff0000',
-  facebook: '#1877f2',
-  twitter: '#1da1f2',
-}
-
-const PLATFORM_ICONS: Record<string, string> = {
-  instagram: '📸',
-  tiktok: '🎵',
-  linkedin: '💼',
-  youtube: '▶️',
-  facebook: '📘',
-  twitter: '🐦',
-}
-
-const PLATFORM_LABELS: Record<string, string> = {
-  instagram: 'Instagram',
-  tiktok: 'TikTok',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
-  facebook: 'Facebook',
-  twitter: 'Twitter',
-}
 
 // ─── Platform Preview Components ─────────────────────────────────────────────
 
@@ -112,7 +86,7 @@ function InstagramPreview({ post }: { post: Post }) {
         position: 'relative',
       }}>
         <div style={{ textAlign: 'center', opacity: 0.45 }}>
-          <div style={{ fontSize: '3rem', marginBottom: '8px' }}>📸</div>
+          <FileText size={32} style={{ marginBottom: '8px', opacity: 0.4 }} />
           <div style={{ fontSize: '12px', fontWeight: 500, color: '#555' }}>Mediabestand</div>
         </div>
       </div>
@@ -120,10 +94,10 @@ function InstagramPreview({ post }: { post: Post }) {
       {/* Action bar */}
       <div style={{ padding: '10px 14px 6px' }}>
         <div style={{ display: 'flex', gap: '14px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '24px', cursor: 'pointer' }}>🤍</span>
-          <span style={{ fontSize: '24px', cursor: 'pointer' }}>💬</span>
-          <span style={{ fontSize: '24px', cursor: 'pointer' }}>📤</span>
-          <span style={{ fontSize: '24px', marginLeft: 'auto', cursor: 'pointer' }}>🔖</span>
+          <Heart size={22} style={{ cursor: 'pointer', color: '#262626' }} />
+          <MessageCircle size={22} style={{ cursor: 'pointer', color: '#262626' }} />
+          <Send size={22} style={{ cursor: 'pointer', color: '#262626' }} />
+          <Bookmark size={22} style={{ marginLeft: 'auto', cursor: 'pointer', color: '#262626' }} />
         </div>
         <div style={{ fontSize: '13px', fontWeight: 700, color: '#262626', marginBottom: '5px' }}>
           1.234 vind-ik-leuks
@@ -186,7 +160,7 @@ function LinkedInPreview({ post }: { post: Post }) {
           <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px', color: '#00000099', marginTop: '2px' }}>
             <span>Zojuist</span>
             <span>·</span>
-            <span>🌐</span>
+            <Globe size={11} />
           </div>
         </div>
         <div style={{ color: '#0a66c2', fontSize: '13px', fontWeight: 600, cursor: 'pointer' }}>+ Volgen</div>
@@ -213,7 +187,7 @@ function LinkedInPreview({ post }: { post: Post }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ textAlign: 'center', opacity: 0.5 }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>💼</div>
+          <FileText size={32} style={{ marginBottom: '8px', opacity: 0.4, color: '#0077b5' }} />
           <div style={{ fontSize: '12px', fontWeight: 500, color: '#555' }}>Mediabestand</div>
         </div>
       </div>
@@ -221,7 +195,7 @@ function LinkedInPreview({ post }: { post: Post }) {
       {/* Action bar */}
       <div style={{ padding: '6px 16px 10px', borderTop: '1px solid #e0e0e0', marginTop: '4px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-around', padding: '4px 0' }}>
-          {['👍 Vind ik leuk', '💬 Reageren', '🔄 Delen', '📤 Sturen'].map((action) => (
+          {['Vind ik leuk', 'Reageren', 'Delen', 'Sturen'].map((action) => (
             <button key={action} style={{
               background: 'none', border: 'none', cursor: 'pointer',
               fontSize: '13px', color: '#00000099', fontWeight: 500,
@@ -269,7 +243,7 @@ function FacebookPreview({ post }: { post: Post }) {
           <div style={{ fontSize: '12px', color: '#65676b', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <span>Gesponsord</span>
             <span>·</span>
-            <span>🌐</span>
+            <Globe size={11} />
           </div>
         </div>
         <div style={{ fontSize: '20px', color: '#65676b', cursor: 'pointer' }}>···</div>
@@ -295,7 +269,7 @@ function FacebookPreview({ post }: { post: Post }) {
         display: 'flex', alignItems: 'center', justifyContent: 'center',
       }}>
         <div style={{ textAlign: 'center', opacity: 0.5 }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '8px' }}>📘</div>
+          <FileText size={32} style={{ marginBottom: '8px', opacity: 0.4, color: '#1877f2' }} />
           <div style={{ fontSize: '12px', color: '#555' }}>Mediabestand</div>
         </div>
       </div>
@@ -303,7 +277,7 @@ function FacebookPreview({ post }: { post: Post }) {
       {/* Reactions bar */}
       <div style={{ padding: '8px 16px', borderTop: '1px solid #dddfe2', marginTop: '4px' }}>
         <div style={{ display: 'flex', gap: '4px', marginBottom: '8px' }}>
-          <span style={{ fontSize: '14px' }}>👍❤️😂</span>
+          <span style={{ fontSize: '14px', display: 'flex', gap: '2px' }}><ThumbsUp size={14} /><Heart size={14} /></span>
           <span style={{ fontSize: '13px', color: '#65676b', marginLeft: '4px' }}>234</span>
           <span style={{ marginLeft: 'auto', fontSize: '13px', color: '#65676b' }}>12 reacties</span>
         </div>
@@ -311,7 +285,7 @@ function FacebookPreview({ post }: { post: Post }) {
           display: 'flex', justifyContent: 'space-around',
           borderTop: '1px solid #dddfe2', paddingTop: '4px',
         }}>
-          {['👍 Vind ik leuk', '💬 Reageren', '↗️ Delen'].map((action) => (
+          {['Vind ik leuk', 'Reageren', 'Delen'].map((action) => (
             <button key={action} style={{
               background: 'none', border: 'none', cursor: 'pointer',
               fontSize: '13px', color: '#65676b', fontWeight: 600,
@@ -346,7 +320,7 @@ function TikTokPreview({ post }: { post: Post }) {
         position: 'relative',
       }}>
         <div style={{ textAlign: 'center', opacity: 0.5 }}>
-          <div style={{ fontSize: '3rem', marginBottom: '8px' }}>🎵</div>
+          <Music2 size={32} style={{ marginBottom: '8px', opacity: 0.5, color: '#fff' }} />
           <div style={{ fontSize: '12px', color: '#fff', fontWeight: 500 }}>Video</div>
         </div>
 
@@ -363,9 +337,9 @@ function TikTokPreview({ post }: { post: Post }) {
             }} />
             <span style={{ fontSize: '10px', color: '#fff' }}>+</span>
           </div>
-          {['🤍', '💬', '↗️', '🎵'].map((icon, i) => (
+          {[<Heart key="h" size={24} />, <MessageCircle key="m" size={24} />, <Repeat2 key="r" size={24} />, <Music2 key="mu" size={24} />].map((icon, i) => (
             <div key={i} style={{ textAlign: 'center' }}>
-              <div style={{ fontSize: '28px', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.5))' }}>{icon}</div>
+              <div style={{ color: '#fff', filter: 'drop-shadow(0 1px 3px rgba(0,0,0,.5))', display: 'flex', justifyContent: 'center' }}>{icon}</div>
               <div style={{ fontSize: '10px', color: '#fff', marginTop: '2px' }}>
                 {['1.2K', '89', '24', ''][i]}
               </div>
@@ -527,7 +501,7 @@ function PlatformPreview({ post }: { post: Post }) {
               background: `${color}30`, display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontSize: '20px',
             }}>
-              {PLATFORM_ICONS[platform] || '📄'}
+              <span style={{ fontSize: '.65rem', fontWeight: 800, color: PLATFORM_COLORS[platform] || '#6b7280', textTransform: 'uppercase' }}>{(PLATFORM_LABELS[platform] || platform || 'PL').slice(0, 2)}</span>
             </div>
             <div>
               <div style={{ fontWeight: 600, fontSize: '14px' }}>
@@ -545,7 +519,7 @@ function PlatformPreview({ post }: { post: Post }) {
             height: '180px', background: `${color}14`,
             borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'center',
           }}>
-            <span style={{ fontSize: '3rem', opacity: 0.4 }}>{PLATFORM_ICONS[platform] || '🖼️'}</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: `${color}80`, textTransform: 'uppercase' }}>{(PLATFORM_LABELS[platform] || platform || 'PL').slice(0, 2)}</span>
           </div>
         </div>
       </div>
@@ -571,7 +545,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
     if (!post.share_token) return
     const url = `${window.location.origin}/review/${post.share_token}`
     navigator.clipboard.writeText(url).then(() => {
-      showToast('Link gekopieerd! ✓')
+      showToast('Link gekopieerd')
     })
   }
 
@@ -611,7 +585,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
       })
 
       removePost(post.id)
-      showToast('Goedgekeurd! 🎉 Content is ingepland.')
+      showToast('Goedgekeurd. Content is ingepland.')
     } else {
       showToast('Er is een fout opgetreden', 'error')
     }
@@ -785,7 +759,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {filteredPosts.length === 0 ? (
             <div style={{ padding: '48px 24px', textAlign: 'center', color: 'var(--muted)' }}>
-              <div style={{ fontSize: '2.8rem', marginBottom: '12px' }}>🎉</div>
+              <PartyPopper size={40} style={{ marginBottom: '12px', opacity: 0.5, color: 'var(--accent3)' }} />
               <div style={{ fontWeight: 700, fontSize: '.9rem', color: 'var(--text)', marginBottom: '6px' }}>
                 Alles bijgewerkt!
               </div>
@@ -795,7 +769,6 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
             </div>
           ) : filteredPosts.map(post => {
             const color = PLATFORM_COLORS[post.platform?.toLowerCase()] || 'var(--accent1)'
-            const icon = PLATFORM_ICONS[post.platform?.toLowerCase()] || '📄'
             const label = PLATFORM_LABELS[post.platform?.toLowerCase()] || post.platform
             const isSelected = selectedPost?.id === post.id
 
@@ -823,9 +796,9 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                   background: `${color}18`,
                   border: `1px solid ${color}28`,
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1.05rem', flexShrink: 0,
+                  flexShrink: 0,
                 }}>
-                  {icon}
+                  <PlatformIcon platform={post.platform} size={18} />
                 </div>
 
                 <div style={{ flex: 1, minWidth: 0 }}>
@@ -840,13 +813,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
 
                   {/* Platform chip + client */}
                   <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '4px' }}>
-                    <span style={{
-                      fontSize: '.64rem', fontWeight: 700, padding: '1px 7px',
-                      borderRadius: '50px', background: `${color}18`, color,
-                      border: `1px solid ${color}22`,
-                    }}>
-                      {label}
-                    </span>
+                    <PlatformBadge platform={post.platform} size={11} />
                     {post.clients?.company_name && (
                       <span style={{ fontSize: '.7rem', color: 'var(--muted)' }}>
                         {post.clients.company_name}
@@ -893,7 +860,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
             alignItems: 'center', justifyContent: 'center',
             color: 'var(--muted)', gap: '14px', padding: '40px',
           }}>
-            <div style={{ fontSize: '4rem', opacity: .35 }}>📋</div>
+            <FileText size={48} style={{ opacity: .35 }} />
             <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)', opacity: .5 }}>
               Selecteer een post om te bekijken
             </div>
@@ -912,14 +879,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
             }}>
               {/* Post info */}
               <div style={{ flex: 1, padding: '14px 0', display: 'flex', alignItems: 'center', gap: '12px', minWidth: 0 }}>
-                <span style={{
-                  fontSize: '.76rem', fontWeight: 700, padding: '3px 11px',
-                  borderRadius: '50px', background: `${platformColor}18`,
-                  color: platformColor, border: `1px solid ${platformColor}28`,
-                  display: 'inline-flex', alignItems: 'center', gap: '5px', flexShrink: 0,
-                }}>
-                  {PLATFORM_ICONS[selectedPost.platform?.toLowerCase()] || '📄'} {platformLabel}
-                </span>
+                <PlatformBadge platform={selectedPost.platform} />
                 <h2 style={{
                   fontFamily: 'var(--font-syne), sans-serif',
                   fontWeight: 800, fontSize: '.95rem',
@@ -1021,7 +981,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       borderRadius: '50px', background: `${platformColor}18`,
                       color: platformColor, border: `1px solid ${platformColor}28`,
                     }}>
-                      {PLATFORM_ICONS[selectedPost.platform?.toLowerCase()] || '📄'} {platformLabel}
+                      <span style={{ width: 7, height: 7, borderRadius: '50%', background: platformColor, display: 'inline-block', marginRight: 5 }} />{platformLabel}
                     </span>
                     {selectedPost.content_type && (
                       <span style={{

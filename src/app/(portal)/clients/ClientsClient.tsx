@@ -4,6 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Client, UserProfile } from '@/types'
+import { Search, Users, X } from 'lucide-react'
 
 interface ClientWithStats extends Client {
   activeProjects?: number
@@ -193,8 +194,8 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
 
       {/* Search bar */}
       <div style={{ marginBottom: '24px', position: 'relative' }}>
-        <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', fontSize: '.9rem', pointerEvents: 'none' }}>
-          🔍
+        <div style={{ position: 'absolute', left: '14px', top: '50%', transform: 'translateY(-50%)', color: 'var(--muted)', pointerEvents: 'none', display: 'flex' }}>
+          <Search size={16} />
         </div>
         <input
           value={search}
@@ -256,7 +257,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
 
         {filtered.length === 0 && search && (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '60px 20px', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>🔍</div>
+            <Search size={32} style={{ marginBottom: '12px', opacity: 0.35 }} />
             <div style={{ fontWeight: 600, fontSize: '.95rem', marginBottom: '4px' }}>Geen resultaten</div>
             <div style={{ fontSize: '.85rem' }}>Geen klanten gevonden voor &quot;{search}&quot;</div>
           </div>
@@ -264,8 +265,8 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
 
         {clients.length === 0 && (
           <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px 20px', color: 'var(--muted)' }}>
-            <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--bg)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.8rem', margin: '0 auto 20px' }}>
-              👥
+            <div style={{ width: '72px', height: '72px', borderRadius: '50%', background: 'var(--bg)', border: '2px dashed var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+              <Users size={32} style={{ opacity: 0.4 }} />
             </div>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem', marginBottom: '8px', color: 'var(--text)' }}>
               Nog geen klanten
@@ -294,7 +295,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
               <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.1rem' }}>
                 {modalMode === 'add' ? 'Nieuwe klant toevoegen' : 'Klant bewerken'}
               </h3>
-              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: 'var(--muted)' }}>✕</button>
+              <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex' }}><X size={20} /></button>
             </div>
 
             {/* Two-column field layout */}

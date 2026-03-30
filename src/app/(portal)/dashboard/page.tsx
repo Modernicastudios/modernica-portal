@@ -2,22 +2,7 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Plus, CalendarDays, Sparkles } from 'lucide-react'
-
-const PLATFORM_COLORS: Record<string, string> = {
-  instagram: '#e1306c',
-  tiktok: '#010101',
-  linkedin: '#0077b5',
-  youtube: '#ff0000',
-  facebook: '#1877f2',
-}
-
-const PLATFORM_LABELS: Record<string, string> = {
-  instagram: 'Instagram',
-  tiktok: 'TikTok',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
-  facebook: 'Facebook',
-}
+import { PlatformIcon, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   backlog:          { label: 'Backlog',        bg: 'rgba(107,114,128,.12)', color: '#6b7280' },
@@ -270,9 +255,9 @@ export default async function DashboardPage() {
                       width: '36px', height: '36px', borderRadius: 'var(--radius-sm)',
                       background: `${color}18`, border: `1px solid ${color}33`,
                       display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontSize: '.7rem', fontWeight: 800, color, flexShrink: 0, textTransform: 'uppercase',
+                      flexShrink: 0,
                     }}>
-                      {(PLATFORM_LABELS[platform] || platform).slice(0, 2)}
+                      <PlatformIcon platform={platform} size={18} color={color} />
                     </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
@@ -355,7 +340,8 @@ export default async function DashboardPage() {
                       }}>
                         {post.title || 'Zonder titel'}
                       </div>
-                      <div style={{ fontSize: '.73rem', color: 'var(--muted)', marginTop: '2px' }}>
+                      <div style={{ fontSize: '.73rem', color: 'var(--muted)', marginTop: '2px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <PlatformIcon platform={platform} size={12} color={color} />
                         {PLATFORM_LABELS[platform] || platform}
                         {(post.clients as any)?.company_name && ` · ${(post.clients as any).company_name}`}
                       </div>

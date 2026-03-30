@@ -1,6 +1,8 @@
 'use client'
 
 import React, { useState, useMemo, CSSProperties } from 'react'
+import { Calendar, AlertTriangle, Video, X } from 'lucide-react'
+import { PlatformIcon, PLATFORM_COLORS as IMPORTED_PLATFORM_COLORS } from '@/components/ui/PlatformIcon'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -61,22 +63,7 @@ interface CalEvent {
 // Helpers
 // ---------------------------------------------------------------------------
 
-const PLATFORM_COLORS: Record<string, string> = {
-  instagram: '#e1306c',
-  tiktok: '#222222',
-  linkedin: '#0077b5',
-  youtube: '#ff0000',
-  facebook: '#1877f2',
-}
-
-const PLATFORM_ICONS: Record<string, string> = {
-  instagram: '📸',
-  tiktok: '🎵',
-  linkedin: '💼',
-  youtube: '▶️',
-  facebook: '👥',
-  default: '📄',
-}
+const PLATFORM_COLORS = IMPORTED_PLATFORM_COLORS
 
 function getDeadlineColor(dueDate: Date): string {
   const now = new Date()
@@ -152,7 +139,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         client: p.clients?.company_name || '',
         status: p.status || '',
         platform,
-        icon: PLATFORM_ICONS[platform] || PLATFORM_ICONS.default,
+        icon: '',
       })
     }
 
@@ -167,7 +154,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         color: getDeadlineColor(d),
         client: pr.clients?.company_name || '',
         status: pr.status || '',
-        icon: '🚨',
+        icon: '',
       })
     }
 
@@ -182,7 +169,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         color: '#00b89c',
         client: m.clients?.company_name || '',
         status: m.status || '',
-        icon: '🗓️',
+        icon: '',
       })
     }
 
@@ -678,7 +665,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
   function renderEventPill(ev: CalEvent, idx: number) {
     return (
       <span key={ev.id} style={s.eventPill(ev.color) as CSSProperties}>
-        {ev.icon} {ev.title}
+        {ev.title}
       </span>
     )
   }
@@ -700,9 +687,9 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
           </div>
           <button
             onClick={() => setSelectedDay(null)}
-            style={{ ...s.navBtn, background: 'var(--bg)', border: '1px solid var(--border)' } as CSSProperties}
+            style={{ ...s.navBtn, background: 'var(--bg)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' } as CSSProperties}
           >
-            ✕
+            <X size={16} />
           </button>
         </div>
         {selectedDayEvents.length === 0 ? (
@@ -710,13 +697,19 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         ) : (
           selectedDayEvents.map((ev) => (
             <div key={ev.id} style={s.dayEventRow as CSSProperties}>
-              <div style={s.dayEventIcon(ev.color) as CSSProperties}>{ev.icon}</div>
+              <div style={s.dayEventIcon(ev.color) as CSSProperties}>
+                {ev.type === 'deadline' ? <AlertTriangle size={15} style={{ color: ev.color }} /> : ev.type === 'meeting' ? <Calendar size={15} style={{ color: ev.color }} /> : <Video size={15} style={{ color: ev.color }} />}
+              </div>
               <div style={s.dayEventInfo as CSSProperties}>
                 <div style={s.dayEventTitle as CSSProperties}>{ev.title}</div>
                 <div style={s.dayEventMeta as CSSProperties}>
                   {ev.client && <span>{ev.client}</span>}
                   <span>{formatTime(ev.date)}</span>
-                  {ev.platform && <span style={{ textTransform: 'capitalize' }}>{ev.platform}</span>}
+                  {ev.platform && (
+                    <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', textTransform: 'capitalize' }}>
+                      <PlatformIcon platform={ev.platform} size={11} /> {ev.platform}
+                    </span>
+                  )}
                 </div>
               </div>
               {ev.status && (
@@ -854,7 +847,12 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
                         <span style={s.dateChipMonth(ev.color) as CSSProperties}>{chip.month}</span>
                       </div>
                       <div style={s.upcomingInfo as CSSProperties}>
-                        <div style={s.upcomingEventTitle as CSSProperties}>{ev.icon} {ev.title}</div>
+                        <div style={s.upcomingEventTitle as CSSProperties}>
+                          {ev.type === 'content' && ev.platform
+                            ? <PlatformIcon platform={ev.platform} size={12} />
+                            : null}{' '}
+                          {ev.title}
+                        </div>
                         {ev.client && (
                           <div style={s.upcomingEventClient as CSSProperties}>{ev.client}</div>
                         )}
@@ -929,9 +927,9 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         {(
           [
             { key: 'all', label: 'Alle' },
-            { key: 'content', label: '📅 Content' },
-            { key: 'deadlines', label: '🚨 Deadlines' },
-            { key: 'meetings', label: '🗓️ Vergaderingen' },
+            { key: 'content', label: 'Content' },
+            { key: 'deadlines', label: 'Deadlines' },
+            { key: 'meetings', label: 'Vergaderingen' },
           ] as { key: FilterType; label: string }[]
         ).map(({ key, label }) => (
           <button
@@ -955,7 +953,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
           {/* Empty state for current month */}
           {view === 'month' && monthEvents.length === 0 && (
             <div style={s.emptyState as CSSProperties}>
-              <div style={s.emptyStateEmoji as CSSProperties}>📭</div>
+              <div style={s.emptyStateEmoji as CSSProperties}><Calendar size={36} style={{ opacity: 0.3 }} /></div>
               <div style={s.emptyStateText as CSSProperties}>
                 Geen evenementen in {NL_MONTHS[viewMonth]} {viewYear}
               </div>

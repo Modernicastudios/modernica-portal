@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Plus, Pencil, Trash2, Upload, X, LayoutGrid, Calendar, Table2, List, Link2, Inbox, Send, FileText, SendHorizonal } from 'lucide-react'
+import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 const PLATFORMS: Record<string, { label: string; color: string; bg: string; textColor: string }> = {
   instagram: { label: 'Instagram', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', textColor: '#fff' },
@@ -10,10 +11,6 @@ const PLATFORMS: Record<string, { label: string; color: string; bg: string; text
   linkedin: { label: 'LinkedIn', color: '#0077b5', bg: '#0077b5', textColor: '#fff' },
   youtube: { label: 'YouTube', color: '#ff0000', bg: '#ff0000', textColor: '#fff' },
   facebook: { label: 'Facebook', color: '#1877f2', bg: '#1877f2', textColor: '#fff' },
-}
-
-const PLATFORM_DOTS: Record<string, string> = {
-  instagram: '#e1306c', tiktok: '#010101', linkedin: '#0077b5', youtube: '#ff0000', facebook: '#1877f2',
 }
 
 const CONTENT_TYPES = ['Post', 'Story', 'Reel', 'Carousel', 'Video', 'Artikel']
@@ -202,7 +199,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                     transition: 'all .15s',
                   }}
                 >
-                  {pl.key !== 'all' && <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[pl.key] || '#6b7280', display: 'inline-block', marginRight: 5 }} />}{pl.label}
+                  {pl.key !== 'all' && <PlatformIcon platform={pl.key} size={14} color={isActive ? '#fff' : undefined} />} {pl.label}
                 </button>
               )
             })}
@@ -447,16 +444,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
 
                       {/* Platform chip */}
                       <td style={{ padding: '12px 14px' }}>
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '5px',
-                          padding: '3px 10px', borderRadius: '50px', fontSize: '.72rem', fontWeight: 700,
-                          background: `${pl.color}18`,
-                          color: pl.color === '#010101' ? '#333' : pl.color,
-                          border: `1px solid ${pl.color}30`,
-                          whiteSpace: 'nowrap',
-                        }}>
-                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[post.platform] || '#6b7280', display: 'inline-block', marginRight: 5 }} />{pl.label}
-                        </span>
+                        <PlatformBadge platform={post.platform} />
                       </td>
 
                       {/* Title */}
@@ -593,7 +581,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                 <div style={{ marginTop: 'auto', padding: '12px', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>Platform</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: PLATFORM_DOTS[form.platform] || '#6b7280', display: 'inline-block' }} />
+                    <PlatformIcon platform={form.platform} size={16} />
                     <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)' }}>{PLATFORMS[form.platform]?.label || 'Instagram'}</span>
                     <span style={{ marginLeft: 'auto', fontSize: '.7rem', color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', padding: '1px 8px', borderRadius: '50px' }}>{form.content_type}</span>
                   </div>
@@ -657,7 +645,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                             background: form.platform === k ? `${v.color}18` : 'transparent',
                             color: form.platform === k ? v.color : 'var(--muted)',
                           }}>
-                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[k] || '#6b7280', display: 'inline-block', marginRight: 5 }} />{v.label}
+                            <PlatformIcon platform={k} size={13} color={form.platform === k ? v.color : '#9ca3af'} /> {v.label}
                           </button>
                         ))}
                       </div>
@@ -837,13 +825,7 @@ function BoardCard({ post, onClick, onDragStart, isDragging }: { post: any; onCl
     >
       {/* Top row: platform chip + type chip */}
       <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-        <span style={{
-          fontSize: '.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px',
-          background: `${pl.color}15`, color: pl.color === '#010101' ? '#333' : pl.color,
-          border: `1px solid ${pl.color}28`,
-        }}>
-          <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[post.platform] || '#6b7280', display: 'inline-block', marginRight: 5 }} />{pl.label}
-        </span>
+        <PlatformBadge platform={post.platform} size={11} />
         <span style={{
           fontSize: '.65rem', fontWeight: 600, padding: '2px 8px', borderRadius: '50px',
           background: 'var(--bg)', color: 'var(--muted)', border: '1px solid var(--border)',
@@ -903,7 +885,7 @@ function QueueCard({ post, past = false, onClick }: { post: any; past?: boolean;
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,.04)' }}
     >
       <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: pl.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
-        <span style={{ fontSize: '.65rem', fontWeight: 800, color: '#fff', textTransform: 'uppercase' }}>{(pl.label || 'PL').slice(0, 2)}</span>
+        <PlatformIcon platform={post.platform} size={18} color="#fff" />
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, fontSize: '.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>

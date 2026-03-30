@@ -1,6 +1,7 @@
 'use client'
 
 import { CSSProperties } from 'react'
+import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 interface Props {
   posts: any[]
@@ -8,21 +9,13 @@ interface Props {
   clientId: string
 }
 
-const PLATFORMS: { key: string; label: string; icon: string; color: string; accent: string }[] = [
-  { key: 'instagram', label: 'Instagram', icon: '📸', color: '#e1306c', accent: '#e1306c' },
-  { key: 'facebook', label: 'Facebook', icon: '📘', color: '#1877f2', accent: '#1877f2' },
-  { key: 'linkedin', label: 'LinkedIn', icon: '💼', color: '#0077b5', accent: '#0077b5' },
-  { key: 'tiktok', label: 'TikTok', icon: '🎵', color: '#010101', accent: '#69c9d0' },
-  { key: 'youtube', label: 'YouTube', icon: '▶️', color: '#ff0000', accent: '#ff6b6b' },
+const PLATFORMS: { key: string; label: string; color: string; accent: string }[] = [
+  { key: 'instagram', label: 'Instagram', color: '#e1306c', accent: '#e1306c' },
+  { key: 'facebook', label: 'Facebook', color: '#1877f2', accent: '#1877f2' },
+  { key: 'linkedin', label: 'LinkedIn', color: '#0077b5', accent: '#0077b5' },
+  { key: 'tiktok', label: 'TikTok', color: '#010101', accent: '#69c9d0' },
+  { key: 'youtube', label: 'YouTube', color: '#ff0000', accent: '#ff6b6b' },
 ]
-
-const PLATFORM_COLORS: Record<string, string> = {
-  instagram: '#e1306c',
-  facebook: '#1877f2',
-  linkedin: '#0077b5',
-  tiktok: '#010101',
-  youtube: '#ff0000',
-}
 
 const STATUS_LABELS: Record<string, string> = {
   published: 'Gepubliceerd',
@@ -154,7 +147,9 @@ export default function SocialAnalyticsClient({ posts }: Props) {
           }}>
             <div style={{ height: '4px', background: pl.color }} />
             <div style={{ padding: '16px', textAlign: 'center' }}>
-              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{pl.icon}</div>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px', display: 'flex', justifyContent: 'center' }}>
+                <PlatformIcon platform={pl.key} size={24} />
+              </div>
               <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem', color: pl.color }}>
                 {platformCounts[pl.key] || 0}
               </div>
@@ -196,7 +191,7 @@ export default function SocialAnalyticsClient({ posts }: Props) {
         <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
           {PLATFORMS.map(pl => (
             <div key={pl.key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.74rem', color: 'var(--muted)' }}>
-              <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: pl.color, flexShrink: 0 }} />
+              <PlatformIcon platform={pl.key} size={13} />
               {pl.label}
             </div>
           ))}
@@ -304,15 +299,7 @@ export default function SocialAnalyticsClient({ posts }: Props) {
                   return (
                     <tr key={post.id} style={{ borderTop: '1px solid var(--border)' }}>
                       <td style={{ padding: '12px 16px' }}>
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: '6px',
-                          background: `${PLATFORM_COLORS[(post.platform || '').toLowerCase()] || '#666'}18`,
-                          color: PLATFORM_COLORS[(post.platform || '').toLowerCase()] || 'var(--muted)',
-                          padding: '3px 8px', borderRadius: '50px',
-                          fontSize: '.75rem', fontWeight: 600,
-                        }}>
-                          {pl?.icon || '📱'} {pl?.label || post.platform || '—'}
-                        </span>
+                        <PlatformBadge platform={post.platform || ''} />
                       </td>
                       <td style={{ padding: '12px 16px', fontSize: '.82rem', color: 'var(--muted)' }}>
                         {date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
