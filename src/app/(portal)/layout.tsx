@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import Sidebar from '@/components/layout/Sidebar'
 import Header from '@/components/layout/Header'
+import SupportButton from '@/components/layout/SupportButton'
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -42,6 +43,7 @@ export default async function PortalLayout({ children }: { children: React.React
           {children}
         </main>
       </div>
+      <SupportButton agencyId={profile.agency_id || ''} userId={user.id} />
     </div>
   )
 }

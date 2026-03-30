@@ -154,7 +154,8 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Super Admin
             </div>
-            <NavLink href="/admin" label="Platform Beheer" icon="🛡️" active={pathname.startsWith('/admin')} />
+            <NavLink href="/admin" label="Platform Beheer" icon="🛡️" active={pathname === '/admin'} />
+            <NavLink href="/admin/tickets" label="Support Tickets" icon="💬" active={pathname.startsWith('/admin/tickets')} />
           </>
         )}
 
