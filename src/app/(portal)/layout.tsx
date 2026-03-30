@@ -38,7 +38,7 @@ export default async function PortalLayout({ children }: { children: React.React
     >
       <Sidebar profile={profile} agency={agency} brandKit={brandKit} />
       <div style={{ marginLeft: 'var(--sidebar-width)', flex: 1, minHeight: '100vh', overflow: 'hidden' }}>
-        <Header profile={profile} agency={agency} />
+        <Header profile={profile} agency={agency} userId={user.id} />
         <main style={{ padding: '32px', animation: 'fadeUp 0.3s ease' }}>
           {children}
         </main>

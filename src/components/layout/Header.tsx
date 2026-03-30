@@ -2,20 +2,29 @@
 
 import { usePathname } from 'next/navigation'
 import type { UserProfile, Agency } from '@/types'
+import NotificationBell from './NotificationBell'
 
 interface Props {
   profile: UserProfile
   agency: Agency | null
+  userId: string
 }
 
 const PAGE_TITLES: Record<string, string> = {
   '/dashboard': 'Dashboard',
-  '/analytics/ads': 'Paid Ads',
-  '/analytics/social': 'Social Organic',
+  '/analytics/ads': 'Paid Ads Analytics',
+  '/analytics/social': 'Social Organic Analytics',
   '/projects': 'Project Board',
   '/content': 'Content Kalender',
+  '/ideas': 'Ideeënbord',
+  '/meetings': 'Vergaderingen',
   '/chat': 'Berichten',
   '/clients': 'Klantbeheer',
+  '/planning': 'Planning Kalender',
+  '/approve': 'Goedkeuringen',
+  '/roi': 'ROI Dashboard',
+  '/reports': 'Rapportage',
+  '/media': 'Media Library',
   '/settings/profile': 'Mijn Profiel',
   '/settings/agency': 'Agency Instellingen',
   '/settings/integrations': 'Koppelingen',
@@ -38,7 +47,7 @@ function formatDate(): string {
   })
 }
 
-export default function Header({ profile, agency }: Props) {
+export default function Header({ profile, agency, userId }: Props) {
   const pathname = usePathname()
   const title = getTitle(pathname)
 
@@ -80,7 +89,7 @@ export default function Header({ profile, agency }: Props) {
           {formatDate()}
         </span>
 
-        {/* Agency badge for admin */}
+        {/* Agency badge */}
         {agency && (
           <span style={{
             display: 'inline-flex',
@@ -97,6 +106,9 @@ export default function Header({ profile, agency }: Props) {
             {agency.name}
           </span>
         )}
+
+        {/* Notification bell */}
+        <NotificationBell userId={userId} />
       </div>
     </header>
   )

@@ -17,7 +17,7 @@ export default async function SuperAdminLayout({ children }: { children: React.R
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>
       <Sidebar profile={{ ...profile, email: user.email }} agency={null} brandKit={null} />
       <div style={{ flex: 1, marginLeft: 'var(--sidebar-width)', display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-        <Header profile={profile as any} agency={null} />
+        <Header profile={profile as any} agency={null} userId={user.id} />
         <main style={{ flex: 1, padding: '32px 40px', maxWidth: '1400px', width: '100%', margin: '0 auto' }}>
           {children}
         </main>

@@ -118,28 +118,33 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
           </div>
         )}
 
+        {/* SHARED: visible for both admin and client */}
+        <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
+          {isAdmin ? 'Werkruimte' : 'Mijn portaal'}
+        </div>
+        <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
+        <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content') && !pathname.includes('compose')} />
+        <NavLink href="/approve" label="Goedkeuringen" icon="✅" active={pathname.startsWith('/approve')} />
+        <NavLink href="/planning" label="Planning Kalender" icon="🗓️" active={pathname.startsWith('/planning')} />
+        <NavLink href="/meetings" label="Vergaderingen" icon="📝" active={pathname.startsWith('/meetings')} />
+        <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
+
+        {/* ADMIN ONLY */}
         {isAdmin && (
           <>
-            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
-              Werkruimte
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+              Creatie
             </div>
-            <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
-            <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content') && !pathname.includes('compose')} />
             <NavLink href="/ideas" label="Ideeënbord" icon="💡" active={pathname.startsWith('/ideas')} />
-            <NavLink href="/meetings" label="Vergaderingen" icon="🗓️" active={pathname.startsWith('/meetings')} />
-            <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
+            <NavLink href="/media" label="Media Library" icon="🖼️" active={pathname.startsWith('/media')} />
 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Analyse
             </div>
             <NavLink href="/analytics/ads" label="Paid Ads" icon="📊" active={pathname.startsWith('/analytics/ads')} />
             <NavLink href="/analytics/social" label="Social Organic" icon="📱" active={pathname.startsWith('/analytics/social')} />
-            <NavLink href="/reports" label="Rapportage" icon="📈" active={pathname.startsWith('/reports')} />
-
-            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
-              Bestanden
-            </div>
-            <NavLink href="/media" label="Media Library" icon="🖼️" active={pathname.startsWith('/media')} />
+            <NavLink href="/roi" label="ROI Dashboard" icon="📈" active={pathname.startsWith('/roi')} />
+            <NavLink href="/reports" label="Rapportage" icon="📋" active={pathname.startsWith('/reports')} />
 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Beheer
@@ -148,18 +153,6 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
             <NavLink href="/settings/integrations" label="Koppelingen" icon="🔗" active={pathname.startsWith('/settings/integrations')} />
             <NavLink href="/settings/agency" label="Agency Instellingen" icon="⚙️" active={pathname.startsWith('/settings/agency')} />
             <NavLink href="/settings/billing" label="Abonnement" icon="💳" active={pathname.startsWith('/settings/billing')} />
-          </>
-        )}
-
-        {!isAdmin && (
-          <>
-            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
-              Mijn projecten
-            </div>
-            <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
-            <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content')} />
-            <NavLink href="/meetings" label="Vergaderingen" icon="🗓️" active={pathname.startsWith('/meetings')} />
-            <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
           </>
         )}
 
