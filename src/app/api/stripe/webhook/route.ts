@@ -2,8 +2,10 @@ import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 import { createClient } from '@supabase/supabase-js'
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!)
-const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env.SUPABASE_SERVICE_ROLE_KEY!)
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
+)
 
 const PLAN_LIMITS: Record<string, object> = {
   starter: { max_clients: 5, max_social_accounts: 10, max_ad_accounts: 2, max_team_members: 3, features: { white_label: false, custom_domain: false } },
@@ -12,6 +14,9 @@ const PLAN_LIMITS: Record<string, object> = {
 }
 
 export async function POST(req: NextRequest) {
+  if (!process.env.STRIPE_SECRET_KEY) return NextResponse.json({ error: 'Stripe not configured' }, { status: 503 })
+  const stripe = new Stripe(process.env.STRIPE_SECRET_KEY)
+
   const body = await req.text()
   const signature = req.headers.get('stripe-signature')!
 
