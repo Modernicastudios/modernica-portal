@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Plus, Pencil, Trash2, Upload, X, LayoutGrid, Calendar, Table2, List, Link2 } from 'lucide-react'
 
 const PLATFORMS: Record<string, { label: string; color: string; bg: string; textColor: string }> = {
   instagram: { label: 'Instagram', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', textColor: '#fff' },
@@ -175,9 +176,9 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
           {isAdmin && (
             <button
               onClick={() => openPost()}
-              style={{ background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 22px', fontSize: '.88rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 12px rgba(26,63,228,.25)', flexShrink: 0, whiteSpace: 'nowrap' }}
+              style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 22px', fontSize: '.88rem', fontWeight: 700, cursor: 'pointer', boxShadow: '0 2px 12px rgba(26,63,228,.25)', flexShrink: 0, whiteSpace: 'nowrap' }}
             >
-              + Nieuw
+              <Plus size={16} /> Nieuw
             </button>
           )}
         </div>
@@ -495,21 +496,21 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                           <button
                             onClick={() => openPost(post)}
                             title="Bewerken"
-                            style={{ padding: '5px 8px', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '.75rem', color: 'var(--muted)', transition: 'all .1s' }}
+                            style={{ padding: '5px 8px', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--muted)', transition: 'all .1s', display: 'flex', alignItems: 'center' }}
                             onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg)'; (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
                             onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--muted)' }}
                           >
-                            ✏️
+                            <Pencil size={14} />
                           </button>
                           {isAdmin && (
                             <button
                               onClick={() => deletePost(post.id)}
                               title="Verwijderen"
-                              style={{ padding: '5px 8px', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '.75rem', color: 'var(--muted)', transition: 'all .1s' }}
+                              style={{ padding: '5px 8px', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: 'var(--muted)', transition: 'all .1s', display: 'flex', alignItems: 'center' }}
                               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(229,57,53,.08)'; (e.currentTarget as HTMLElement).style.color = '#e53935'; (e.currentTarget as HTMLElement).style.borderColor = '#e53935' }}
                               onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.color = 'var(--muted)'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
                             >
-                              🗑️
+                              <Trash2 size={14} />
                             </button>
                           )}
                         </div>
@@ -576,7 +577,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                   onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent1)'; (e.currentTarget as HTMLElement).style.background = 'rgba(26,63,228,.03)' }}
                   onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)'; (e.currentTarget as HTMLElement).style.background = 'var(--bg)' }}
                 >
-                  <div style={{ fontSize: '2.4rem' }}>🖼️</div>
+                  <Upload size={24} />
                   <div style={{ textAlign: 'center' }}>
                     <div style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)', marginBottom: '4px' }}>Upload media</div>
                     <div style={{ fontSize: '.72rem', lineHeight: 1.5 }}>Sleep bestanden hier<br />of klik om te selecteren</div>
@@ -613,7 +614,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                   placeholder={editingPost ? 'Post titel...' : 'Nieuwe inhoud'}
                   style={{ flex: 1, fontSize: '1.1rem', fontWeight: 700, border: 'none', background: 'none', outline: 'none', color: 'var(--text)', fontFamily: 'var(--font-syne), sans-serif' }}
                 />
-                <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--muted)', padding: '4px 6px', borderRadius: '6px', lineHeight: 1 }}>✕</button>
+                <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '4px 6px', borderRadius: '6px', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
               </div>
 
               {/* Fields rows */}
@@ -710,17 +711,17 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
               {/* Bottom action bar */}
               <div style={{ padding: '14px 22px', borderTop: '1px solid var(--border)', display: 'flex', gap: '8px', background: 'var(--card)', alignItems: 'center' }}>
                 {editingPost && isAdmin && (
-                  <button onClick={() => deletePost(editingPost.id)} title="Verwijderen" style={{ padding: '9px 12px', background: 'rgba(229,57,53,.08)', color: '#e53935', border: '1px solid rgba(229,57,53,.2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem' }}>
-                    🗑️
+                  <button onClick={() => deletePost(editingPost.id)} title="Verwijderen" style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '9px 12px', background: 'rgba(229,57,53,.08)', color: '#e53935', border: '1px solid rgba(229,57,53,.2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem' }}>
+                    <Trash2 size={14} />
                   </button>
                 )}
                 {editingPost && editingPost.share_token && (
                   <button
                     onClick={() => copyShareLink(editingPost)}
                     title="Kopieer review link"
-                    style={{ padding: '9px 12px', background: 'rgba(26,63,228,.07)', color: 'var(--accent1)', border: '1px solid rgba(26,63,228,.2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem', whiteSpace: 'nowrap' }}
+                    style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '9px 12px', background: 'rgba(26,63,228,.07)', color: 'var(--accent1)', border: '1px solid rgba(26,63,228,.2)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem', whiteSpace: 'nowrap' }}
                   >
-                    🔗 Deel
+                    <Link2 size={14} /> Deel
                   </button>
                 )}
                 {editingPost && isAdmin && (

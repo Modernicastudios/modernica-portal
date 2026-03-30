@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Plus, X, LayoutGrid, List } from 'lucide-react'
 
 const STATUSES = [
   { key: 'backlog',          label: 'Backlog',             color: '#6b7280', bg: 'rgba(107,114,128,.08)', strip: '#d1d5db' },
@@ -149,13 +150,14 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
             <button
               onClick={() => openAdd('backlog')}
               style={{
+                display: 'flex', alignItems: 'center', gap: '6px',
                 background: 'var(--accent1)', color: '#fff', border: 'none',
                 borderRadius: 'var(--radius-sm)', padding: '10px 20px',
                 fontSize: '.88rem', fontWeight: 700, cursor: 'pointer',
                 boxShadow: '0 2px 8px rgba(26,63,228,.3)',
               }}
             >
-              + Nieuw project
+              <Plus size={16} /> Nieuw project
             </button>
           )}
         </div>
@@ -310,7 +312,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
           <div style={{ background: 'var(--card)', borderRadius: 'var(--radius)', padding: '32px', width: '100%', maxWidth: '480px', boxShadow: '0 24px 60px rgba(0,0,0,.2)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
               <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.1rem' }}>Nieuw project</h3>
-              <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', fontSize: '1.3rem', cursor: 'pointer', color: 'var(--muted)' }}>✕</button>
+              <button onClick={() => setShowAddModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
               <div>
@@ -619,7 +621,7 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, isAdmin }: 
                   {project.title}
                 </h2>
               </div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', fontSize: '1.2rem', cursor: 'pointer', color: 'var(--muted)', flexShrink: 0, padding: '2px' }}>✕</button>
+              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', flexShrink: 0, padding: '2px', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
             </div>
 
             {/* Tabs */}

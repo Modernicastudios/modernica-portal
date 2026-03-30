@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { Bell, CheckCircle, XCircle, Clock, AlertTriangle, LayoutList, MessageSquare } from 'lucide-react'
 
 interface Notification {
   id: string
@@ -14,14 +15,14 @@ interface Notification {
   created_at: string
 }
 
-const TYPE_ICONS: Record<string, string> = {
-  approved: '✅',
-  rejected: '❌',
-  pending_approval: '⏳',
-  deadline: '🚨',
-  project_update: '📋',
-  new_message: '💬',
-  default: '🔔',
+const TYPE_ICON_COMPONENTS: Record<string, React.ReactNode> = {
+  approved: <CheckCircle size={18} color="#00b89c" />,
+  rejected: <XCircle size={18} color="#e53935" />,
+  pending_approval: <Clock size={18} color="#f5a623" />,
+  deadline: <AlertTriangle size={18} color="#e53935" />,
+  project_update: <LayoutList size={18} color="var(--accent1)" />,
+  new_message: <MessageSquare size={18} color="var(--accent1)" />,
+  default: <Bell size={18} color="var(--accent1)" />,
 }
 
 export default function NotificationBell({ userId }: { userId: string }) {
@@ -105,11 +106,11 @@ export default function NotificationBell({ userId }: { userId: string }) {
           width: '38px', height: '38px', borderRadius: '50%', border: '1px solid var(--border)',
           background: open ? 'rgba(26,63,228,.08)' : 'var(--card)', cursor: 'pointer',
           display: 'flex', alignItems: 'center', justifyContent: 'center',
-          fontSize: '1.1rem', position: 'relative', transition: 'all .15s',
+          position: 'relative', transition: 'all .15s',
         }}
         title="Notificaties"
       >
-        🔔
+        <Bell size={18} />
         {unread > 0 && (
           <span style={{
             position: 'absolute', top: '-3px', right: '-3px',
@@ -146,7 +147,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
           <div style={{ maxHeight: '400px', overflowY: 'auto' }}>
             {notifications.length === 0 ? (
               <div style={{ padding: '32px', textAlign: 'center', color: 'var(--muted)' }}>
-                <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🔔</div>
+                <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '8px', opacity: 0.5 }}><Bell size={32} /></div>
                 <div style={{ fontSize: '.85rem' }}>Geen notificaties</div>
               </div>
             ) : notifications.map(n => (
@@ -166,7 +167,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
                   background: n.read ? 'var(--bg)' : 'rgba(26,63,228,.1)',
                   display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem',
                 }}>
-                  {TYPE_ICONS[n.type] || TYPE_ICONS.default}
+                  {TYPE_ICON_COMPONENTS[n.type] || TYPE_ICON_COMPONENTS.default}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: n.read ? 400 : 700, fontSize: '.85rem', marginBottom: '2px', color: 'var(--text)' }}>

@@ -1,6 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
+import { Plus, CalendarDays } from 'lucide-react'
 
 const PLATFORM_COLORS: Record<string, string> = {
   instagram: '#e1306c',
@@ -161,7 +162,7 @@ export default async function DashboardPage() {
             borderRadius: 'var(--radius)', padding: '10px 18px',
             textDecoration: 'none', fontWeight: 700, fontSize: '.88rem',
           }}>
-            <span style={{ fontSize: '1rem' }}>+</span> Nieuwe post
+            <Plus size={16} /> Nieuwe post
           </Link>
         </div>
       </div>
@@ -244,8 +245,8 @@ export default async function DashboardPage() {
                   width: '36px', height: '36px', borderRadius: 'var(--radius-sm)',
                   background: '#00b89c22', color: '#00b89c',
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontSize: '1rem', flexShrink: 0,
-                }}>📅</div>
+                  flexShrink: 0,
+                }}><CalendarDays size={18} /></div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div style={{ fontWeight: 600, fontSize: '.88rem', color: 'var(--text)' }}>{m.title}</div>
                   <div style={{ fontSize: '.75rem', color: '#00b89c', marginTop: '2px' }}>
@@ -508,19 +509,19 @@ export default async function DashboardPage() {
             </div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
-                { href: '/content/compose', label: '+ Nieuwe post aanmaken', color: 'var(--accent1)' },
-                { href: '/projects',        label: '+ Nieuw project',         color: '#7c5ff5' },
-                { href: '/meetings',        label: '+ Vergadering plannen',   color: '#00b89c' },
-                { href: '/clients',         label: '+ Klant toevoegen',       color: '#f5a623' },
+                { href: '/content/compose', label: 'Nieuwe post aanmaken', color: 'var(--accent1)' },
+                { href: '/projects',        label: 'Nieuw project',         color: '#7c5ff5' },
+                { href: '/meetings',        label: 'Vergadering plannen',   color: '#00b89c' },
+                { href: '/clients',         label: 'Klant toevoegen',       color: '#f5a623' },
               ].map(action => (
                 <Link key={action.href} href={action.href} style={{
-                  display: 'block', padding: '9px 14px',
+                  display: 'flex', alignItems: 'center', gap: '6px', padding: '9px 14px',
                   background: 'var(--bg)', border: '1px solid var(--border)',
                   borderRadius: 'var(--radius-sm)', textDecoration: 'none',
                   fontSize: '.82rem', fontWeight: 600, color: action.color,
                   transition: 'border-color .15s',
                 }}>
-                  {action.label}
+                  <Plus size={14} style={{ flexShrink: 0 }} />{action.label}
                 </Link>
               ))}
             </div>

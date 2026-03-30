@@ -2,6 +2,7 @@
 
 import { useState, useMemo, CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Check, Pencil, Share2, Clock, Eye, FileText, Pin } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -857,7 +858,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                   <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                     {post.scheduled_at && (
                       <span style={{ fontSize: '.67rem', color: 'var(--muted)' }}>
-                        📅 {new Date(post.scheduled_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
+                        {new Date(post.scheduled_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
                       </span>
                     )}
                     <span style={{
@@ -951,7 +952,11 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       textTransform: 'capitalize',
                     }}
                   >
-                    {tab === 'preview' ? '👁 Preview' : '📋 Details'}
+                    {tab === 'preview' ? (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><Eye size={14} /> Preview</span>
+                    ) : (
+                      <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}><FileText size={14} /> Details</span>
+                    )}
                   </button>
                 ))}
               </div>
@@ -993,7 +998,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       textAlign: 'center', marginTop: '20px',
                       fontSize: '.8rem', color: 'var(--muted)',
                     }}>
-                      📅 Ingepland op{' '}
+                      Ingepland op{' '}
                       <strong style={{ color: 'var(--text)' }}>
                         {new Date(selectedPost.scheduled_at).toLocaleString('nl-NL', {
                           weekday: 'long', day: 'numeric', month: 'long',
@@ -1033,7 +1038,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       background: 'rgba(255,122,48,.10)', color: '#ff7a30',
                       border: '1px solid rgba(255,122,48,.20)',
                     }}>
-                      ⏳ Wacht op goedkeuring
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Clock size={12} /> Wacht op goedkeuring</span>
                     </span>
                   </div>
 
@@ -1090,7 +1095,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                         fontSize: '.65rem', fontWeight: 700, color: '#ff7a30',
                         marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '.08em',
                       }}>
-                        📌 Notitie van agency
+                        <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}><Pin size={12} /> Notitie van agency</span>
                       </div>
                       <p style={{ fontSize: '.88rem', lineHeight: 1.65, color: 'var(--text)', margin: 0 }}>
                         {selectedPost.notes}
@@ -1105,7 +1110,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       borderRadius: 'var(--radius-sm)', padding: '12px 16px',
                       fontSize: '.84rem', color: 'var(--text)',
                     }}>
-                      📅 <strong>Ingepland:</strong>{' '}
+                      <strong>Ingepland:</strong>{' '}
                       {new Date(selectedPost.scheduled_at).toLocaleString('nl-NL', {
                         weekday: 'long', day: 'numeric', month: 'long',
                         hour: '2-digit', minute: '2-digit',
@@ -1142,7 +1147,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       transition: 'all .2s',
                     }}
                   >
-                    ✅ Goedkeuren
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Check size={18} /> Goedkeuren</span>
                   </button>
                   <button
                     onClick={() => setShowRejectModal(true)}
@@ -1160,7 +1165,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       transition: 'all .2s',
                     }}
                   >
-                    ✏️ Aanpassingen nodig
+                    <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}><Pencil size={18} /> Aanpassingen nodig</span>
                   </button>
                 </div>
               ) : (
@@ -1181,6 +1186,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                       <button
                         onClick={() => copyShareLink(selectedPost)}
                         style={{
+                          display: 'flex', alignItems: 'center', gap: '6px',
                           padding: '9px 18px',
                           background: 'rgba(26,63,228,.07)', color: 'var(--accent1)',
                           border: '1px solid rgba(26,63,228,.2)',
@@ -1188,12 +1194,13 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                           fontWeight: 700, fontSize: '.82rem',
                         }}
                       >
-                        🔗 Deel goedkeuringslink
+                        <Share2 size={14} style={{ flexShrink: 0 }} /> Deel goedkeuringslink
                       </button>
                     )}
                     <button
                       onClick={() => handleAdminChange(selectedPost, 'scheduled')}
                       style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
                         padding: '9px 18px',
                         background: 'rgba(0,184,156,.10)', color: '#00b89c',
                         border: '1px solid rgba(0,184,156,.3)',
@@ -1201,11 +1208,12 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                         fontWeight: 700, fontSize: '.82rem',
                       }}
                     >
-                      ✅ Goedkeuren & inplannen
+                      <Check size={14} /> Goedkeuren & inplannen
                     </button>
                     <button
                       onClick={() => handleAdminChange(selectedPost, 'concept')}
                       style={{
+                        display: 'flex', alignItems: 'center', gap: '6px',
                         padding: '9px 18px',
                         background: 'rgba(229,62,62,.07)', color: '#e53e3e',
                         border: '1px solid rgba(229,62,62,.25)',
@@ -1213,7 +1221,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
                         fontWeight: 700, fontSize: '.82rem',
                       }}
                     >
-                      ↩️ Terug naar concept
+                      Terug naar concept
                     </button>
                   </div>
                 </div>
@@ -1244,7 +1252,7 @@ export default function ApproveClient({ posts: initial, clients, isAdmin, client
               fontFamily: 'var(--font-syne), sans-serif',
               fontWeight: 800, fontSize: '1.05rem', marginBottom: '6px', margin: '0 0 6px',
             }}>
-              ✏️ Aanpassingen doorgeven
+              <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><Pencil size={16} /> Aanpassingen doorgeven</span>
             </h3>
             <p style={{ fontSize: '.84rem', color: 'var(--muted)', marginBottom: '18px', lineHeight: 1.5 }}>
               Beschrijf wat er moet worden aangepast. Het team ontvangt jouw feedback direct.

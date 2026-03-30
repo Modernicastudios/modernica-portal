@@ -6,6 +6,12 @@ import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import type { UserProfile, Agency, BrandKit } from '@/types'
+import {
+  LayoutDashboard, BarChart2, TrendingUp, Kanban, CalendarDays, CheckSquare,
+  ThumbsUp, Calendar, Video, MessageSquare, Lightbulb, Image, PieChart,
+  FileText, Users, Link2, Settings, CreditCard, Shield, User, LogOut, X,
+  BarChart3,
+} from 'lucide-react'
 
 interface Props {
   profile: UserProfile & { agencies?: Agency }
@@ -18,24 +24,24 @@ interface Props {
 interface NavItem {
   href: string
   label: string
-  icon: string
+  icon: React.ReactNode
   adminOnly?: boolean
   superAdminOnly?: boolean
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
-  { href: '/analytics/ads', label: 'Paid Ads', icon: '📊' },
-  { href: '/analytics/social', label: 'Social Organic', icon: '📱' },
-  { href: '/projects', label: 'Project Board', icon: '📋' },
-  { href: '/content', label: 'Content Kalender', icon: '📅' },
-  { href: '/chat', label: 'Berichten', icon: '💬' },
-  { href: '/clients', label: 'Klantbeheer', icon: '👥', adminOnly: true },
-  { href: '/settings/profile', label: 'Mijn Profiel', icon: '👤' },
-  { href: '/settings/agency', label: 'Agency Instellingen', icon: '⚙️', adminOnly: true },
-  { href: '/settings/integrations', label: 'Koppelingen', icon: '🔗', adminOnly: true },
-  { href: '/settings/billing', label: 'Abonnement', icon: '💳', adminOnly: true },
-  { href: '/admin', label: 'Platform Beheer', icon: '🛡️', superAdminOnly: true },
+  { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} /> },
+  { href: '/analytics/ads', label: 'Paid Ads', icon: <BarChart2 size={16} /> },
+  { href: '/analytics/social', label: 'Social Organic', icon: <TrendingUp size={16} /> },
+  { href: '/projects', label: 'Project Board', icon: <Kanban size={16} /> },
+  { href: '/content', label: 'Content Kalender', icon: <CalendarDays size={16} /> },
+  { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
+  { href: '/clients', label: 'Klantbeheer', icon: <Users size={16} />, adminOnly: true },
+  { href: '/settings/profile', label: 'Mijn Profiel', icon: <User size={16} /> },
+  { href: '/settings/agency', label: 'Agency Instellingen', icon: <Settings size={16} />, adminOnly: true },
+  { href: '/settings/integrations', label: 'Koppelingen', icon: <Link2 size={16} />, adminOnly: true },
+  { href: '/settings/billing', label: 'Abonnement', icon: <CreditCard size={16} />, adminOnly: true },
+  { href: '/admin', label: 'Platform Beheer', icon: <Shield size={16} />, superAdminOnly: true },
 ]
 
 const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
@@ -135,7 +141,7 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
             }}
             aria-label="Sluiten"
           >
-            ×
+            <X size={16} />
           </button>
         )}
         {logoUrl ? (
@@ -160,9 +166,9 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
               Overzicht
             </div>
-            <NavLink href="/dashboard" label="Dashboard" icon="⊞" active={pathname === '/dashboard'} />
-            <NavLink href="/analytics/ads" label="Paid Ads" icon="📊" active={pathname.startsWith('/analytics/ads')} />
-            <NavLink href="/analytics/social" label="Social Organic" icon="📱" active={pathname.startsWith('/analytics/social')} />
+            <NavLink href="/dashboard" label="Dashboard" icon={<LayoutDashboard size={16} />} active={pathname === '/dashboard'} />
+            <NavLink href="/analytics/ads" label="Paid Ads" icon={<BarChart2 size={16} />} active={pathname.startsWith('/analytics/ads')} />
+            <NavLink href="/analytics/social" label="Social Organic" icon={<TrendingUp size={16} />} active={pathname.startsWith('/analytics/social')} />
           </div>
         )}
 
@@ -171,7 +177,7 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
               Mijn portaal
             </div>
-            <NavLink href="/dashboard" label="Dashboard" icon="⊞" active={pathname === '/dashboard'} />
+            <NavLink href="/dashboard" label="Dashboard" icon={<LayoutDashboard size={16} />} active={pathname === '/dashboard'} />
           </div>
         )}
 
@@ -179,13 +185,13 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
         <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
           {isAdmin ? 'Werkruimte' : 'Mijn portaal'}
         </div>
-        <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
-        <NavLink href="/taken" label="Taken" icon="✓" active={pathname.startsWith('/taken')} />
-        <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content') && !pathname.includes('compose')} />
-        <NavLink href="/approve" label="Goedkeuringen" icon="✅" active={pathname.startsWith('/approve')} />
-        <NavLink href="/planning" label="Planning Kalender" icon="🗓️" active={pathname.startsWith('/planning')} />
-        <NavLink href="/meetings" label="Vergaderingen" icon="📝" active={pathname.startsWith('/meetings')} />
-        <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
+        <NavLink href="/projects" label="Project Board" icon={<Kanban size={16} />} active={pathname.startsWith('/projects')} />
+        <NavLink href="/taken" label="Taken" icon={<CheckSquare size={16} />} active={pathname.startsWith('/taken')} />
+        <NavLink href="/content" label="Content Kalender" icon={<CalendarDays size={16} />} active={pathname.startsWith('/content') && !pathname.includes('compose')} />
+        <NavLink href="/approve" label="Goedkeuringen" icon={<ThumbsUp size={16} />} active={pathname.startsWith('/approve')} />
+        <NavLink href="/planning" label="Planning Kalender" icon={<Calendar size={16} />} active={pathname.startsWith('/planning')} />
+        <NavLink href="/meetings" label="Vergaderingen" icon={<Video size={16} />} active={pathname.startsWith('/meetings')} />
+        <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
 
         {/* ADMIN ONLY */}
         {isAdmin && (
@@ -193,24 +199,24 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Creatie
             </div>
-            <NavLink href="/ideas" label="Ideeënbord" icon="💡" active={pathname.startsWith('/ideas')} />
-            <NavLink href="/media" label="Media Library" icon="🖼️" active={pathname.startsWith('/media')} />
+            <NavLink href="/ideas" label="Ideeënbord" icon={<Lightbulb size={16} />} active={pathname.startsWith('/ideas')} />
+            <NavLink href="/media" label="Media Library" icon={<Image size={16} />} active={pathname.startsWith('/media')} />
 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Analyse
             </div>
-            <NavLink href="/analytics/ads" label="Paid Ads" icon="📊" active={pathname.startsWith('/analytics/ads')} />
-            <NavLink href="/analytics/social" label="Social Organic" icon="📱" active={pathname.startsWith('/analytics/social')} />
-            <NavLink href="/roi" label="ROI Dashboard" icon="📈" active={pathname.startsWith('/roi')} />
-            <NavLink href="/reports" label="Rapportage" icon="📋" active={pathname.startsWith('/reports')} />
+            <NavLink href="/analytics/ads" label="Paid Ads" icon={<BarChart2 size={16} />} active={pathname.startsWith('/analytics/ads')} />
+            <NavLink href="/analytics/social" label="Social Organic" icon={<TrendingUp size={16} />} active={pathname.startsWith('/analytics/social')} />
+            <NavLink href="/roi" label="ROI Dashboard" icon={<BarChart3 size={16} />} active={pathname.startsWith('/roi')} />
+            <NavLink href="/reports" label="Rapportage" icon={<FileText size={16} />} active={pathname.startsWith('/reports')} />
 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Beheer
             </div>
-            <NavLink href="/clients" label="Klantbeheer" icon="👥" active={pathname.startsWith('/clients')} />
-            <NavLink href="/settings/integrations" label="Koppelingen" icon="🔗" active={pathname.startsWith('/settings/integrations')} />
-            <NavLink href="/settings/agency" label="Agency Instellingen" icon="⚙️" active={pathname.startsWith('/settings/agency')} />
-            <NavLink href="/settings/billing" label="Abonnement" icon="💳" active={pathname.startsWith('/settings/billing')} />
+            <NavLink href="/clients" label="Klantbeheer" icon={<Users size={16} />} active={pathname.startsWith('/clients')} />
+            <NavLink href="/settings/integrations" label="Koppelingen" icon={<Link2 size={16} />} active={pathname.startsWith('/settings/integrations')} />
+            <NavLink href="/settings/agency" label="Agency Instellingen" icon={<Settings size={16} />} active={pathname.startsWith('/settings/agency')} />
+            <NavLink href="/settings/billing" label="Abonnement" icon={<CreditCard size={16} />} active={pathname.startsWith('/settings/billing')} />
           </>
         )}
 
@@ -219,15 +225,15 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Super Admin
             </div>
-            <NavLink href="/admin" label="Platform Beheer" icon="🛡️" active={pathname === '/admin'} />
-            <NavLink href="/admin/tickets" label="Support Tickets" icon="💬" active={pathname.startsWith('/admin/tickets')} />
+            <NavLink href="/admin" label="Platform Beheer" icon={<Shield size={16} />} active={pathname === '/admin'} />
+            <NavLink href="/admin/tickets" label="Support Tickets" icon={<MessageSquare size={16} />} active={pathname.startsWith('/admin/tickets')} />
           </>
         )}
 
         <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
           Account
         </div>
-        <NavLink href="/settings/profile" label="Mijn Profiel" icon="👤" active={pathname.startsWith('/settings/profile')} />
+        <NavLink href="/settings/profile" label="Mijn Profiel" icon={<User size={16} />} active={pathname.startsWith('/settings/profile')} />
       </nav>
 
       {/* User chip */}
@@ -261,7 +267,8 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
             <div style={{ fontSize: '.82rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
               {profile.full_name}
             </div>
-            <div style={{ fontSize: '.7rem', color: 'rgba(255,255,255,.55)' }}>
+            <div style={{ fontSize: '.7rem', color: 'rgba(255,255,255,.55)', display: 'flex', alignItems: 'center', gap: '4px' }}>
+              <LogOut size={14} />
               Uitloggen
             </div>
           </div>
@@ -272,7 +279,7 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
   )
 }
 
-function NavLink({ href, label, icon, active }: { href: string; label: string; icon: string; active: boolean }) {
+function NavLink({ href, label, icon, active }: { href: string; label: string; icon: React.ReactNode; active: boolean }) {
   return (
     <Link
       href={href}
@@ -291,7 +298,7 @@ function NavLink({ href, label, icon, active }: { href: string; label: string; i
         fontWeight: active ? 600 : 400,
       }}
     >
-      <span style={{ fontSize: '1rem' }}>{icon}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
       {label}
     </Link>
   )

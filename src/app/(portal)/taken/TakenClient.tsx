@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Plus, X, List, LayoutGrid, CheckSquare } from 'lucide-react'
 
 interface Todo {
   id: string
@@ -293,6 +294,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
         <button
           onClick={openAddModal}
           style={{
+            display: 'flex', alignItems: 'center', gap: '6px',
             background: 'var(--accent1)',
             color: '#fff',
             border: 'none',
@@ -305,7 +307,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
             marginTop: 4,
           }}
         >
-          + Nieuwe taak
+          <Plus size={16} /> Nieuwe taak
         </button>
       </div>
 
@@ -411,14 +413,14 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
       {/* Empty state */}
       {filtered.length === 0 && (
         <div style={{ textAlign: 'center', padding: '72px 24px', color: 'var(--muted)' }}>
-          <div style={{ fontSize: '3rem', marginBottom: 16 }}>✓</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16, opacity: 0.4 }}><CheckSquare size={48} /></div>
           <div style={{ fontSize: '1.1rem', fontWeight: 600, marginBottom: 8 }}>Geen taken gevonden</div>
           <div style={{ fontSize: '.9rem', marginBottom: 20 }}>Voeg een nieuwe taak toe om te beginnen</div>
           <button
             onClick={openAddModal}
-            style={{ background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 20px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' }}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', padding: '10px 20px', fontSize: '.9rem', fontWeight: 600, cursor: 'pointer' }}
           >
-            + Nieuwe taak
+            <Plus size={16} /> Nieuwe taak
           </button>
         </div>
       )}
@@ -786,14 +788,15 @@ function TodoRow({
             border: 'none',
             color: '#ef4444',
             cursor: 'pointer',
-            fontSize: '1rem',
             padding: '0 4px',
             transition: 'opacity .15s',
             flexShrink: 0,
+            display: 'flex',
+            alignItems: 'center',
           }}
           title="Verwijder taak"
         >
-          ×
+          <X size={16} />
         </button>
       )}
     </div>
