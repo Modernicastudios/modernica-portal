@@ -18,6 +18,8 @@ const AD_PLATFORMS = [
   { key: 'google_ads', label: 'Google Ads', icon: '🔍', color: '#ea4335' },
   { key: 'tiktok_ads', label: 'TikTok Ads', icon: '🎵', color: '#010101' },
   { key: 'linkedin_ads', label: 'LinkedIn Ads', icon: '💼', color: '#0077b5' },
+  { key: 'indeed', label: 'Indeed', icon: '💼', color: '#003A9B' },
+  { key: 'snapchat', label: 'Snapchat', icon: '👻', color: '#FFFC00' },
   { key: 'overig', label: 'Overig', icon: '📊', color: '#7c5ff5' },
 ]
 

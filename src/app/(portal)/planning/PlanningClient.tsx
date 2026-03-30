@@ -664,7 +664,10 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
 
   function renderEventPill(ev: CalEvent, idx: number) {
     return (
-      <span key={ev.id} style={s.eventPill(ev.color) as CSSProperties}>
+      <span key={ev.id} style={{ ...(s.eventPill(ev.color) as CSSProperties), display: 'flex', alignItems: 'center', gap: '3px' }}>
+        {ev.type === 'content' && ev.platform && (
+          <PlatformIcon platform={ev.platform} size={10} color={ev.color} />
+        )}
         {ev.title}
       </span>
     )
@@ -800,9 +803,15 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '3px',
                       } as CSSProperties}
                     >
-                      {ev.icon} {ev.title}
+                      {ev.type === 'content' && ev.platform
+                        ? <PlatformIcon platform={ev.platform} size={10} color={ev.color} />
+                        : null}
+                      {ev.title}
                     </div>
                   ))
                 )}

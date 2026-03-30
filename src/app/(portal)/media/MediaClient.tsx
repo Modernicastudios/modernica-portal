@@ -2,6 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Link2, Trash2, Upload, Download, X } from 'lucide-react'
 
 interface Props {
   assets: any[]
@@ -655,7 +656,7 @@ export default function MediaClient({ assets: initialAssets, clients, agencyId, 
                 onClick={() => fileInputRef.current?.click()}
                 disabled={uploading}
               >
-                {uploading ? <span style={spinnerStyle} /> : '↑'}
+                {uploading ? <span style={spinnerStyle} /> : <Upload size={14} />}
                 {uploading ? 'Uploaden…' : 'Uploaden'}
               </button>
             </>
@@ -791,17 +792,17 @@ export default function MediaClient({ assets: initialAssets, clients, agencyId, 
                           onClick={(e) => e.stopPropagation()}
                         >
                           <button
-                            style={copyBtnStyle}
+                            style={{ ...copyBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 4 }}
                             onClick={() => copyUrl(asset.public_url)}
                           >
-                            📋 Kopieer URL
+                            <Link2 size={12} /> URL
                           </button>
                           {isAdmin && (
                             <button
-                              style={deleteBtnStyle}
+                              style={{ ...deleteBtnStyle, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                               onClick={() => deleteAsset(asset)}
                             >
-                              🗑️
+                              <Trash2 size={13} />
                             </button>
                           )}
                         </div>
@@ -824,7 +825,7 @@ export default function MediaClient({ assets: initialAssets, clients, agencyId, 
               <div style={{ fontWeight: 700, fontSize: '1rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', flex: 1 }}>
                 {selectedAsset.file_name}
               </div>
-              <button style={closeBtnStyle} onClick={() => setSelectedAsset(null)}>×</button>
+              <button style={{ ...closeBtnStyle, display: 'flex', alignItems: 'center' }} onClick={() => setSelectedAsset(null)}><X size={18} /></button>
             </div>
 
             {/* Modal body */}
@@ -900,17 +901,17 @@ export default function MediaClient({ assets: initialAssets, clients, agencyId, 
             <div style={modalActionsStyle}>
               {isAdmin && (
                 <button
-                  style={modalDeleteBtnStyle}
+                  style={{ ...modalDeleteBtnStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                   onClick={() => deleteAsset(selectedAsset)}
                 >
-                  🗑️ Verwijderen
+                  <Trash2 size={15} /> Verwijderen
                 </button>
               )}
               <button
-                style={downloadBtnStyle}
+                style={{ ...downloadBtnStyle, display: 'inline-flex', alignItems: 'center', gap: 6 }}
                 onClick={() => window.open(selectedAsset.public_url, '_blank')}
               >
-                ↓ Downloaden
+                <Download size={15} /> Downloaden
               </button>
             </div>
           </div>

@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Lightbulb, User, Pencil, Trash2, Copy, Check, Plus, X } from 'lucide-react'
+import { Lightbulb, User, Trash2, Copy, Check, Plus, X, ArrowRight } from 'lucide-react'
 import { PlatformIcon, PlatformBadge, PLATFORM_COLORS as IMPORTED_PLATFORM_COLORS } from '@/components/ui/PlatformIcon'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -586,7 +586,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
         {/* ── Header ─────────────────────────────────────────────────────── */}
         <div style={headerStyle}>
           <h1 style={h1Style}>Ideeënbord</h1>
-          <p style={subStyle}>Verzamel inspiratie en beheer je script templates op één plek.</p>
+          <p style={subStyle}>Bewaar en organiseer content ideeën</p>
         </div>
 
         {/* ── Tab bar ────────────────────────────────────────────────────── */}
@@ -616,7 +616,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                 style={newBtnStyle}
                 onClick={() => { setForm({ ...EMPTY_FORM }); setShowModal(true) }}
               >
-                <span style={{ fontSize: '1.1rem' }}>+</span> Nieuw idee
+                <Plus size={15} /> Nieuw idee
               </button>
             </div>
 
@@ -634,18 +634,13 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                   style={{ ...newBtnStyle, marginLeft: 0 }}
                   onClick={() => { setForm({ ...EMPTY_FORM }); setShowModal(true) }}
                 >
-                  + Eerste idee toevoegen
+                  <Plus size={15} /> Eerste idee toevoegen
                 </button>
               </div>
             ) : (
               <div style={masonryStyle}>
                 {filteredIdeas.map(idea => (
                   <div key={idea.id} style={cardStyle} className="idea-card">
-                    {/* Colored top strip */}
-                    <div style={{
-                      height: '3px',
-                      background: PLATFORMS[idea.platform]?.bg || '#6b7280',
-                    }} />
                     <div style={{ padding: '14px' }}>
                       {/* Platform badge */}
                       <div style={{ marginBottom: '8px', display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
@@ -720,7 +715,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                             onClick={() => window.location.href = `/content?idea=${idea.id}`}
                             style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                           >
-                            <Pencil size={14} />
+                            <ArrowRight size={14} />
                           </button>
                           <button
                             className="icon-btn"

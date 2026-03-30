@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Upload } from 'lucide-react'
+import { useState, CSSProperties } from 'react'
+import { Download, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'
 import { PlatformIcon, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 interface Props {
@@ -27,11 +27,8 @@ const PROJECT_STATUS_CONFIG: Record<string, { label: string; color: string; bg: 
   archived: { label: 'Archief', color: '#6b78a8', bg: 'rgba(107,120,168,.10)' },
 }
 
-function getMonthRange(year: number, month: number) {
-  const start = new Date(year, month, 1)
-  const end = new Date(year, month + 1, 0, 23, 59, 59, 999)
-  return { start, end }
-}
+const PLATFORMS = ['instagram', 'tiktok', 'linkedin', 'youtube', 'facebook']
+const WEEKDAYS = ['Ma', 'Di', 'Wo', 'Do', 'Vr', 'Za', 'Zo']
 
 function inMonth(dateStr: string | null | undefined, year: number, month: number): boolean {
   if (!dateStr) return false
@@ -47,21 +44,28 @@ function getDaysInMonth(year: number, month: number): number {
   return new Date(year, month + 1, 0).getDate()
 }
 
-function getWeekRanges(year: number, month: number): { label: string; start: number; end: number }[] {
-  const days = getDaysInMonth(year, month)
-  const weeks: { label: string; start: number; end: number }[] = []
-  let day = 1
-  let week = 1
-  while (day <= days) {
-    const end = Math.min(day + 6, days)
-    weeks.push({ label: `Week ${week} (${day}-${end} ${new Date(year, month, 1).toLocaleDateString('nl-NL', { month: 'short' })})`, start: day, end })
-    day += 7
-    week++
-  }
-  return weeks
+// ISO day: Monday=0 ... Sunday=6
+function isoWeekday(date: Date): number {
+  return (date.getDay() + 6) % 7
 }
 
 let toastTimeout: ReturnType<typeof setTimeout> | null = null
+
+const cardStyle: CSSProperties = {
+  background: 'var(--card)',
+  border: '1px solid var(--border)',
+  borderRadius: '12px',
+  padding: '24px',
+  boxShadow: '0 1px 8px rgba(26,63,228,.06)',
+}
+
+const cardTitleStyle: CSSProperties = {
+  fontFamily: 'var(--font-syne), sans-serif',
+  fontWeight: 700,
+  fontSize: '.9rem',
+  marginBottom: '18px',
+  color: 'var(--text)',
+}
 
 export default function ReportsClient({ projects, posts, clients, agency }: Props) {
   const now = new Date()
@@ -90,7 +94,7 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
     setViewYear(now.getFullYear())
   }
 
-  // --- Stats calculations ---
+  // ── Stats ──
   const postsThisMonth = posts.filter(p => inMonth(p.scheduled_at, viewYear, viewMonth))
   const postsPrevMonth = posts.filter(p => {
     const pm = viewMonth === 0 ? 11 : viewMonth - 1
@@ -98,29 +102,28 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
     return inMonth(p.scheduled_at, py, pm)
   })
 
-  const publishedThisMonth = postsThisMonth.filter(p => p.status === 'published').length
-  const publishedPrevMonth = postsPrevMonth.filter(p => p.status === 'published').length
+  const publishedThis = postsThisMonth.filter(p => p.status === 'published').length
+  const publishedPrev = postsPrevMonth.filter(p => p.status === 'published').length
+  const scheduledThis = postsThisMonth.filter(p => p.status === 'scheduled').length
+  const scheduledPrev = postsPrevMonth.filter(p => p.status === 'scheduled').length
 
-  const scheduledThisMonth = postsThisMonth.filter(p => p.status === 'scheduled').length
-  const scheduledPrevMonth = postsPrevMonth.filter(p => p.status === 'scheduled').length
-
-  const projectsDoneThisMonth = projects.filter(p =>
+  const projectsDoneThis = projects.filter(p =>
     (p.status === 'approved' || p.status === 'archived') && inMonth(p.created_at, viewYear, viewMonth)
   ).length
-  const projectsDonePrevMonth = projects.filter(p => {
+  const projectsDonePrev = projects.filter(p => {
     const pm = viewMonth === 0 ? 11 : viewMonth - 1
     const py = viewMonth === 0 ? viewYear - 1 : viewYear
     return (p.status === 'approved' || p.status === 'archived') && inMonth(p.created_at, py, pm)
   }).length
 
-  function delta(cur: number, prev: number) {
+  function delta(cur: number, prev: number): { pct: number; up: boolean } | null {
     if (prev === 0 && cur === 0) return null
     if (prev === 0) return { pct: 100, up: true }
     const d = Math.round(((cur - prev) / prev) * 100)
     return { pct: Math.abs(d), up: d >= 0 }
   }
 
-  // --- Platform breakdown ---
+  // ── Platform breakdown ──
   const platformCounts: Record<string, number> = {}
   postsThisMonth.forEach(p => {
     const pl = (p.platform || 'other').toLowerCase()
@@ -128,7 +131,7 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
   })
   const maxPlatformCount = Math.max(1, ...Object.values(platformCounts))
 
-  // --- Status distribution ---
+  // ── Status breakdown (all posts) ──
   const statusCounts: Record<string, number> = {}
   posts.forEach(p => {
     const s = p.status || 'concept'
@@ -136,9 +139,8 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
   })
   const totalPostsAll = posts.length || 1
 
-  // --- Platform donut ---
-  const platformsForDonut = ['instagram', 'tiktok', 'linkedin', 'youtube', 'facebook']
-  const donutData = platformsForDonut.map(pl => ({
+  // ── Donut (platform, all time) ──
+  const donutData = PLATFORMS.map(pl => ({
     platform: pl,
     count: posts.filter(p => (p.platform || '').toLowerCase() === pl).length,
     color: PLATFORM_COLORS[pl],
@@ -155,10 +157,60 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
     ? `conic-gradient(${donutSegments.map(s => `${s.color} ${s.start}deg ${s.start + s.deg}deg`).join(', ')})`
     : 'conic-gradient(var(--border) 0deg 360deg)'
 
-  // --- Week summary ---
-  const weekRanges = getWeekRanges(viewYear, viewMonth)
+  // ── Heatmap ──
+  const daysInMonth = getDaysInMonth(viewYear, viewMonth)
+  const heatmapCounts: Record<number, number> = {}
+  postsThisMonth.forEach(p => {
+    if (!p.scheduled_at) return
+    const d = new Date(p.scheduled_at)
+    if (d.getFullYear() === viewYear && d.getMonth() === viewMonth) {
+      const day = d.getDate()
+      heatmapCounts[day] = (heatmapCounts[day] || 0) + 1
+    }
+  })
+  const maxHeatmap = Math.max(1, ...Object.values(heatmapCounts))
 
-  // --- Projects grouped by status ---
+  // Build calendar grid: start from Monday of first week
+  const firstDay = new Date(viewYear, viewMonth, 1)
+  const startOffset = isoWeekday(firstDay) // 0=Mon
+  const calCells: (number | null)[] = [
+    ...Array(startOffset).fill(null),
+    ...Array.from({ length: daysInMonth }, (_, i) => i + 1),
+  ]
+  // Pad to full weeks
+  while (calCells.length % 7 !== 0) calCells.push(null)
+
+  function heatColor(count: number): string {
+    if (count === 0) return 'var(--bg)'
+    const intensity = count / maxHeatmap
+    if (intensity < 0.25) return 'rgba(26,63,228,.15)'
+    if (intensity < 0.5) return 'rgba(26,63,228,.35)'
+    if (intensity < 0.75) return 'rgba(26,63,228,.60)'
+    return 'rgba(26,63,228,.85)'
+  }
+
+  // ── Weekly activity table (Mon-Sun) ──
+  // Build rows: week index → day-of-week array
+  interface WeekRow {
+    label: string
+    days: (number | null)[]
+    counts: number[]
+  }
+  const weekRows: WeekRow[] = []
+  for (let i = 0; i < calCells.length; i += 7) {
+    const slice = calCells.slice(i, i + 7)
+    const counts = slice.map(day => {
+      if (!day) return 0
+      return heatmapCounts[day] || 0
+    })
+    const validDays = slice.filter(d => d !== null) as number[]
+    if (validDays.length === 0) continue
+    const label = `${validDays[0]}–${validDays[validDays.length - 1]} ${new Date(viewYear, viewMonth, 1)
+      .toLocaleDateString('nl-NL', { month: 'short' })}`
+    weekRows.push({ label, days: slice, counts })
+  }
+
+  // ── Projects grouped ──
   const projectsByStatus: Record<string, any[]> = {}
   projects.forEach(p => {
     const s = p.status || 'backlog'
@@ -166,34 +218,30 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
     projectsByStatus[s].push(p)
   })
 
-  const statCards = [
+  const kpiCards = [
     {
       label: 'Posts gepubliceerd',
-      value: publishedThisMonth,
+      value: publishedThis,
       color: '#e1306c',
-      gradient: 'linear-gradient(90deg, #e1306c, #ff6b6b)',
-      delta: delta(publishedThisMonth, publishedPrevMonth),
+      delta: delta(publishedThis, publishedPrev),
     },
     {
       label: 'Posts gepland',
-      value: scheduledThisMonth,
+      value: scheduledThis,
       color: '#0077b5',
-      gradient: 'linear-gradient(90deg, #0077b5, #00b4d8)',
-      delta: delta(scheduledThisMonth, scheduledPrevMonth),
+      delta: delta(scheduledThis, scheduledPrev),
     },
     {
       label: 'Projecten afgerond',
-      value: projectsDoneThisMonth,
+      value: projectsDoneThis,
       color: '#00b89c',
-      gradient: 'linear-gradient(90deg, #00b89c, #00dfc0)',
-      delta: delta(projectsDoneThisMonth, projectsDonePrevMonth),
+      delta: delta(projectsDoneThis, projectsDonePrev),
     },
     {
       label: 'Actieve klanten',
       value: clients.count,
       color: '#7c5ff5',
-      gradient: 'linear-gradient(90deg, #7c5ff5, #1a3fe4)',
-      delta: null,
+      delta: null as { pct: number; up: boolean } | null,
     },
   ]
 
@@ -206,13 +254,12 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
           background: '#1a1a2e', color: '#fff', borderRadius: '10px',
           padding: '12px 20px', fontSize: '.88rem', fontWeight: 500,
           boxShadow: '0 8px 32px rgba(0,0,0,.3)',
-          animation: 'fadeIn .2s ease',
         }}>
           {toast}
         </div>
       )}
 
-      {/* HEADER */}
+      {/* ── HEADER ── */}
       <div style={{
         display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between',
         marginBottom: '28px', flexWrap: 'wrap', gap: '16px',
@@ -220,34 +267,35 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
         <div>
           <h1 style={{
             fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800,
-            fontSize: '1.75rem', marginBottom: '4px',
+            fontSize: '1.6rem', marginBottom: '4px',
           }}>
             Rapportage
           </h1>
-          <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>
+          <p style={{ color: 'var(--muted)', fontSize: '.88rem' }}>
             {agency?.name ? `${agency.name} — ` : ''}Maandelijks overzicht van content &amp; projecten
           </p>
         </div>
 
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {/* Month selector */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Month navigator */}
           <div style={{
-            display: 'flex', alignItems: 'center', gap: '0',
+            display: 'flex', alignItems: 'center',
             border: '1px solid var(--border)', borderRadius: '10px',
             overflow: 'hidden', background: 'var(--card)',
           }}>
             <button
               onClick={prevMonth}
               style={{
-                padding: '8px 14px', border: 'none', background: 'transparent',
-                cursor: 'pointer', color: 'var(--text)', fontSize: '1rem',
+                padding: '8px 10px', border: 'none', background: 'transparent',
+                cursor: 'pointer', color: 'var(--text)',
                 borderRight: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center',
               }}
             >
-              ←
+              <ChevronLeft size={15} />
             </button>
             <span style={{
-              padding: '8px 16px', fontSize: '.88rem', fontWeight: 600,
+              padding: '8px 16px', fontSize: '.85rem', fontWeight: 600,
               fontFamily: 'var(--font-syne), sans-serif', minWidth: '160px',
               textAlign: 'center', color: 'var(--text)',
             }}>
@@ -256,19 +304,20 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
             <button
               onClick={nextMonth}
               style={{
-                padding: '8px 14px', border: 'none', background: 'transparent',
-                cursor: 'pointer', color: 'var(--text)', fontSize: '1rem',
+                padding: '8px 10px', border: 'none', background: 'transparent',
+                cursor: 'pointer', color: 'var(--text)',
                 borderLeft: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center',
               }}
             >
-              →
+              <ChevronLeft size={15} style={{ transform: 'rotate(180deg)' }} />
             </button>
           </div>
 
           <button
             onClick={goToday}
             style={{
-              padding: '8px 16px', border: '1px solid var(--border)',
+              padding: '8px 14px', border: '1px solid var(--border)',
               borderRadius: '10px', background: 'var(--card)', cursor: 'pointer',
               fontSize: '.82rem', fontWeight: 600, color: 'var(--text)',
             }}
@@ -277,163 +326,149 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
           </button>
 
           <button
-            onClick={() => showToast('Export komt binnenkort')}
+            onClick={() => showToast('Export komt binnenkort beschikbaar')}
             style={{
-              padding: '8px 18px',
-              border: 'none',
-              borderRadius: '10px',
-              background: 'linear-gradient(90deg, var(--accent1), #2d5fff)',
-              color: '#fff',
-              cursor: 'pointer',
-              fontSize: '.85rem',
-              fontWeight: 600,
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
+              padding: '8px 16px', border: 'none', borderRadius: '10px',
+              background: 'var(--accent1)', color: '#fff',
+              cursor: 'pointer', fontSize: '.84rem', fontWeight: 600,
+              display: 'flex', alignItems: 'center', gap: '6px',
             }}
           >
-            <Upload size={15} /> Exporteer
+            <Download size={14} /> Exporteren
           </button>
         </div>
       </div>
 
-      {/* STATS GRID */}
+      {/* ── KPI CARDS ── */}
       <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))',
-        gap: '16px',
-        marginBottom: '28px',
+        display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)',
+        gap: '16px', marginBottom: '24px',
       }}>
-        {statCards.map(card => (
-          <div key={card.label} style={{
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            borderRadius: '12px',
-            padding: '20px',
-            position: 'relative',
-            overflow: 'hidden',
-            boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-          }}>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-              background: card.gradient,
-            }} />
-            <div style={{
-              fontSize: '.72rem', color: 'var(--muted)',
-              textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '10px',
+        {kpiCards.map(card => {
+          const d = card.delta
+          return (
+            <div key={card.label} style={{
+              ...cardStyle,
+              padding: '20px',
+              borderTop: `3px solid ${card.color}`,
             }}>
-              {card.label}
-            </div>
-            <div style={{
-              fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800,
-              fontSize: '2rem', color: card.color, lineHeight: 1,
-              marginBottom: '8px',
-            }}>
-              {card.value}
-            </div>
-            {card.delta !== null ? (
               <div style={{
-                fontSize: '.75rem',
-                color: card.delta.up ? '#00b89c' : '#e1306c',
-                display: 'flex', alignItems: 'center', gap: '4px',
+                fontSize: '.72rem', color: 'var(--muted)',
+                textTransform: 'uppercase', letterSpacing: '.08em',
+                marginBottom: '10px',
               }}>
-                <span>{card.delta.up ? '↑' : '↓'}</span>
-                <span>{card.delta.pct}% vs vorige maand</span>
+                {card.label}
               </div>
-            ) : (
-              <div style={{ fontSize: '.75rem', color: 'var(--muted)' }}>Totaal</div>
-            )}
-          </div>
-        ))}
+              <div style={{
+                fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800,
+                fontSize: '2.1rem', color: card.color, lineHeight: 1, marginBottom: '8px',
+              }}>
+                {card.value}
+              </div>
+              {d !== null ? (
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '4px',
+                  fontSize: '.75rem', color: d.up ? '#00b89c' : '#e1306c',
+                }}>
+                  {d.up
+                    ? <TrendingUp size={12} />
+                    : <TrendingDown size={12} />}
+                  <span>{d.pct}% vs vorige maand</span>
+                </div>
+              ) : (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '.75rem', color: 'var(--muted)' }}>
+                  <Minus size={12} />
+                  <span>Totaal</span>
+                </div>
+              )}
+            </div>
+          )
+        })}
       </div>
 
-      {/* TWO COLUMN CHARTS */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+      {/* ── PLATFORM + STATUS ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '20px' }}>
 
-        {/* PLATFORM BAR CHART */}
-        <div style={{
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: '12px', padding: '24px',
-          boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        }}>
-          <h3 style={{
-            fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-            fontSize: '.95rem', marginBottom: '20px', color: 'var(--text)',
-          }}>
-            Content per platform
-          </h3>
-          {['instagram', 'tiktok', 'linkedin', 'youtube', 'facebook'].map(pl => {
+        {/* Platform breakdown */}
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Content per platform</h3>
+          {PLATFORMS.map(pl => {
             const count = platformCounts[pl] || 0
             const pct = Math.round((count / maxPlatformCount) * 100)
+            const totalPct = postsThisMonth.length > 0
+              ? Math.round((count / postsThisMonth.length) * 100)
+              : 0
             return (
-              <div key={pl} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '12px' }}>
-                <div style={{ width: '80px', fontSize: '.78rem', fontWeight: 500, color: 'var(--text)', flexShrink: 0, display: 'flex', alignItems: 'center', gap: '5px' }}>
+              <div key={pl} style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '11px' }}>
+                <div style={{
+                  width: '90px', fontSize: '.78rem', fontWeight: 500,
+                  color: 'var(--text)', flexShrink: 0,
+                  display: 'flex', alignItems: 'center', gap: '6px',
+                }}>
                   <PlatformIcon platform={pl} size={13} />
                   {PLATFORM_LABELS[pl]}
                 </div>
-                <div style={{ flex: 1, height: '22px', background: 'var(--bg)', borderRadius: '6px', overflow: 'hidden' }}>
+                <div style={{
+                  flex: 1, height: '8px', background: 'var(--bg)',
+                  borderRadius: '4px', overflow: 'hidden',
+                }}>
                   <div style={{
-                    width: `${pct}%`,
-                    height: '100%',
+                    width: `${pct}%`, height: '100%',
                     background: PLATFORM_COLORS[pl],
-                    borderRadius: '6px',
-                    minWidth: count > 0 ? '6px' : '0',
+                    borderRadius: '4px',
+                    minWidth: count > 0 ? '4px' : '0',
                     transition: 'width .4s ease',
                   }} />
                 </div>
-                <div style={{ width: '24px', fontSize: '.8rem', fontWeight: 700, color: 'var(--text)', textAlign: 'right', flexShrink: 0 }}>
-                  {count}
+                <div style={{
+                  width: '52px', flexShrink: 0,
+                  display: 'flex', justifyContent: 'space-between',
+                  fontSize: '.76rem',
+                }}>
+                  <span style={{ fontWeight: 700, color: 'var(--text)' }}>{count}</span>
+                  <span style={{ color: 'var(--muted)' }}>{totalPct}%</span>
                 </div>
               </div>
             )
           })}
           {postsThisMonth.length === 0 && (
-            <p style={{ color: 'var(--muted)', fontSize: '.82rem', textAlign: 'center', padding: '20px 0' }}>
+            <p style={{ color: 'var(--muted)', fontSize: '.82rem', textAlign: 'center', padding: '16px 0' }}>
               Geen posts in deze maand
             </p>
           )}
         </div>
 
-        {/* STATUS DISTRIBUTION */}
-        <div style={{
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: '12px', padding: '24px',
-          boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        }}>
-          <h3 style={{
-            fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-            fontSize: '.95rem', marginBottom: '20px', color: 'var(--text)',
-          }}>
-            Content status verdeling
-          </h3>
+        {/* Status distribution */}
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Content status verdeling</h3>
           {Object.entries(STATUS_CONFIG).map(([status, cfg]) => {
             const count = statusCounts[status] || 0
             const pct = Math.round((count / totalPostsAll) * 100)
             return (
               <div key={status} style={{ marginBottom: '14px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '5px', alignItems: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '7px' }}>
                     <span style={{
-                      display: 'inline-block', width: '10px', height: '10px',
-                      borderRadius: '50%', background: cfg.color, flexShrink: 0,
+                      width: '9px', height: '9px', borderRadius: '50%',
+                      background: cfg.color, flexShrink: 0, display: 'inline-block',
                     }} />
                     <span style={{ fontSize: '.8rem', fontWeight: 500, color: 'var(--text)' }}>{cfg.label}</span>
                   </div>
                   <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                     <span style={{
                       fontSize: '.7rem', fontWeight: 700,
-                      padding: '1px 8px', borderRadius: '50px',
+                      padding: '2px 8px', borderRadius: '50px',
                       background: cfg.bg, color: cfg.color,
                     }}>{count}</span>
-                    <span style={{ fontSize: '.72rem', color: 'var(--muted)', minWidth: '32px', textAlign: 'right' }}>
+                    <span style={{ fontSize: '.72rem', color: 'var(--muted)', minWidth: '30px', textAlign: 'right' }}>
                       {pct}%
                     </span>
                   </div>
                 </div>
-                <div style={{ height: '6px', background: 'var(--bg)', borderRadius: '4px', overflow: 'hidden' }}>
+                <div style={{ height: '5px', background: 'var(--bg)', borderRadius: '3px', overflow: 'hidden' }}>
                   <div style={{
                     width: `${pct}%`, height: '100%',
-                    background: cfg.color, borderRadius: '4px',
+                    background: cfg.color, borderRadius: '3px',
                     transition: 'width .4s ease',
                   }} />
                 </div>
@@ -443,24 +478,73 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
         </div>
       </div>
 
-      {/* DONUT + WEEK SUMMARY */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
+      {/* ── HEATMAP + DONUT ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: '20px', marginBottom: '20px' }}>
 
-        {/* PLATFORM DONUT */}
-        <div style={{
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: '12px', padding: '24px',
-          boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        }}>
-          <h3 style={{
-            fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-            fontSize: '.95rem', marginBottom: '20px', color: 'var(--text)',
-          }}>
-            Platform verdeling (totaal)
-          </h3>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
-            {/* Donut circle */}
-            <div style={{ position: 'relative', flexShrink: 0 }}>
+        {/* Content calendar heatmap */}
+        <div style={cardStyle}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+            <h3 style={{ ...cardTitleStyle, marginBottom: 0 }}>Content kalender</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.72rem', color: 'var(--muted)' }}>
+              <span>Minder</span>
+              {[0, 0.2, 0.5, 0.8, 1].map((v, i) => (
+                <div key={i} style={{
+                  width: '12px', height: '12px', borderRadius: '3px',
+                  background: v === 0 ? 'var(--bg)' : `rgba(26,63,228,${v * 0.85})`,
+                  border: '1px solid var(--border)',
+                }} />
+              ))}
+              <span>Meer</span>
+            </div>
+          </div>
+
+          {/* Weekday header */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px', marginBottom: '3px' }}>
+            {WEEKDAYS.map(d => (
+              <div key={d} style={{
+                fontSize: '.68rem', color: 'var(--muted)', textAlign: 'center',
+                fontWeight: 600, padding: '2px 0',
+              }}>
+                {d}
+              </div>
+            ))}
+          </div>
+
+          {/* Calendar cells */}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '3px' }}>
+            {calCells.map((day, idx) => {
+              const count = day ? (heatmapCounts[day] || 0) : 0
+              const isToday = day !== null
+                && viewYear === now.getFullYear()
+                && viewMonth === now.getMonth()
+                && day === now.getDate()
+              return (
+                <div
+                  key={idx}
+                  title={day ? `${day} — ${count} post${count !== 1 ? 's' : ''}` : ''}
+                  style={{
+                    aspectRatio: '1',
+                    borderRadius: '4px',
+                    background: day ? heatColor(count) : 'transparent',
+                    border: isToday ? '2px solid var(--accent1)' : '1px solid transparent',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontSize: '.7rem', fontWeight: isToday ? 700 : 500,
+                    color: count > 0 && count / maxHeatmap > 0.5 ? '#fff' : 'var(--text)',
+                    cursor: day ? 'default' : 'default',
+                  }}
+                >
+                  {day}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+
+        {/* Platform donut */}
+        <div style={{ ...cardStyle, minWidth: '240px' }}>
+          <h3 style={cardTitleStyle}>Platform verdeling</h3>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
+            <div style={{ position: 'relative' }}>
               <div style={{
                 width: '120px', height: '120px', borderRadius: '50%',
                 background: conicGradient,
@@ -468,26 +552,29 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
               <div style={{
                 position: 'absolute', top: '50%', left: '50%',
                 transform: 'translate(-50%,-50%)',
-                width: '64px', height: '64px', borderRadius: '50%',
+                width: '68px', height: '68px', borderRadius: '50%',
                 background: 'var(--card)',
-                display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+                display: 'flex', flexDirection: 'column',
+                alignItems: 'center', justifyContent: 'center',
               }}>
-                <span style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '.9rem', lineHeight: 1 }}>
+                <span style={{
+                  fontFamily: 'var(--font-syne), sans-serif',
+                  fontWeight: 800, fontSize: '.95rem', lineHeight: 1,
+                }}>
                   {posts.length}
                 </span>
-                <span style={{ fontSize: '.6rem', color: 'var(--muted)' }}>posts</span>
+                <span style={{ fontSize: '.58rem', color: 'var(--muted)' }}>posts</span>
               </div>
             </div>
-            {/* Legend */}
-            <div style={{ flex: 1 }}>
+
+            <div style={{ width: '100%' }}>
               {donutData.length > 0 ? donutData.map(d => (
                 <div key={d.platform} style={{
-                  display: 'flex', alignItems: 'center', gap: '8px',
-                  marginBottom: '8px',
+                  display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px',
                 }}>
                   <span style={{
-                    width: '10px', height: '10px', borderRadius: '50%',
-                    background: d.color, flexShrink: 0,
+                    width: '9px', height: '9px', borderRadius: '50%',
+                    background: d.color, flexShrink: 0, display: 'inline-block',
                   }} />
                   <span style={{ fontSize: '.78rem', color: 'var(--text)', flex: 1 }}>
                     {PLATFORM_LABELS[d.platform] || d.platform}
@@ -497,159 +584,284 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
                   </span>
                 </div>
               )) : (
-                <p style={{ fontSize: '.82rem', color: 'var(--muted)' }}>Geen data beschikbaar</p>
+                <p style={{ fontSize: '.8rem', color: 'var(--muted)', textAlign: 'center' }}>
+                  Geen data
+                </p>
               )}
             </div>
           </div>
         </div>
+      </div>
 
-        {/* WEEK SUMMARY */}
-        <div style={{
-          background: 'var(--card)', border: '1px solid var(--border)',
-          borderRadius: '12px', padding: '24px',
-          boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        }}>
-          <h3 style={{
-            fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-            fontSize: '.95rem', marginBottom: '20px', color: 'var(--text)',
-          }}>
-            Content kalender samenvatting
-          </h3>
-          <p style={{ fontSize: '.78rem', color: 'var(--muted)', marginBottom: '16px' }}>
-            Aantal geplande posts per week — {formatMonthLabel(viewYear, viewMonth)}
-          </p>
-          {weekRanges.map((week, i) => {
-            const count = postsThisMonth.filter(p => {
-              if (!p.scheduled_at) return false
-              const d = new Date(p.scheduled_at)
-              const day = d.getDate()
-              return d.getFullYear() === viewYear && d.getMonth() === viewMonth && day >= week.start && day <= week.end
-            }).length
-            const maxWeek = Math.max(1, ...weekRanges.map(w => {
-              return postsThisMonth.filter(p => {
-                if (!p.scheduled_at) return false
-                const d = new Date(p.scheduled_at)
-                return d.getFullYear() === viewYear && d.getMonth() === viewMonth && d.getDate() >= w.start && d.getDate() <= w.end
-              }).length
+      {/* ── WEEKLY ACTIVITY TABLE ── */}
+      <div style={{ ...cardStyle, marginBottom: '20px' }}>
+        <h3 style={cardTitleStyle}>Weekactiviteit — {formatMonthLabel(viewYear, viewMonth)}</h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '.82rem' }}>
+            <thead>
+              <tr>
+                <th style={{
+                  textAlign: 'left', padding: '8px 12px',
+                  color: 'var(--muted)', fontWeight: 600, fontSize: '.7rem',
+                  textTransform: 'uppercase', letterSpacing: '.07em',
+                  borderBottom: '1px solid var(--border)',
+                  whiteSpace: 'nowrap',
+                }}>
+                  Week
+                </th>
+                {WEEKDAYS.map(d => (
+                  <th key={d} style={{
+                    textAlign: 'center', padding: '8px 6px',
+                    color: 'var(--muted)', fontWeight: 600, fontSize: '.7rem',
+                    textTransform: 'uppercase', letterSpacing: '.07em',
+                    borderBottom: '1px solid var(--border)',
+                    width: '60px',
+                  }}>
+                    {d}
+                  </th>
+                ))}
+                <th style={{
+                  textAlign: 'right', padding: '8px 12px',
+                  color: 'var(--muted)', fontWeight: 600, fontSize: '.7rem',
+                  textTransform: 'uppercase', letterSpacing: '.07em',
+                  borderBottom: '1px solid var(--border)',
+                }}>
+                  Totaal
+                </th>
+              </tr>
+            </thead>
+            <tbody>
+              {weekRows.map((row, wi) => {
+                const weekTotal = row.counts.reduce((a, b) => a + b, 0)
+                return (
+                  <tr key={wi} style={{ borderBottom: '1px solid var(--border)' }}>
+                    <td style={{
+                      padding: '10px 12px', color: 'var(--muted)',
+                      fontSize: '.75rem', whiteSpace: 'nowrap',
+                    }}>
+                      {row.label}
+                    </td>
+                    {row.days.map((day, di) => {
+                      const count = row.counts[di]
+                      const isToday = day !== null
+                        && viewYear === now.getFullYear()
+                        && viewMonth === now.getMonth()
+                        && day === now.getDate()
+                      return (
+                        <td key={di} style={{ padding: '6px 4px', textAlign: 'center' }}>
+                          {day !== null ? (
+                            <div style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              width: '36px', height: '36px', borderRadius: '8px',
+                              background: count > 0 ? 'rgba(26,63,228,.1)' : 'transparent',
+                              border: isToday ? '2px solid var(--accent1)' : '1px solid transparent',
+                              flexDirection: 'column',
+                              gap: '1px',
+                            }}>
+                              <span style={{
+                                fontSize: '.65rem', color: 'var(--muted)', lineHeight: 1,
+                              }}>
+                                {day}
+                              </span>
+                              {count > 0 && (
+                                <span style={{
+                                  fontSize: '.7rem', fontWeight: 700,
+                                  color: 'var(--accent1)', lineHeight: 1,
+                                }}>
+                                  {count}
+                                </span>
+                              )}
+                            </div>
+                          ) : null}
+                        </td>
+                      )
+                    })}
+                    <td style={{
+                      padding: '10px 12px', textAlign: 'right',
+                      fontWeight: weekTotal > 0 ? 700 : 400,
+                      color: weekTotal > 0 ? 'var(--text)' : 'var(--muted)',
+                      fontSize: '.82rem',
+                    }}>
+                      {weekTotal > 0 ? weekTotal : '—'}
+                    </td>
+                  </tr>
+                )
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {/* ── PROJECT STATUS DONUT ── */}
+      <div style={{ ...cardStyle, marginBottom: '20px' }}>
+        <h3 style={cardTitleStyle}>Project status overzicht</h3>
+        {(() => {
+          const projectStatusData = Object.entries(PROJECT_STATUS_CONFIG)
+            .map(([status, cfg]) => ({
+              status,
+              label: cfg.label,
+              color: cfg.color,
+              count: (projectsByStatus[status] || []).length,
             }))
-            const pct = Math.round((count / maxWeek) * 100)
+            .filter(d => d.count > 0)
+
+          const projTotal = projectStatusData.reduce((s, d) => s + d.count, 0) || 1
+          let pAngle = 0
+          const projDonutSegs = projectStatusData.map(d => {
+            const deg = (d.count / projTotal) * 360
+            const seg = { ...d, start: pAngle, deg }
+            pAngle += deg
+            return seg
+          })
+          const projConic = projDonutSegs.length
+            ? `conic-gradient(${projDonutSegs.map(s => `${s.color} ${s.start}deg ${s.start + s.deg}deg`).join(', ')})`
+            : 'conic-gradient(var(--border) 0deg 360deg)'
+
+          return (
+            <div style={{ display: 'flex', alignItems: 'center', gap: '48px', flexWrap: 'wrap' }}>
+              {/* Donut */}
+              <div style={{ position: 'relative', flexShrink: 0 }}>
+                <div style={{
+                  width: '140px', height: '140px', borderRadius: '50%',
+                  background: projConic,
+                }} />
+                <div style={{
+                  position: 'absolute', top: '50%', left: '50%',
+                  transform: 'translate(-50%,-50%)',
+                  width: '76px', height: '76px', borderRadius: '50%',
+                  background: 'var(--card)',
+                  display: 'flex', flexDirection: 'column',
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <span style={{
+                    fontFamily: 'var(--font-syne), sans-serif',
+                    fontWeight: 800, fontSize: '1.1rem', lineHeight: 1,
+                  }}>
+                    {projects.length}
+                  </span>
+                  <span style={{ fontSize: '.62rem', color: 'var(--muted)' }}>projecten</span>
+                </div>
+              </div>
+
+              {/* Legend grid */}
+              <div style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))',
+                gap: '10px', flex: 1,
+              }}>
+                {projectStatusData.map(d => (
+                  <div key={d.status} style={{
+                    display: 'flex', alignItems: 'center', gap: '10px',
+                    padding: '10px 14px',
+                    background: 'var(--bg)', borderRadius: '8px',
+                    border: '1px solid var(--border)',
+                  }}>
+                    <div style={{
+                      width: '10px', height: '10px', borderRadius: '50%',
+                      background: d.color, flexShrink: 0,
+                    }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontSize: '.75rem', fontWeight: 600, color: 'var(--text)' }}>
+                        {d.label}
+                      </div>
+                      <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginTop: '1px' }}>
+                        {d.count} project{d.count !== 1 ? 'en' : ''} · {Math.round((d.count / projTotal) * 100)}%
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {projectStatusData.length === 0 && (
+                  <p style={{ color: 'var(--muted)', fontSize: '.82rem' }}>Geen projecten gevonden</p>
+                )}
+              </div>
+            </div>
+          )
+        })()}
+      </div>
+
+      {/* ── PROJECTS TABLE ── */}
+      {Object.keys(projectsByStatus).length > 0 && (
+        <div style={cardStyle}>
+          <h3 style={cardTitleStyle}>Projecten per status</h3>
+          {Object.entries(PROJECT_STATUS_CONFIG).map(([status, cfg]) => {
+            const group = projectsByStatus[status]
+            if (!group || group.length === 0) return null
             return (
-              <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '12px', marginBottom: '10px' }}>
-                <div style={{ fontSize: '.72rem', color: 'var(--muted)', width: '80px', flexShrink: 0 }}>{week.label}</div>
-                <div style={{ flex: 1, height: '20px', background: 'var(--bg)', borderRadius: '6px', overflow: 'hidden' }}>
-                  <div style={{
-                    width: `${pct}%`, height: '100%',
-                    background: 'linear-gradient(90deg, var(--accent1), var(--accent2))',
-                    borderRadius: '6px',
-                    minWidth: count > 0 ? '6px' : '0',
+              <div key={status} style={{ marginBottom: '24px' }}>
+                <div style={{
+                  display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '10px',
+                }}>
+                  <span style={{
+                    width: '8px', height: '8px', borderRadius: '50%',
+                    background: cfg.color, flexShrink: 0, display: 'inline-block',
                   }} />
+                  <span style={{
+                    fontSize: '.75rem', fontWeight: 700,
+                    textTransform: 'uppercase', letterSpacing: '.06em', color: cfg.color,
+                  }}>
+                    {cfg.label} ({group.length})
+                  </span>
                 </div>
-                <div style={{ width: '20px', fontSize: '.8rem', fontWeight: 700, textAlign: 'right', flexShrink: 0 }}>
-                  {count}
+                <div style={{
+                  display: 'grid',
+                  gridTemplateColumns: '3fr 2fr 1fr 1fr',
+                  gap: '12px',
+                  padding: '5px 12px',
+                  fontSize: '.68rem', color: 'var(--muted)',
+                  textTransform: 'uppercase', letterSpacing: '.07em',
+                  borderBottom: '1px solid var(--border)',
+                  marginBottom: '4px',
+                }}>
+                  <span>Project</span>
+                  <span>Klant</span>
+                  <span>Categorie</span>
+                  <span>Aangemaakt</span>
                 </div>
+                {group.map((project: any) => (
+                  <div key={project.id} style={{
+                    display: 'grid',
+                    gridTemplateColumns: '3fr 2fr 1fr 1fr',
+                    gap: '12px',
+                    padding: '9px 12px',
+                    borderRadius: '6px',
+                    fontSize: '.82rem',
+                    borderBottom: '1px solid var(--border)',
+                  }}>
+                    <div style={{
+                      fontWeight: 600, color: 'var(--text)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {project.title || 'Zonder titel'}
+                    </div>
+                    <div style={{
+                      color: 'var(--muted)',
+                      overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                    }}>
+                      {project.clients?.company_name || '—'}
+                    </div>
+                    <div>
+                      {project.category ? (
+                        <span style={{
+                          fontSize: '.7rem', fontWeight: 600, padding: '2px 8px',
+                          borderRadius: '50px', background: 'var(--bg)',
+                          border: '1px solid var(--border)', color: 'var(--muted)',
+                        }}>
+                          {project.category}
+                        </span>
+                      ) : <span style={{ color: 'var(--muted)' }}>—</span>}
+                    </div>
+                    <div style={{ color: 'var(--muted)', fontSize: '.75rem' }}>
+                      {project.created_at
+                        ? new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+                        : '—'}
+                    </div>
+                  </div>
+                ))}
               </div>
             )
           })}
         </div>
-      </div>
-
-      {/* PROJECTEN OVERZICHT */}
-      <div style={{
-        background: 'var(--card)', border: '1px solid var(--border)',
-        borderRadius: '12px', padding: '24px',
-        boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        marginBottom: '24px',
-      }}>
-        <h3 style={{
-          fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-          fontSize: '.95rem', marginBottom: '20px', color: 'var(--text)',
-        }}>
-          Projecten overzicht
-        </h3>
-
-        {projects.length === 0 && (
-          <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>Geen projecten gevonden</p>
-        )}
-
-        {Object.entries(PROJECT_STATUS_CONFIG).map(([status, cfg]) => {
-          const group = projectsByStatus[status]
-          if (!group || group.length === 0) return null
-          return (
-            <div key={status} style={{ marginBottom: '20px' }}>
-              <div style={{
-                display: 'flex', alignItems: 'center', gap: '8px',
-                marginBottom: '10px',
-              }}>
-                <span style={{
-                  width: '8px', height: '8px', borderRadius: '50%',
-                  background: cfg.color, flexShrink: 0,
-                }} />
-                <span style={{
-                  fontSize: '.78rem', fontWeight: 700, textTransform: 'uppercase',
-                  letterSpacing: '.06em', color: cfg.color,
-                }}>
-                  {cfg.label} ({group.length})
-                </span>
-              </div>
-
-              {/* Table header */}
-              <div style={{
-                display: 'grid',
-                gridTemplateColumns: '3fr 2fr 1fr 1fr',
-                gap: '12px',
-                padding: '6px 12px',
-                fontSize: '.68rem',
-                color: 'var(--muted)',
-                textTransform: 'uppercase',
-                letterSpacing: '.07em',
-                borderBottom: '1px solid var(--border)',
-                marginBottom: '4px',
-              }}>
-                <span>Project</span>
-                <span>Klant</span>
-                <span>Categorie</span>
-                <span>Aangemaakt</span>
-              </div>
-
-              {group.map((project: any) => (
-                <div key={project.id} style={{
-                  display: 'grid',
-                  gridTemplateColumns: '3fr 2fr 1fr 1fr',
-                  gap: '12px',
-                  padding: '10px 12px',
-                  borderRadius: '8px',
-                  fontSize: '.82rem',
-                  transition: 'background .15s',
-                  borderBottom: '1px solid var(--border)',
-                }}>
-                  <div style={{ fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {project.title || 'Zonder titel'}
-                  </div>
-                  <div style={{ color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                    {project.clients?.company_name || '—'}
-                  </div>
-                  <div>
-                    {project.category ? (
-                      <span style={{
-                        fontSize: '.7rem', fontWeight: 600, padding: '2px 8px',
-                        borderRadius: '50px', background: 'var(--bg)',
-                        border: '1px solid var(--border)', color: 'var(--muted)',
-                      }}>
-                        {project.category}
-                      </span>
-                    ) : <span style={{ color: 'var(--muted)' }}>—</span>}
-                  </div>
-                  <div style={{ color: 'var(--muted)', fontSize: '.75rem' }}>
-                    {project.created_at
-                      ? new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
-                      : '—'}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )
-        })}
-      </div>
+      )}
     </div>
   )
 }

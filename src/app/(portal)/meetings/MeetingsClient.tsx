@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { ClipboardList, CalendarDays, User, Users, Wand2, Pencil, Trash2, X, ArrowRight, CheckSquare } from 'lucide-react'
+import { CalendarDays, User, Users, Wand2, Pencil, Trash2, X, ArrowRight, Plus, Calendar } from 'lucide-react'
 
 interface Meeting {
   id: string
@@ -191,32 +191,39 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
       {/* LEFT SIDEBAR: Meeting list */}
       <div style={{ width: '320px', flexShrink: 0, borderRight: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--card)', overflowY: 'auto' }}>
         {/* Header */}
-        <div style={{ padding: '20px 16px 12px', borderBottom: '1px solid var(--border)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <div style={{ padding: '20px 16px 14px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px' }}>
             <div>
-              <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.15rem' }}>Vergaderingen</h1>
-              <p style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '2px' }}>{upcoming} gepland · {done} afgerond</p>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '7px', marginBottom: '3px' }}>
+                <CalendarDays size={16} style={{ color: '#1a3fe4' }} />
+                <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.05rem', margin: 0 }}>Vergaderingen</h1>
+              </div>
+              <p style={{ fontSize: '.72rem', color: 'var(--muted)', margin: 0 }}>
+                <span style={{ color: '#1a3fe4', fontWeight: 600 }}>{upcoming}</span> gepland &nbsp;·&nbsp; <span style={{ fontWeight: 600 }}>{done}</span> afgerond
+              </p>
             </div>
             {isAdmin && (
               <button
                 onClick={() => setShowNew(true)}
-                style={{ background: '#1a3fe4', color: '#fff', border: 'none', borderRadius: '8px', padding: '8px 14px', fontSize: '.8rem', fontWeight: 700, cursor: 'pointer' }}
+                style={{ background: '#1a3fe4', color: '#fff', border: 'none', borderRadius: '8px', padding: '7px 12px', fontSize: '.78rem', fontWeight: 700, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '5px' }}
               >
-                + Nieuw
+                <Plus size={14} /> Nieuw
               </button>
             )}
           </div>
-          {/* Filter */}
-          <div style={{ display: 'flex', gap: '5px' }}>
+          {/* Filter pills */}
+          <div style={{ display: 'flex', gap: '4px' }}>
             {([
               { key: 'all', label: 'Alle' },
               { key: 'gepland', label: 'Gepland' },
               { key: 'afgerond', label: 'Afgerond' },
             ] as const).map(f => (
               <button key={f.key} onClick={() => setFilter(f.key)} style={{
-                padding: '4px 12px', borderRadius: '50px', fontSize: '.72rem', fontWeight: 600, cursor: 'pointer', border: 'none',
-                background: filter === f.key ? '#1a3fe4' : 'var(--bg)',
+                padding: '4px 13px', borderRadius: '50px', fontSize: '.72rem', fontWeight: 600, cursor: 'pointer',
+                border: `1.5px solid ${filter === f.key ? '#1a3fe4' : 'var(--border)'}`,
+                background: filter === f.key ? '#1a3fe4' : 'transparent',
                 color: filter === f.key ? '#fff' : 'var(--muted)',
+                transition: 'all .15s',
               }}>
                 {f.label}
               </button>
@@ -227,9 +234,9 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
         {/* Meeting list */}
         <div style={{ flex: 1, overflowY: 'auto' }}>
           {filtered.length === 0 ? (
-            <div style={{ padding: '40px 20px', textAlign: 'center', color: 'var(--muted)' }}>
-              <ClipboardList size={32} style={{ marginBottom: '8px', opacity: 0.35 }} />
-              <div style={{ fontSize: '.85rem' }}>Geen vergaderingen</div>
+            <div style={{ padding: '48px 20px', textAlign: 'center', color: 'var(--muted)', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+              <Calendar size={30} style={{ opacity: 0.3 }} />
+              <div style={{ fontSize: '.85rem', fontWeight: 500 }}>Geen vergaderingen</div>
             </div>
           ) : filtered.map(meeting => {
             const sc = STATUS_CFG[meeting.status] || STATUS_CFG.gepland
@@ -239,28 +246,33 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                 key={meeting.id}
                 onClick={() => { setSelected(meeting); setEditMode(false); setActiveTab('notities') }}
                 style={{
-                  padding: '14px 16px', cursor: 'pointer', borderBottom: '1px solid var(--border)',
-                  background: isSelected ? 'rgba(26,63,228,.06)' : 'transparent',
+                  padding: '13px 16px', cursor: 'pointer', borderBottom: '1px solid var(--border)',
+                  background: isSelected ? '#fff' : 'transparent',
                   borderLeft: isSelected ? '3px solid #1a3fe4' : '3px solid transparent',
-                  transition: 'all .1s',
+                  transition: 'all .15s',
                 }}
                 onMouseEnter={e => !isSelected && ((e.currentTarget as HTMLElement).style.background = 'var(--bg)')}
                 onMouseLeave={e => !isSelected && ((e.currentTarget as HTMLElement).style.background = 'transparent')}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '8px', marginBottom: '5px' }}>
-                  <div style={{ fontWeight: 600, fontSize: '.88rem', lineHeight: 1.3, flex: 1 }}>{meeting.title}</div>
-                  <span style={{ fontSize: '.65rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px', background: sc.bg, color: sc.color, flexShrink: 0 }}>
+                  <div style={{ fontWeight: 700, fontSize: '.87rem', lineHeight: 1.35, flex: 1, color: 'var(--text)' }}>{meeting.title}</div>
+                  <span style={{ fontSize: '.62rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px', background: sc.bg, color: sc.color, flexShrink: 0, letterSpacing: '0.2px' }}>
                     {sc.label}
                   </span>
                 </div>
-                <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                <div style={{ fontSize: '.71rem', color: 'var(--muted)', marginBottom: '3px', display: 'flex', alignItems: 'center', gap: '4px' }}>
                   <CalendarDays size={11} /> {formatDate(meeting.meeting_date)}
                 </div>
-                {meeting.clients?.company_name && (
-                  <div style={{ fontSize: '.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '4px' }}><User size={11} /> {meeting.clients.company_name}</div>
-                )}
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                  {meeting.clients?.company_name && (
+                    <div style={{ fontSize: '.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '3px' }}><User size={10} /> {meeting.clients.company_name}</div>
+                  )}
+                  {meeting.attendees && (
+                    <div style={{ fontSize: '.7rem', color: 'var(--muted)', display: 'flex', alignItems: 'center', gap: '3px' }}><Users size={10} /> {meeting.attendees.split(',').length}</div>
+                  )}
+                </div>
                 {meeting.summary && (
-                  <div style={{ fontSize: '.68rem', color: '#00b89c', marginTop: '4px', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                  <div style={{ fontSize: '.66rem', color: '#00b89c', marginTop: '5px', fontWeight: 600 }}>
                     Samenvatting beschikbaar
                   </div>
                 )}
@@ -273,13 +285,15 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
       {/* RIGHT: Meeting detail */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflowY: 'auto', background: 'var(--bg)' }}>
         {!selected ? (
-          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', gap: '12px' }}>
-            <ClipboardList size={40} style={{ opacity: 0.3 }} />
-            <div style={{ fontWeight: 600, fontSize: '1rem' }}>Selecteer een vergadering</div>
-            <div style={{ fontSize: '.85rem' }}>of maak een nieuwe aan</div>
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--muted)', gap: '12px', padding: '40px' }}>
+            <div style={{ width: '72px', height: '72px', borderRadius: '20px', background: 'rgba(26,63,228,.08)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <CalendarDays size={32} style={{ color: '#1a3fe4', opacity: 0.6 }} />
+            </div>
+            <div style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--text)' }}>Selecteer een vergadering</div>
+            <div style={{ fontSize: '.85rem', color: 'var(--muted)' }}>Kies een vergadering uit de lijst of maak een nieuwe aan</div>
             {isAdmin && (
-              <button onClick={() => setShowNew(true)} style={{ marginTop: '8px', background: '#1a3fe4', color: '#fff', border: 'none', borderRadius: '8px', padding: '10px 24px', cursor: 'pointer', fontWeight: 700 }}>
-                + Nieuwe vergadering
+              <button onClick={() => setShowNew(true)} style={{ marginTop: '4px', background: '#1a3fe4', color: '#fff', border: 'none', borderRadius: '10px', padding: '10px 24px', cursor: 'pointer', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '7px' }}>
+                <Plus size={15} /> Nieuwe vergadering
               </button>
             )}
           </div>
@@ -310,19 +324,19 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                       <button
                         onClick={() => autoSummarize(selected)}
                         disabled={summarizing}
-                        style={{ padding: '8px 14px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.3)', borderRadius: '8px', cursor: summarizing ? 'not-allowed' : 'pointer', fontSize: '.8rem', fontWeight: 700, opacity: summarizing ? 0.7 : 1 }}
+                        style={{ padding: '7px 13px', background: 'rgba(0,184,156,.08)', color: '#00b89c', border: '1px solid rgba(0,184,156,.25)', borderRadius: '8px', cursor: summarizing ? 'not-allowed' : 'pointer', fontSize: '.78rem', fontWeight: 700, opacity: summarizing ? 0.7 : 1, display: 'flex', alignItems: 'center', gap: '5px' }}
                       >
-                        {summarizing ? 'Genereren...' : <><Wand2 size={14} style={{ marginRight: 5 }} />Samenvatten</>}
+                        <Wand2 size={13} />{summarizing ? 'Genereren...' : 'Samenvatten'}
                       </button>
                       <button
                         onClick={() => { setEditMode(true); setEditForm({ ...selected, client_id: selected.client_id || '' }) }}
-                        style={{ padding: '8px 14px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600 }}
+                        style={{ padding: '7px 13px', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: '8px', cursor: 'pointer', fontSize: '.78rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '5px' }}
                       >
-                        <Pencil size={14} style={{ marginRight: 5 }} />Bewerken
+                        <Pencil size={13} />Bewerken
                       </button>
                       <button
                         onClick={() => deleteMeeting(selected.id)}
-                        style={{ padding: '8px 12px', background: 'rgba(229,57,53,.1)', color: '#e53935', border: 'none', borderRadius: '8px', cursor: 'pointer', fontSize: '.85rem' }}
+                        style={{ padding: '7px 10px', background: 'rgba(229,57,53,.08)', color: '#e53935', border: '1px solid rgba(229,57,53,.2)', borderRadius: '8px', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
                       >
                         <Trash2 size={14} />
                       </button>
@@ -463,9 +477,9 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
                     {selected.action_items && isAdmin && !editMode && (
                       <button
                         onClick={openSync}
-                        style={{ padding: '6px 14px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.3)', borderRadius: '8px', cursor: 'pointer', fontSize: '.78rem', fontWeight: 700 }}
+                        style={{ padding: '6px 14px', background: 'rgba(0,184,156,.08)', color: '#00b89c', border: '1px solid rgba(0,184,156,.25)', borderRadius: '8px', cursor: 'pointer', fontSize: '.78rem', fontWeight: 700, display: 'flex', alignItems: 'center', gap: '5px' }}
                       >
-                        <ArrowRight size={13} style={{ marginRight: 5 }} />Synchroniseer naar taken
+                        <ArrowRight size={13} />Synchroniseer naar taken
                       </button>
                     )}
                   </div>

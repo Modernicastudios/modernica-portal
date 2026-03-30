@@ -23,6 +23,7 @@ export const PLATFORM_COLORS: Record<string, string> = {
   pinterest: '#e60023',
   snapchat: '#fffc00',
   google: '#4285f4',
+  indeed: '#003A9B',
 }
 
 export const PLATFORM_LABELS: Record<string, string> = {
@@ -37,6 +38,7 @@ export const PLATFORM_LABELS: Record<string, string> = {
   pinterest: 'Pinterest',
   snapchat: 'Snapchat',
   google: 'Google',
+  indeed: 'Indeed',
 }
 
 interface PlatformIconProps {
@@ -62,6 +64,14 @@ export function PlatformIcon({ platform, size = 16, color }: PlatformIconProps) 
     case 'pinterest':  return <SiPinterest {...props} />
     case 'snapchat':   return <SiSnapchat {...props} />
     case 'google':     return <SiGoogle {...props} />
+    case 'indeed':     return (
+      <span style={{
+        width: size, height: size, borderRadius: '4px',
+        background: '#003A9B', display: 'inline-flex',
+        alignItems: 'center', justifyContent: 'center',
+        color: '#fff', fontSize: size * 0.55, fontWeight: 800, flexShrink: 0,
+      }}>in</span>
+    )
     default:           return (
       <span style={{
         width: size, height: size, borderRadius: '50%',

@@ -58,7 +58,7 @@ const PLATFORM_ICONS: Record<string, string> = {
   'Overig': '…',
 }
 
-const PLATFORMS = ['Meta Ads', 'Google Ads', 'TikTok Ads', 'LinkedIn Ads', 'Overig']
+const PLATFORMS = ['Meta Ads', 'Google Ads', 'TikTok Ads', 'LinkedIn Ads', 'Indeed', 'Snapchat', 'Overig']
 
 // ─── Helpers ──────────────────────────────────────────────────────────────────
 

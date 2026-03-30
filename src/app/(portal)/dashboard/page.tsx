@@ -1,8 +1,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, CalendarDays, Sparkles } from 'lucide-react'
-import { PlatformIcon, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
+import { Plus, CalendarDays, Sparkles, TrendingUp } from 'lucide-react'
+import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
   backlog:          { label: 'Backlog',        bg: 'rgba(107,114,128,.12)', color: '#6b7280' },
@@ -36,6 +36,13 @@ export default async function DashboardPage() {
   const in7days = new Date()
   in7days.setDate(in7days.getDate() + 7)
 
+  const now = new Date()
+  const currentMonth = now.getMonth() + 1
+  const currentYear = now.getFullYear()
+  const threeMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 2, 1)
+  const thirtyDaysAgo = new Date(now)
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+
   const [
     { count: pendingApprovalCount },
     { data: todayPosts },
@@ -44,6 +51,8 @@ export default async function DashboardPage() {
     { data: openTasks },
     { data: todayMeetings },
     { data: brandKitRow },
+    { data: roiEntries },
+    { data: platformPostsRaw },
   ] = await Promise.all([
     // Pending approvals
     supabase
@@ -101,12 +110,50 @@ export default async function DashboardPage() {
       .select('logo_url')
       .eq('agency_id', agencyId)
       .maybeSingle(),
+
+    // ROI entries last 3 months
+    supabase
+      .from('roi_entries')
+      .select('platform, ad_spend, revenue, leads, month, year, client_id')
+      .eq('agency_id', agencyId)
+      .gte('year', threeMonthsAgo.getFullYear())
+      .order('year', { ascending: false })
+      .order('month', { ascending: false })
+      .limit(20),
+
+    // Content posts platform breakdown last 30 days
+    supabase
+      .from('content_posts')
+      .select('platform')
+      .eq('agency_id', agencyId)
+      .eq('status', 'published')
+      .gte('scheduled_at', thirtyDaysAgo.toISOString()),
   ])
 
   const showSetupBanner = isAdmin && !brandKitRow?.logo_url
   const firstName = profile?.full_name?.split(' ')[0] || 'daar'
   const dayName = new Date().toLocaleDateString('nl-NL', { weekday: 'long' })
   const dateStr = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
+
+  // ROI aggregations
+  const thisMonthRoi = (roiEntries || []).filter(e => e.month === currentMonth && e.year === currentYear)
+  const roiSpend = thisMonthRoi.reduce((s: number, e: any) => s + (e.ad_spend || 0), 0)
+  const roiRevenue = thisMonthRoi.reduce((s: number, e: any) => s + (e.revenue || 0), 0)
+  const roiLeads = thisMonthRoi.reduce((s: number, e: any) => s + (e.leads || 0), 0)
+  const roiRoas = roiSpend > 0 ? roiRevenue / roiSpend : 0
+  const roasColor = roiRoas > 3 ? '#00b89c' : roiRoas > 1.5 ? '#f5a623' : roiRoas > 0 ? '#e53935' : 'var(--muted)'
+
+  function fmtEur(n: number): string {
+    return '€' + n.toLocaleString('nl-NL', { minimumFractionDigits: 0, maximumFractionDigits: 0 })
+  }
+
+  // Platform post counts last 30 days
+  const platformCounts: Record<string, number> = {}
+  for (const post of platformPostsRaw || []) {
+    const p = (post.platform || '').toLowerCase()
+    if (p) platformCounts[p] = (platformCounts[p] || 0) + 1
+  }
+  const platformEntries = Object.entries(platformCounts).filter(([, count]) => count > 0)
 
   return (
     <div style={{ fontFamily: 'var(--font-syne), sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
@@ -355,6 +402,128 @@ export default async function DashboardPage() {
             </div>
           )}
 
+          {/* ROI SNAPSHOT — admin only */}
+          {isAdmin && (roiEntries || []).length > 0 && (
+            <div style={{
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)', overflow: 'hidden',
+            }}>
+              <div style={{
+                padding: '16px 20px', borderBottom: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <TrendingUp size={16} color="var(--accent1)" />
+                  <span style={{ fontWeight: 700, fontSize: '.95rem' }}>ROI Snapshot — deze maand</span>
+                </div>
+                <Link href="/roi" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
+                  ROI Dashboard →
+                </Link>
+              </div>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '0' }}>
+                {[
+                  {
+                    label: 'Totaal spend',
+                    value: fmtEur(roiSpend),
+                    color: '#1877f2',
+                  },
+                  {
+                    label: 'Totaal omzet',
+                    value: fmtEur(roiRevenue),
+                    color: '#00b89c',
+                  },
+                  {
+                    label: 'Gem. ROAS',
+                    value: roiSpend > 0 ? `${roiRoas.toFixed(2)}×` : '—',
+                    color: roasColor,
+                  },
+                  {
+                    label: 'Leads',
+                    value: roiLeads.toString(),
+                    color: 'var(--accent1)',
+                  },
+                ].map((kpi, i, arr) => (
+                  <Link key={kpi.label} href="/roi" style={{ textDecoration: 'none' }}>
+                    <div style={{
+                      padding: '18px 20px',
+                      borderRight: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                      position: 'relative',
+                    }}>
+                      <div style={{
+                        position: 'absolute', top: 0, left: 0, right: 0,
+                        height: '3px', background: kpi.color,
+                      }} />
+                      <div style={{ fontSize: '.72rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.06em', marginBottom: '6px' }}>
+                        {kpi.label}
+                      </div>
+                      <div style={{
+                        fontWeight: 800, fontSize: '1.35rem', color: kpi.color,
+                        fontFamily: 'var(--font-syne), sans-serif',
+                      }}>
+                        {kpi.value}
+                      </div>
+                    </div>
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* PLATFORM ACTIVITY — last 30 days */}
+          <div style={{
+            background: 'var(--card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)', overflow: 'hidden',
+          }}>
+            <div style={{
+              padding: '16px 20px', borderBottom: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#7c5ff5', display: 'inline-block' }} />
+                <span style={{ fontWeight: 700, fontSize: '.95rem' }}>Platform activiteit</span>
+                <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>laatste 30 dagen</span>
+              </div>
+              <Link href="/content" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
+                Content →
+              </Link>
+            </div>
+            <div style={{ padding: '16px 20px' }}>
+              {platformEntries.length > 0 ? (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+                  {platformEntries.sort((a, b) => b[1] - a[1]).map(([platform, count]) => {
+                    const color = PLATFORM_COLORS[platform] || '#6b7280'
+                    const label = PLATFORM_LABELS[platform] || platform
+                    return (
+                      <Link key={platform} href="/content" style={{ textDecoration: 'none' }}>
+                        <div style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '8px',
+                          background: `${color}12`, border: `1px solid ${color}30`,
+                          borderRadius: '50px', padding: '7px 14px',
+                        }}>
+                          <PlatformIcon platform={platform} size={15} color={color} />
+                          <span style={{ fontSize: '.82rem', fontWeight: 600, color }}>
+                            {label}
+                          </span>
+                          <span style={{
+                            background: color, color: '#fff',
+                            borderRadius: '50px', padding: '1px 7px',
+                            fontSize: '.7rem', fontWeight: 800,
+                          }}>
+                            {count}
+                          </span>
+                        </div>
+                      </Link>
+                    )
+                  })}
+                </div>
+              ) : (
+                <div style={{ color: 'var(--muted)', fontSize: '.85rem', textAlign: 'center', padding: '12px 0' }}>
+                  Nog geen posts gepubliceerd
+                </div>
+              )}
+            </div>
+          </div>
+
           {/* ACTIEVE PROJECTEN */}
           {activeProjects && activeProjects.length > 0 && (
             <div style={{
@@ -445,6 +614,29 @@ export default async function DashboardPage() {
               </Link>
             ))}
           </div>
+
+          {/* QUICK ROI ROW */}
+          {isAdmin && thisMonthRoi.length > 0 && (
+            <Link href="/roi" style={{ textDecoration: 'none' }}>
+              <div style={{
+                background: 'var(--card)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius)', padding: '14px 18px',
+                display: 'flex', alignItems: 'center', gap: '10px',
+              }}>
+                <TrendingUp size={16} color="var(--accent1)" style={{ flexShrink: 0 }} />
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: '3px' }}>
+                    ROI deze maand
+                  </div>
+                  <div style={{ fontSize: '.85rem', fontWeight: 700, color: 'var(--text)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    Spend: {fmtEur(roiSpend)} &nbsp;·&nbsp;
+                    <span style={{ color: roasColor }}>ROAS: {roiSpend > 0 ? `${roiRoas.toFixed(1)}×` : '—'}</span>
+                  </div>
+                </div>
+                <span style={{ fontSize: '.72rem', color: 'var(--accent1)', fontWeight: 600, flexShrink: 0 }}>→</span>
+              </div>
+            </Link>
+          )}
 
           {/* OPEN TAKEN */}
           {openTasks && openTasks.length > 0 && (
