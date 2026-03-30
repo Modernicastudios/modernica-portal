@@ -10,17 +10,26 @@ const PLATFORM_COLORS: Record<string, string> = {
   facebook: '#1877f2',
 }
 
-const PLATFORM_EMOJI: Record<string, string> = {
-  instagram: '📸',
-  tiktok: '🎵',
-  linkedin: '💼',
-  youtube: '▶️',
-  facebook: '👥',
+const PLATFORM_LABELS: Record<string, string> = {
+  instagram: 'Instagram',
+  tiktok: 'TikTok',
+  linkedin: 'LinkedIn',
+  youtube: 'YouTube',
+  facebook: 'Facebook',
+}
+
+const STATUS_CONFIG: Record<string, { label: string; bg: string; color: string }> = {
+  backlog:          { label: 'Backlog',        bg: 'rgba(107,114,128,.12)', color: '#6b7280' },
+  in_progress:      { label: 'In uitvoering',  bg: 'rgba(26,63,228,.10)',   color: 'var(--accent1)' },
+  waiting_feedback: { label: 'Wacht feedback', bg: 'rgba(245,166,35,.12)',  color: '#f5a623' },
+  blocked:          { label: 'Geblokkeerd',    bg: 'rgba(229,57,53,.10)',   color: '#e53935' },
+  review:           { label: 'Review',         bg: 'rgba(255,122,48,.10)',  color: '#ff7a30' },
+  approved:         { label: 'Goedgekeurd',    bg: 'rgba(0,184,156,.10)',   color: '#00b89c' },
+  archived:         { label: 'Archief',        bg: 'rgba(107,114,128,.12)', color: '#6b7280' },
 }
 
 export default async function DashboardPage() {
   const supabase = await createClient()
-
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
@@ -31,507 +40,493 @@ export default async function DashboardPage() {
     .single()
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
-  const agencyId = profile?.agency_id
+  const agencyId = profile?.agency_id || ''
+  const clientId = profile?.client_id || null
 
-  const today = new Date()
-  const sevenDaysLater = new Date(today)
-  sevenDaysLater.setDate(today.getDate() + 7)
+  const todayStart = new Date()
+  todayStart.setHours(0, 0, 0, 0)
+  const todayEnd = new Date()
+  todayEnd.setHours(23, 59, 59, 999)
+  const in7days = new Date()
+  in7days.setDate(in7days.getDate() + 7)
 
   const [
-    { count: clientCount },
-    { count: activeProjectCount },
-    { data: recentProjects },
-    { data: pendingTasks },
-    { data: thisWeekPosts },
     { count: pendingApprovalCount },
+    { data: todayPosts },
+    { data: upcomingPosts },
+    { data: activeProjects },
+    { data: openTasks },
+    { data: todayMeetings },
     { data: brandKitRow },
   ] = await Promise.all([
+    // Pending approvals
     supabase
-      .from('clients')
+      .from('content_posts')
       .select('*', { count: 'exact', head: true })
-      .eq('agency_id', agencyId || ''),
+      .eq('agency_id', agencyId)
+      .eq('status', 'pending_approval'),
+
+    // Posts vandaag
+    supabase
+      .from('content_posts')
+      .select('id, title, platform, scheduled_at, status, clients(company_name)')
+      .eq('agency_id', agencyId)
+      .gte('scheduled_at', todayStart.toISOString())
+      .lte('scheduled_at', todayEnd.toISOString())
+      .order('scheduled_at', { ascending: true }),
+
+    // Komende posts (morgen t/m 7 dagen)
+    supabase
+      .from('content_posts')
+      .select('id, title, platform, scheduled_at, status, clients(company_name)')
+      .eq('agency_id', agencyId)
+      .gt('scheduled_at', todayEnd.toISOString())
+      .lte('scheduled_at', in7days.toISOString())
+      .order('scheduled_at', { ascending: true })
+      .limit(6),
+
+    // Actieve projecten
     supabase
       .from('projects')
-      .select('*', { count: 'exact', head: true })
-      .eq('agency_id', agencyId || '')
-      .in('status', ['in_progress', 'waiting_feedback', 'review']),
-    supabase
-      .from('projects')
-      .select('*, clients(company_name)')
-      .eq('agency_id', agencyId || '')
-      .order('created_at', { ascending: false })
+      .select('id, title, status, priority, clients(company_name)')
+      .eq('agency_id', agencyId)
+      .in('status', ['in_progress', 'waiting_feedback', 'review', 'blocked'])
+      .order('updated_at', { ascending: false })
       .limit(5),
+
+    // Open taken
     supabase
       .from('project_todos')
-      .select('*, projects(title, clients(company_name))')
+      .select('id, title, projects(title, clients(company_name))')
       .eq('done', false)
-      .limit(8),
+      .limit(5),
+
+    // Vergaderingen vandaag
     supabase
-      .from('content_posts')
-      .select('*')
-      .eq('agency_id', agencyId || '')
-      .gte('scheduled_at', today.toISOString())
-      .lte('scheduled_at', sevenDaysLater.toISOString())
-      .order('scheduled_at', { ascending: true }),
-    supabase
-      .from('content_posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('agency_id', agencyId || '')
-      .eq('status', 'pending_approval'),
+      .from('meeting_notes')
+      .select('id, title, meeting_date, status')
+      .eq('agency_id', agencyId)
+      .gte('meeting_date', todayStart.toISOString())
+      .lte('meeting_date', todayEnd.toISOString()),
+
+    // Brand kit (voor setup banner)
     supabase
       .from('brand_kits')
       .select('logo_url')
-      .eq('agency_id', agencyId || '')
+      .eq('agency_id', agencyId)
       .maybeSingle(),
   ])
 
-  // Check if setup is incomplete (admin without logo)
   const showSetupBanner = isAdmin && !brandKitRow?.logo_url
+  const firstName = profile?.full_name?.split(' ')[0] || 'daar'
+  const dayName = new Date().toLocaleDateString('nl-NL', { weekday: 'long' })
+  const dateStr = new Date().toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })
 
   return (
-    <div className="animate-fade-up">
-      {/* SETUP BANNER — admin only, when no logo configured */}
+    <div style={{ fontFamily: 'var(--font-syne), sans-serif', maxWidth: '1200px', margin: '0 auto' }}>
+
+      {/* SETUP BANNER */}
       {showSetupBanner && (
-        <a
-          href="/onboarding"
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'space-between',
-            background: 'linear-gradient(90deg, #f5a623 0%, #ffcc70 100%)',
-            borderRadius: 'var(--radius)',
-            padding: '14px 20px',
-            marginBottom: '20px',
-            textDecoration: 'none',
-            boxShadow: '0 2px 12px rgba(245,166,35,.25)',
-          }}
-        >
+        <a href="/onboarding" style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          background: 'linear-gradient(90deg, #f5a623, #ffcc70)',
+          borderRadius: 'var(--radius)', padding: '12px 20px',
+          marginBottom: '20px', textDecoration: 'none',
+          boxShadow: '0 2px 12px rgba(245,166,35,.2)',
+        }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span style={{ fontSize: '1.2rem' }}>🚀</span>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: '.9rem', color: '#7a4800' }}>
-                Stel je agency in
-              </div>
-              <div style={{ fontSize: '.78rem', color: 'rgba(122,72,0,.75)' }}>
-                Logo, huisstijlkleuren en je eerste klant — het duurt 2 minuten
-              </div>
-            </div>
+            <span>🚀</span>
+            <span style={{ fontWeight: 700, fontSize: '.88rem', color: '#7a4800' }}>
+              Stel je agency in — logo, kleuren en eerste klant
+            </span>
           </div>
-          <span style={{ fontWeight: 700, fontSize: '.85rem', color: '#7a4800', whiteSpace: 'nowrap' }}>
-            Onboarding →
-          </span>
+          <span style={{ fontWeight: 700, fontSize: '.82rem', color: '#7a4800' }}>Onboarding →</span>
         </a>
       )}
 
-      {/* HERO BANNER */}
-      <div style={{
-        background: 'linear-gradient(135deg, var(--accent1) 0%, #2d5fff 60%, #7c5ff5 100%)',
-        borderRadius: 'var(--radius)',
-        padding: '36px',
-        marginBottom: '28px',
-        position: 'relative',
-        overflow: 'hidden',
-        boxShadow: '0 8px 40px rgba(26,63,228,.3)',
-      }}>
-        {/* Decorative blobs */}
-        <div style={{
-          position: 'absolute', top: '-80px', right: '-80px',
-          width: '320px', height: '320px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,.12), transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-        <div style={{
-          position: 'absolute', bottom: '-40px', left: '30%',
-          width: '200px', height: '200px', borderRadius: '50%',
-          background: 'radial-gradient(circle, rgba(255,255,255,.07), transparent 70%)',
-          pointerEvents: 'none',
-        }} />
-
-        <h2 style={{
-          fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800,
-          fontSize: '1.9rem', color: '#fff', marginBottom: '8px', position: 'relative',
-        }}>
-          Goedendag, {profile?.full_name?.split(' ')[0] || 'daar'} 👋
-        </h2>
-        <p style={{ color: 'rgba(255,255,255,.8)', fontSize: '.92rem', position: 'relative' }}>
-          {isAdmin
-            ? `Je bureau heeft ${clientCount || 0} klanten • ${activeProjectCount || 0} actieve projecten • ${pendingApprovalCount || 0} wachten op goedkeuring`
-            : `Welkom terug in ${profile?.agencies?.name || 'je portaal'}`}
-        </p>
-      </div>
-
-      {/* STATS GRID */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))',
-        gap: '16px',
-        marginBottom: '28px',
-      }}>
-        <StatCard
-          label="Klanten"
-          value={clientCount || 0}
-          gradient="linear-gradient(90deg, #7c5ff5, var(--accent1))"
-          color="#7c5ff5"
-          icon="👥"
-          href="/clients"
-        />
-        <StatCard
-          label="Actieve projecten"
-          value={activeProjectCount || 0}
-          gradient="linear-gradient(90deg, var(--accent1), var(--accent2))"
-          color="var(--accent1)"
-          icon="📋"
-          href="/projects"
-        />
-        <StatCard
-          label="Posts deze week"
-          value={thisWeekPosts?.length || 0}
-          gradient="linear-gradient(90deg, #e1306c, #ff6b6b)"
-          color="#e1306c"
-          icon="📅"
-          href="/content"
-        />
-        <StatCard
-          label="Wachten op goedkeuring"
-          value={pendingApprovalCount || 0}
-          gradient="linear-gradient(90deg, var(--accent4), #ffaa70)"
-          color="var(--accent4)"
-          icon="⏳"
-          href="/content"
-        />
-      </div>
-
-      {/* TWO COLUMNS: Posts this week + Open tasks */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '24px' }}>
-
-        {/* Posts deze week */}
-        <div style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          padding: '24px',
-          boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 style={{
-              fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-              fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px',
-            }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#e1306c', display: 'inline-block' }} />
-              Posts deze week
-            </h3>
-            <Link href="/content" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
-              Alles bekijken →
-            </Link>
+      {/* HEADER */}
+      <div style={{ marginBottom: '28px' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
+          <div>
+            <h1 style={{ fontWeight: 800, fontSize: '1.7rem', color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>
+              Goedendag, {firstName} 👋
+            </h1>
+            <p style={{ color: 'var(--muted)', fontSize: '.88rem', marginTop: '4px', textTransform: 'capitalize' }}>
+              {dayName} · {dateStr}
+            </p>
           </div>
+          <Link href="/content/compose" style={{
+            display: 'inline-flex', alignItems: 'center', gap: '8px',
+            background: 'var(--accent1)', color: '#fff',
+            borderRadius: 'var(--radius)', padding: '10px 18px',
+            textDecoration: 'none', fontWeight: 700, fontSize: '.88rem',
+          }}>
+            <span style={{ fontSize: '1rem' }}>+</span> Nieuwe post
+          </Link>
+        </div>
+      </div>
 
-          {thisWeekPosts && thisWeekPosts.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {thisWeekPosts.map((post: any) => {
-                const platform = (post.platform || 'other').toLowerCase()
-                const color = PLATFORM_COLORS[platform] || 'var(--muted)'
-                const emoji = PLATFORM_EMOJI[platform] || '📄'
-                const date = post.scheduled_at ? new Date(post.scheduled_at) : null
+      {/* ACTIE VEREIST — alleen als er iets urgent is */}
+      {(pendingApprovalCount ?? 0) > 0 && (
+        <Link href="/approve" style={{ textDecoration: 'none', display: 'block', marginBottom: '20px' }}>
+          <div style={{
+            background: 'linear-gradient(90deg, rgba(26,63,228,.08), rgba(26,63,228,.04))',
+            border: '1px solid rgba(26,63,228,.2)',
+            borderLeft: '4px solid var(--accent1)',
+            borderRadius: 'var(--radius)', padding: '14px 20px',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <span style={{
+                background: 'var(--accent1)', color: '#fff',
+                borderRadius: '50%', width: '28px', height: '28px',
+                display: 'flex', alignItems: 'center', justifyContent: 'center',
+                fontWeight: 800, fontSize: '.82rem', flexShrink: 0,
+              }}>{pendingApprovalCount}</span>
+              <div>
+                <div style={{ fontWeight: 700, fontSize: '.9rem', color: 'var(--text)' }}>
+                  {pendingApprovalCount === 1 ? '1 post wacht op goedkeuring' : `${pendingApprovalCount} posts wachten op goedkeuring`}
+                </div>
+                <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>
+                  Klik om te bekijken en goed te keuren
+                </div>
+              </div>
+            </div>
+            <span style={{ color: 'var(--accent1)', fontWeight: 700, fontSize: '.85rem' }}>Bekijken →</span>
+          </div>
+        </Link>
+      )}
+
+      {/* MAIN GRID */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: '20px', alignItems: 'start' }}>
+
+        {/* LEFT COLUMN */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+
+          {/* VANDAAG */}
+          <div style={{
+            background: 'var(--card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)', overflow: 'hidden',
+          }}>
+            <div style={{
+              padding: '16px 20px', borderBottom: '1px solid var(--border)',
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                <span style={{
+                  width: '8px', height: '8px', borderRadius: '50%',
+                  background: 'var(--accent1)', display: 'inline-block',
+                }} />
+                <span style={{ fontWeight: 700, fontSize: '.95rem' }}>Vandaag</span>
+                {todayMeetings && todayMeetings.length > 0 && (
+                  <span style={{
+                    background: '#00b89c22', color: '#00b89c',
+                    borderRadius: '50px', padding: '2px 8px',
+                    fontSize: '.72rem', fontWeight: 700,
+                  }}>
+                    {todayMeetings.length} vergadering{todayMeetings.length > 1 ? 'en' : ''}
+                  </span>
+                )}
+              </div>
+              <Link href="/planning" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
+                Planning →
+              </Link>
+            </div>
+
+            {/* Vergaderingen vandaag */}
+            {todayMeetings && todayMeetings.map((m: any) => (
+              <div key={m.id} style={{
+                padding: '14px 20px', borderBottom: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', gap: '14px',
+                background: 'rgba(0,184,156,.04)',
+              }}>
+                <div style={{
+                  width: '36px', height: '36px', borderRadius: 'var(--radius-sm)',
+                  background: '#00b89c22', color: '#00b89c',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontSize: '1rem', flexShrink: 0,
+                }}>📅</div>
+                <div style={{ flex: 1, minWidth: 0 }}>
+                  <div style={{ fontWeight: 600, fontSize: '.88rem', color: 'var(--text)' }}>{m.title}</div>
+                  <div style={{ fontSize: '.75rem', color: '#00b89c', marginTop: '2px' }}>
+                    Vergadering · {new Date(m.meeting_date).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                  </div>
+                </div>
+                <Link href="/meetings" style={{ fontSize: '.75rem', color: 'var(--muted)', textDecoration: 'none' }}>Bekijken →</Link>
+              </div>
+            ))}
+
+            {/* Posts vandaag */}
+            {todayPosts && todayPosts.length > 0 ? (
+              todayPosts.map((post: any) => {
+                const platform = (post.platform || '').toLowerCase()
+                const color = PLATFORM_COLORS[platform] || '#6b7280'
                 return (
                   <div key={post.id} style={{
-                    display: 'flex', alignItems: 'center', gap: '12px',
-                    padding: '10px 12px',
-                    background: 'var(--bg)',
-                    borderRadius: 'var(--radius-sm)',
-                    borderLeft: `3px solid ${color}`,
-                    border: `1px solid var(--border)`,
-                    borderLeftWidth: '3px',
-                    borderLeftColor: color,
+                    padding: '14px 20px', borderBottom: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', gap: '14px',
                   }}>
-                    <span style={{ fontSize: '1.1rem', flexShrink: 0 }}>{emoji}</span>
+                    <div style={{
+                      width: '36px', height: '36px', borderRadius: 'var(--radius-sm)',
+                      background: `${color}18`, border: `1px solid ${color}33`,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontSize: '.7rem', fontWeight: 800, color, flexShrink: 0, textTransform: 'uppercase',
+                    }}>
+                      {(PLATFORM_LABELS[platform] || platform).slice(0, 2)}
+                    </div>
                     <div style={{ flex: 1, minWidth: 0 }}>
                       <div style={{
-                        fontWeight: 600, fontSize: '.83rem', color: 'var(--text)',
+                        fontWeight: 600, fontSize: '.88rem', color: 'var(--text)',
                         overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
                       }}>
                         {post.title || 'Zonder titel'}
                       </div>
-                      <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' }}>
-                        {PLATFORM_LABELS[platform] || platform}
+                      <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '2px' }}>
+                        {(post.clients as any)?.company_name && `${(post.clients as any).company_name} · `}
+                        {new Date(post.scheduled_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
                       </div>
                     </div>
-                    <div style={{ fontSize: '.72rem', color: 'var(--muted)', textAlign: 'right', flexShrink: 0 }}>
-                      {date ? (
-                        <>
-                          <div style={{ fontWeight: 600, color: 'var(--text)' }}>
-                            {date.toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}
-                          </div>
-                          <div>
-                            {date.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
-                          </div>
-                        </>
-                      ) : '—'}
+                    <span style={{
+                      fontSize: '.7rem', fontWeight: 700, padding: '3px 8px',
+                      borderRadius: '50px',
+                      background: post.status === 'published' ? '#00b89c22' : post.status === 'scheduled' ? 'rgba(26,63,228,.1)' : '#f5a62322',
+                      color: post.status === 'published' ? '#00b89c' : post.status === 'scheduled' ? 'var(--accent1)' : '#f5a623',
+                    }}>
+                      {post.status === 'published' ? 'Gepubliceerd' : post.status === 'scheduled' ? 'Ingepland' : 'Concept'}
+                    </span>
+                  </div>
+                )
+              })
+            ) : (
+              !todayMeetings?.length && (
+                <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontSize: '.85rem' }}>
+                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>✨</div>
+                  Niets gepland voor vandaag
+                </div>
+              )
+            )}
+          </div>
+
+          {/* DEZE WEEK */}
+          {upcomingPosts && upcomingPosts.length > 0 && (
+            <div style={{
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)', overflow: 'hidden',
+            }}>
+              <div style={{
+                padding: '16px 20px', borderBottom: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#e1306c', display: 'inline-block' }} />
+                  <span style={{ fontWeight: 700, fontSize: '.95rem' }}>Komende 7 dagen</span>
+                </div>
+                <Link href="/content" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
+                  Alles →
+                </Link>
+              </div>
+              {upcomingPosts.map((post: any) => {
+                const platform = (post.platform || '').toLowerCase()
+                const color = PLATFORM_COLORS[platform] || '#6b7280'
+                const date = new Date(post.scheduled_at)
+                return (
+                  <div key={post.id} style={{
+                    padding: '12px 20px', borderBottom: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                  }}>
+                    <div style={{
+                      width: '40px', textAlign: 'center', flexShrink: 0,
+                    }}>
+                      <div style={{ fontSize: '.65rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em' }}>
+                        {date.toLocaleDateString('nl-NL', { weekday: 'short' })}
+                      </div>
+                      <div style={{ fontWeight: 800, fontSize: '1.1rem', color: 'var(--text)', lineHeight: 1.1 }}>
+                        {date.getDate()}
+                      </div>
+                    </div>
+                    <div style={{
+                      width: '3px', height: '32px', borderRadius: '2px',
+                      background: color, flexShrink: 0,
+                    }} />
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{
+                        fontWeight: 600, fontSize: '.85rem',
+                        overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                      }}>
+                        {post.title || 'Zonder titel'}
+                      </div>
+                      <div style={{ fontSize: '.73rem', color: 'var(--muted)', marginTop: '2px' }}>
+                        {PLATFORM_LABELS[platform] || platform}
+                        {(post.clients as any)?.company_name && ` · ${(post.clients as any).company_name}`}
+                      </div>
+                    </div>
+                    <div style={{ fontSize: '.73rem', color: 'var(--muted)', flexShrink: 0 }}>
+                      {date.toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
                     </div>
                   </div>
                 )
               })}
             </div>
-          ) : (
+          )}
+
+          {/* ACTIEVE PROJECTEN */}
+          {activeProjects && activeProjects.length > 0 && (
             <div style={{
-              textAlign: 'center', padding: '32px 20px',
-              color: 'var(--muted)', fontSize: '.85rem',
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)', overflow: 'hidden',
             }}>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>📭</div>
-              <div>Geen posts gepland voor deze week</div>
-              <Link href="/content" style={{
-                display: 'inline-block', marginTop: '12px',
-                fontSize: '.78rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600,
+              <div style={{
+                padding: '16px 20px', borderBottom: '1px solid var(--border)',
+                display: 'flex', alignItems: 'center', justifyContent: 'space-between',
               }}>
-                Content plannen →
-              </Link>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent4)', display: 'inline-block' }} />
+                  <span style={{ fontWeight: 700, fontSize: '.95rem' }}>Actieve projecten</span>
+                </div>
+                <Link href="/projects" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
+                  Alle projecten →
+                </Link>
+              </div>
+              {activeProjects.map((project: any) => {
+                const sc = STATUS_CONFIG[project.status] || STATUS_CONFIG.backlog
+                return (
+                  <div key={project.id} style={{
+                    padding: '14px 20px', borderBottom: '1px solid var(--border)',
+                    display: 'flex', alignItems: 'center', gap: '14px',
+                  }}>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 600, fontSize: '.88rem', color: 'var(--text)' }}>
+                        {project.title}
+                      </div>
+                      <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '2px' }}>
+                        {(project.clients as any)?.company_name || 'Intern'}
+                      </div>
+                    </div>
+                    <span style={{
+                      fontSize: '.7rem', fontWeight: 700, padding: '3px 9px',
+                      borderRadius: '50px', background: sc.bg, color: sc.color, flexShrink: 0,
+                    }}>
+                      {sc.label}
+                    </span>
+                  </div>
+                )
+              })}
             </div>
           )}
         </div>
 
-        {/* Open taken */}
-        <div style={{
-          background: 'var(--card)',
-          border: '1px solid var(--border)',
-          borderRadius: 'var(--radius)',
-          padding: '24px',
-          boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-        }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-            <h3 style={{
-              fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700,
-              fontSize: '1rem', display: 'flex', alignItems: 'center', gap: '8px',
-            }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent3)', display: 'inline-block' }} />
-              Open taken
-            </h3>
-            <Link href="/projects" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
-              Alle projecten →
-            </Link>
+        {/* RIGHT COLUMN */}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+          {/* STATS */}
+          <div style={{
+            background: 'var(--card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)', overflow: 'hidden',
+          }}>
+            {[
+              {
+                label: 'Wachten op goedkeuring',
+                value: pendingApprovalCount ?? 0,
+                color: 'var(--accent1)',
+                href: '/approve',
+              },
+              {
+                label: 'Posts vandaag',
+                value: todayPosts?.length ?? 0,
+                color: '#e1306c',
+                href: '/content',
+              },
+              {
+                label: 'Open taken',
+                value: openTasks?.length ?? 0,
+                color: '#f5a623',
+                href: '/projects',
+              },
+            ].map((stat, i, arr) => (
+              <Link key={stat.label} href={stat.href} style={{ textDecoration: 'none', display: 'block' }}>
+                <div style={{
+                  padding: '16px 20px',
+                  borderBottom: i < arr.length - 1 ? '1px solid var(--border)' : 'none',
+                  display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                  transition: 'background .15s',
+                }}>
+                  <span style={{ fontSize: '.82rem', color: 'var(--muted)', fontWeight: 500 }}>{stat.label}</span>
+                  <span style={{
+                    fontWeight: 800, fontSize: '1.3rem', color: stat.value > 0 ? stat.color : 'var(--muted)',
+                    fontFamily: 'var(--font-syne), sans-serif',
+                  }}>{stat.value}</span>
+                </div>
+              </Link>
+            ))}
           </div>
 
-          {pendingTasks && pendingTasks.length > 0 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-              {pendingTasks.map((task: any) => (
+          {/* OPEN TAKEN */}
+          {openTasks && openTasks.length > 0 && (
+            <div style={{
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: 'var(--radius)', overflow: 'hidden',
+            }}>
+              <div style={{ padding: '14px 18px', borderBottom: '1px solid var(--border)', fontWeight: 700, fontSize: '.88rem' }}>
+                Open taken
+              </div>
+              {openTasks.map((task: any) => (
                 <div key={task.id} style={{
-                  padding: '10px 12px',
-                  background: 'var(--bg)',
-                  borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border)',
+                  padding: '11px 18px', borderBottom: '1px solid var(--border)',
+                  display: 'flex', alignItems: 'flex-start', gap: '10px',
                 }}>
-                  <div style={{ fontWeight: 600, fontSize: '.83rem', color: 'var(--text)' }}>
-                    {task.title}
-                  </div>
-                  <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginTop: '3px', display: 'flex', gap: '6px' }}>
-                    <span>{task.projects?.title}</span>
-                    {task.projects?.clients?.company_name && (
-                      <>
-                        <span>·</span>
-                        <span>{task.projects.clients.company_name}</span>
-                      </>
+                  <div style={{
+                    width: '16px', height: '16px', borderRadius: '50%',
+                    border: '2px solid var(--border)', flexShrink: 0, marginTop: '2px',
+                  }} />
+                  <div style={{ minWidth: 0 }}>
+                    <div style={{ fontSize: '.83rem', fontWeight: 600, color: 'var(--text)' }}>{task.title}</div>
+                    {task.projects && (
+                      <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginTop: '2px' }}>
+                        {(task.projects as any).title}
+                        {(task.projects as any).clients?.company_name && ` · ${(task.projects as any).clients.company_name}`}
+                      </div>
                     )}
                   </div>
                 </div>
               ))}
-            </div>
-          ) : (
-            <div style={{ textAlign: 'center', padding: '32px 20px', color: 'var(--muted)', fontSize: '.85rem' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '8px' }}>🎉</div>
-              <div>Geen open taken</div>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* BOTTOM GRID — admin only */}
-      {isAdmin && (
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
-
-          {/* Recente projecten */}
-          <div style={{
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            padding: '24px',
-            boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-          }}>
-            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-              <h3 style={{
-                fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem',
-                display: 'flex', alignItems: 'center', gap: '8px',
+              <Link href="/projects" style={{
+                display: 'block', padding: '11px 18px',
+                fontSize: '.78rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600,
               }}>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent1)', display: 'inline-block' }} />
-                Recente projecten
-              </h3>
-              <Link href="/projects" style={{ fontSize: '.75rem', color: 'var(--accent1)', textDecoration: 'none', fontWeight: 600 }}>
-                Alle projecten →
+                Alle taken bekijken →
               </Link>
             </div>
-            {recentProjects && recentProjects.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                {recentProjects.map((project: any) => (
-                  <div key={project.id} style={{
-                    padding: '12px',
-                    background: 'var(--bg)',
-                    borderRadius: 'var(--radius-sm)',
-                    border: '1px solid var(--border)',
-                  }}>
-                    <div style={{ fontWeight: 600, fontSize: '.88rem', marginBottom: '6px', color: 'var(--text)' }}>
-                      {project.title}
-                    </div>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                      <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>
-                        {project.clients?.company_name || 'Intern'}
-                      </span>
-                      <StatusBadge status={project.status} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>Nog geen projecten</p>
-            )}
-          </div>
+          )}
 
-          {/* Quick actions */}
+          {/* SNELLE LINKS */}
           <div style={{
-            background: 'var(--card)',
-            border: '1px solid var(--border)',
-            borderRadius: 'var(--radius)',
-            padding: '24px',
-            boxShadow: '0 2px 12px rgba(26,63,228,.06)',
+            background: 'var(--card)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)', padding: '16px',
           }}>
-            <h3 style={{
-              fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem',
-              marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '8px',
-            }}>
-              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: 'var(--accent4)', display: 'inline-block' }} />
+            <div style={{ fontWeight: 700, fontSize: '.88rem', marginBottom: '12px', paddingLeft: '2px' }}>
               Snelle acties
-            </h3>
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
               {[
-                { href: '/content', label: 'Content', sub: 'Posts & planning', emoji: '📝', color: '#e1306c', bg: 'rgba(225,48,108,.08)' },
-                { href: '/projects', label: 'Projecten', sub: 'Beheer projecten', emoji: '📋', color: 'var(--accent1)', bg: 'rgba(26,63,228,.08)' },
-                { href: '/ideas', label: 'Ideeën', sub: 'Brainstorm board', emoji: '💡', color: '#f5a623', bg: 'rgba(245,166,35,.08)' },
-                { href: '/media', label: 'Media', sub: 'Bestanden & assets', emoji: '🗂️', color: '#7c5ff5', bg: 'rgba(124,95,245,.08)' },
-                { href: '/clients', label: 'Klanten', sub: 'Klantenbeheer', emoji: '👥', color: '#00b89c', bg: 'rgba(0,184,156,.08)' },
+                { href: '/content/compose', label: '+ Nieuwe post aanmaken', color: 'var(--accent1)' },
+                { href: '/projects',        label: '+ Nieuw project',         color: '#7c5ff5' },
+                { href: '/meetings',        label: '+ Vergadering plannen',   color: '#00b89c' },
+                { href: '/clients',         label: '+ Klant toevoegen',       color: '#f5a623' },
               ].map(action => (
-                <Link key={action.href} href={action.href} style={{ textDecoration: 'none' }}>
-                  <div style={{
-                    padding: '14px',
-                    background: action.bg,
-                    borderRadius: 'var(--radius-sm)',
-                    border: `1px solid ${action.color}22`,
-                    cursor: 'pointer',
-                    transition: 'transform .15s, box-shadow .15s',
-                    display: 'flex', flexDirection: 'column', gap: '6px',
-                  }}>
-                    <span style={{ fontSize: '1.4rem' }}>{action.emoji}</span>
-                    <div style={{
-                      fontFamily: 'var(--font-syne), sans-serif',
-                      fontWeight: 700, fontSize: '.85rem', color: action.color,
-                    }}>
-                      {action.label}
-                    </div>
-                    <div style={{ fontSize: '.72rem', color: 'var(--muted)' }}>
-                      {action.sub}
-                    </div>
-                  </div>
+                <Link key={action.href} href={action.href} style={{
+                  display: 'block', padding: '9px 14px',
+                  background: 'var(--bg)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)', textDecoration: 'none',
+                  fontSize: '.82rem', fontWeight: 600, color: action.color,
+                  transition: 'border-color .15s',
+                }}>
+                  {action.label}
                 </Link>
               ))}
             </div>
           </div>
         </div>
-      )}
-    </div>
-  )
-}
-
-const PLATFORM_LABELS: Record<string, string> = {
-  instagram: 'Instagram',
-  tiktok: 'TikTok',
-  linkedin: 'LinkedIn',
-  youtube: 'YouTube',
-  facebook: 'Facebook',
-}
-
-function StatCard({
-  label,
-  value,
-  gradient,
-  color,
-  icon,
-  href,
-}: {
-  label: string
-  value: number
-  gradient: string
-  color: string
-  icon: string
-  href?: string
-}) {
-  const content = (
-    <div style={{
-      background: 'var(--card)',
-      border: '1px solid var(--border)',
-      borderRadius: 'var(--radius)',
-      padding: '20px',
-      position: 'relative',
-      overflow: 'hidden',
-      boxShadow: '0 2px 12px rgba(26,63,228,.07)',
-      textDecoration: 'none',
-    }}>
-      <div style={{
-        position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
-        borderRadius: 'var(--radius) var(--radius) 0 0',
-        background: gradient,
-      }} />
-      <div style={{
-        position: 'absolute', top: '16px', right: '16px',
-        fontSize: '1.5rem', opacity: .2,
-      }}>
-        {icon}
-      </div>
-      <div style={{
-        fontSize: '.72rem', color: 'var(--muted)',
-        textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '8px',
-      }}>
-        {label}
-      </div>
-      <div style={{
-        fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800,
-        fontSize: '1.9rem', color,
-      }}>
-        {value}
       </div>
     </div>
-  )
-
-  if (href) {
-    return (
-      <Link href={href} style={{ textDecoration: 'none', display: 'block' }}>
-        {content}
-      </Link>
-    )
-  }
-  return content
-}
-
-function StatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; bg: string; color: string }> = {
-    backlog: { label: 'Backlog', bg: 'rgba(107,120,168,.12)', color: 'var(--muted)' },
-    in_progress: { label: 'In uitvoering', bg: 'rgba(26,63,228,.10)', color: 'var(--accent1)' },
-    waiting_feedback: { label: 'Wacht op feedback', bg: 'rgba(245,166,35,.12)', color: '#f5a623' },
-    review: { label: 'Review', bg: 'rgba(255,122,48,.10)', color: 'var(--accent4)' },
-    approved: { label: 'Goedgekeurd', bg: 'rgba(0,184,156,.10)', color: 'var(--accent3)' },
-    archived: { label: 'Archief', bg: 'rgba(107,120,168,.12)', color: 'var(--muted)' },
-  }
-  const c = config[status] || config.backlog
-  return (
-    <span style={{
-      fontSize: '.68rem', fontWeight: 600, padding: '2px 8px',
-      borderRadius: '50px', background: c.bg, color: c.color,
-    }}>
-      {c.label}
-    </span>
   )
 }
