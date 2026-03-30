@@ -121,12 +121,25 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
         {isAdmin && (
           <>
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
-              Projecten
+              Werkruimte
             </div>
             <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
-            <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname === '/content'} />
-            <NavLink href="/content/compose" label="Post aanmaken" icon="✍️" active={pathname === '/content/compose'} />
+            <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content') && !pathname.includes('compose')} />
+            <NavLink href="/ideas" label="Ideeënbord" icon="💡" active={pathname.startsWith('/ideas')} />
+            <NavLink href="/meetings" label="Vergaderingen" icon="🗓️" active={pathname.startsWith('/meetings')} />
             <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
+
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+              Analyse
+            </div>
+            <NavLink href="/analytics/ads" label="Paid Ads" icon="📊" active={pathname.startsWith('/analytics/ads')} />
+            <NavLink href="/analytics/social" label="Social Organic" icon="📱" active={pathname.startsWith('/analytics/social')} />
+            <NavLink href="/reports" label="Rapportage" icon="📈" active={pathname.startsWith('/reports')} />
+
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+              Bestanden
+            </div>
+            <NavLink href="/media" label="Media Library" icon="🖼️" active={pathname.startsWith('/media')} />
 
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Beheer
@@ -145,6 +158,7 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
             </div>
             <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
             <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content')} />
+            <NavLink href="/meetings" label="Vergaderingen" icon="🗓️" active={pathname.startsWith('/meetings')} />
             <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
           </>
         )}
