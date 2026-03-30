@@ -1,194 +1,468 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, CSSProperties } from 'react'
 import Link from 'next/link'
 
-const PLATFORMS = [
-  { key: 'all', label: 'Alles', icon: '📊' },
-  { key: 'meta_ads', label: 'Meta Ads', icon: '📘', color: '#1877f2' },
-  { key: 'google_ads', label: 'Google Ads', icon: '🔍', color: '#ea4335' },
-  { key: 'tiktok_ads', label: 'TikTok Ads', icon: '🎵', color: '#000' },
-  { key: 'linkedin_ads', label: 'LinkedIn Ads', icon: '💼', color: '#0077b5' },
-]
-
 interface Props {
-  adAccounts: any[]
-  campaigns: any[]
-  agencyId: string
+  entries: any[]
+  clients: any[]
+  isAdmin: boolean
+  clientId: string
 }
 
-export default function AdsClient({ adAccounts, campaigns, agencyId }: Props) {
-  const [platform, setPlatform] = useState('all')
+type SortKey = 'month' | 'year' | 'platform' | 'client' | 'spend' | 'revenue' | 'roas'
+type SortDir = 'asc' | 'desc'
 
-  const filteredCampaigns = platform === 'all'
-    ? campaigns
-    : campaigns.filter(c => c.ad_accounts?.platform === platform)
+const AD_PLATFORMS = [
+  { key: 'meta_ads', label: 'Meta Ads', icon: '📘', color: '#1877f2' },
+  { key: 'google_ads', label: 'Google Ads', icon: '🔍', color: '#ea4335' },
+  { key: 'tiktok_ads', label: 'TikTok Ads', icon: '🎵', color: '#010101' },
+  { key: 'linkedin_ads', label: 'LinkedIn Ads', icon: '💼', color: '#0077b5' },
+  { key: 'overig', label: 'Overig', icon: '📊', color: '#7c5ff5' },
+]
 
-  function sumMetrics(campaign: any) {
-    const metrics = campaign.ad_metrics || []
-    return metrics.reduce((acc: any, m: any) => ({
-      spend: acc.spend + (m.spend || 0),
-      impressions: acc.impressions + (m.impressions || 0),
-      clicks: acc.clicks + (m.clicks || 0),
-      conversions: acc.conversions + (m.conversions || 0),
-    }), { spend: 0, impressions: 0, clicks: 0, conversions: 0 })
+const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+
+function roasColor(roas: number): string {
+  if (roas > 3) return '#00a67d'
+  if (roas > 1.5) return '#cc8800'
+  return '#d94040'
+}
+
+function fmtEur(n: number): string {
+  return `€${n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+}
+
+function fmtNum(n: number): string {
+  return n.toLocaleString('nl-NL')
+}
+
+export default function AdsClient({ entries, clients, isAdmin, clientId }: Props) {
+  const now = new Date()
+  const currentYear = now.getFullYear()
+
+  const [selectedClient, setSelectedClient] = useState<string>('all')
+  const [selectedYear, setSelectedYear] = useState<number>(currentYear)
+  const [sortKey, setSortKey] = useState<SortKey>('year')
+  const [sortDir, setSortDir] = useState<SortDir>('desc')
+
+  // Filter entries
+  const filtered = entries.filter(e => {
+    if (selectedYear && e.year !== selectedYear) return false
+    if (selectedClient !== 'all' && e.client_id !== selectedClient) return false
+    return true
+  })
+
+  // KPI totals for current period
+  const totalSpend = filtered.reduce((s, e) => s + (e.ad_spend || 0), 0)
+  const totalRevenue = filtered.reduce((s, e) => s + (e.revenue || 0), 0)
+  const totalLeads = filtered.reduce((s, e) => s + (e.leads || 0), 0)
+  const avgRoas = totalSpend > 0 ? totalRevenue / totalSpend : 0
+
+  // Previous period (previous year)
+  const prevYearEntries = entries.filter(e => {
+    if (e.year !== selectedYear - 1) return false
+    if (selectedClient !== 'all' && e.client_id !== selectedClient) return false
+    return true
+  })
+  const prevSpend = prevYearEntries.reduce((s, e) => s + (e.ad_spend || 0), 0)
+  const prevRevenue = prevYearEntries.reduce((s, e) => s + (e.revenue || 0), 0)
+  const prevRoas = prevSpend > 0 ? prevRevenue / prevSpend : 0
+  const prevLeads = prevYearEntries.reduce((s, e) => s + (e.leads || 0), 0)
+
+  function trend(current: number, prev: number) {
+    if (prev === 0) return null
+    const pct = ((current - prev) / prev) * 100
+    return pct
   }
 
-  const totalSpend = filteredCampaigns.reduce((sum, c) => sum + sumMetrics(c).spend, 0)
-  const totalImpressions = filteredCampaigns.reduce((sum, c) => sum + sumMetrics(c).impressions, 0)
-  const totalClicks = filteredCampaigns.reduce((sum, c) => sum + sumMetrics(c).clicks, 0)
-  const avgRoas = filteredCampaigns.length > 0
-    ? filteredCampaigns.reduce((sum, c) => {
-        const m = c.ad_metrics?.[0]
-        return sum + (m?.roas || 0)
-      }, 0) / filteredCampaigns.length
-    : 0
+  function TrendArrow({ current, prev }: { current: number; prev: number }) {
+    const pct = trend(current, prev)
+    if (pct === null) return null
+    const up = pct >= 0
+    return (
+      <span style={{ fontSize: '.78rem', color: up ? '#00a67d' : '#d94040', marginLeft: '6px', fontWeight: 600 }}>
+        {up ? '↑' : '↓'} {Math.abs(pct).toFixed(1)}%
+      </span>
+    )
+  }
 
-  const fmt = (n: number) => n.toLocaleString('nl-NL')
-  const fmtEur = (n: number) => `€${n.toLocaleString('nl-NL', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+  // Platform breakdown
+  const platformRows = AD_PLATFORMS.map(pl => {
+    const rows = filtered.filter(e => (e.platform || '').toLowerCase() === pl.key)
+    const spend = rows.reduce((s, e) => s + (e.ad_spend || 0), 0)
+    const revenue = rows.reduce((s, e) => s + (e.revenue || 0), 0)
+    const leads = rows.reduce((s, e) => s + (e.leads || 0), 0)
+    const impressions = rows.reduce((s, e) => s + (e.impressions || 0), 0)
+    const roas = spend > 0 ? revenue / spend : 0
+    return { ...pl, spend, revenue, leads, impressions, roas }
+  })
+  const totalRow = {
+    label: 'Totaal', spend: totalSpend, revenue: totalRevenue,
+    leads: totalLeads,
+    impressions: platformRows.reduce((s, r) => s + r.impressions, 0),
+    roas: avgRoas,
+  }
 
-  const platformLabel = (p: string) => PLATFORMS.find(pl => pl.key === p)?.label || p
-  const platformIcon = (p: string) => PLATFORMS.find(pl => pl.key === p)?.icon || '📊'
+  // 6-month trend chart
+  const last6Months: { year: number; month: number; label: string }[] = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    last6Months.push({ year: d.getFullYear(), month: d.getMonth() + 1, label: MONTH_NAMES_SHORT[d.getMonth()] })
+  }
+  const monthlySpend = last6Months.map(m =>
+    entries.filter(e => e.month === m.month && e.year === m.year &&
+      (selectedClient === 'all' || e.client_id === selectedClient))
+      .reduce((s, e) => s + (e.ad_spend || 0), 0)
+  )
+  const monthlyRevenue = last6Months.map(m =>
+    entries.filter(e => e.month === m.month && e.year === m.year &&
+      (selectedClient === 'all' || e.client_id === selectedClient))
+      .reduce((s, e) => s + (e.revenue || 0), 0)
+  )
+  const maxBarVal = Math.max(...monthlySpend, ...monthlyRevenue, 1)
 
-  return (
-    <div className="animate-fade-up">
-      {/* No accounts state */}
-      {adAccounts.length === 0 && (
+  // Sortable entries table
+  const sortedEntries = [...filtered].sort((a, b) => {
+    let aVal: string | number = 0
+    let bVal: string | number = 0
+    if (sortKey === 'month') { aVal = a.month; bVal = b.month }
+    else if (sortKey === 'year') { aVal = a.year; bVal = b.year }
+    else if (sortKey === 'platform') { aVal = a.platform || ''; bVal = b.platform || '' }
+    else if (sortKey === 'client') { aVal = a.clients?.company_name || ''; bVal = b.clients?.company_name || '' }
+    else if (sortKey === 'spend') { aVal = a.ad_spend || 0; bVal = b.ad_spend || 0 }
+    else if (sortKey === 'revenue') { aVal = a.revenue || 0; bVal = b.revenue || 0 }
+    else if (sortKey === 'roas') {
+      aVal = (a.ad_spend || 0) > 0 ? (a.revenue || 0) / (a.ad_spend || 0) : 0
+      bVal = (b.ad_spend || 0) > 0 ? (b.revenue || 0) / (b.ad_spend || 0) : 0
+    }
+    if (aVal < bVal) return sortDir === 'asc' ? -1 : 1
+    if (aVal > bVal) return sortDir === 'asc' ? 1 : -1
+    return 0
+  })
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc')
+    else { setSortKey(key); setSortDir('desc') }
+  }
+
+  function SortIndicator({ k }: { k: SortKey }) {
+    if (sortKey !== k) return <span style={{ opacity: .3 }}> ↕</span>
+    return <span style={{ color: 'var(--accent1)' }}> {sortDir === 'asc' ? '↑' : '↓'}</span>
+  }
+
+  const cardStyle: CSSProperties = {
+    background: 'var(--card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '20px',
+    boxShadow: '0 2px 12px rgba(26,63,228,.06)',
+  }
+
+  const thStyle: CSSProperties = {
+    padding: '10px 16px',
+    textAlign: 'left',
+    fontSize: '.73rem',
+    fontWeight: 700,
+    color: 'var(--muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '.05em',
+    whiteSpace: 'nowrap',
+    background: 'var(--bg)',
+  }
+
+  const tdStyle: CSSProperties = {
+    padding: '12px 16px',
+    fontSize: '.85rem',
+    borderTop: '1px solid var(--border)',
+  }
+
+  if (entries.length === 0) {
+    return (
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+        <div>
+          <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem', marginBottom: '4px' }}>
+            Advertentie Resultaten
+          </h1>
+          <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>Overzicht van advertentieuitgaven en ROI</p>
+        </div>
         <div style={{
-          background: 'linear-gradient(135deg, var(--accent1), #2d5fff)',
-          borderRadius: 'var(--radius)', padding: '32px', marginBottom: '24px',
-          color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          boxShadow: '0 8px 40px rgba(26,63,228,.3)',
+          ...cardStyle,
+          textAlign: 'center',
+          padding: '56px 40px',
         }}>
-          <div>
-            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.3rem', marginBottom: '8px' }}>
-              Koppel je advertentieplatformen
-            </div>
-            <div style={{ opacity: .85, fontSize: '.9rem' }}>
-              Verbind Meta Ads, Google Ads, TikTok Ads en meer met één klik
-            </div>
+          <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>📊</div>
+          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px' }}>
+            Nog geen advertentiedata
           </div>
-          <Link href="/settings/integrations" style={{
-            background: '#fff', color: 'var(--accent1)', padding: '12px 24px',
-            borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '.9rem', textDecoration: 'none',
-            whiteSpace: 'nowrap',
+          <div style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '20px' }}>
+            Voeg ROI entries toe via het ROI Dashboard
+          </div>
+          <Link href="/roi" style={{
+            display: 'inline-block',
+            background: 'var(--accent1)',
+            color: '#fff',
+            padding: '10px 24px',
+            borderRadius: 'var(--radius-sm)',
+            fontWeight: 700,
+            fontSize: '.9rem',
+            textDecoration: 'none',
           }}>
-            🔗 Koppelen
+            Naar ROI Dashboard →
           </Link>
         </div>
-      )}
+      </div>
+    )
+  }
 
-      {/* Platform filter */}
-      <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
-        {PLATFORMS.map(pl => (
-          <button key={pl.key} onClick={() => setPlatform(pl.key)} style={{
-            padding: '6px 14px', borderRadius: '50px', fontSize: '.8rem', fontWeight: 600,
-            cursor: 'pointer', border: 'none',
-            background: platform === pl.key ? 'var(--accent1)' : 'var(--card)',
-            color: platform === pl.key ? '#fff' : 'var(--muted)',
-            boxShadow: platform === pl.key ? '0 2px 8px rgba(26,63,228,.25)' : 'none',
-          }}>
-            {pl.icon} {pl.label}
-          </button>
-        ))}
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem', marginBottom: '4px' }}>
+          Advertentie Resultaten
+        </h1>
+        <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>Overzicht van advertentieuitgaven en ROI per platform</p>
       </div>
 
-      {/* Stats grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
-        {[
-          { label: 'Totaal uitgegeven', value: fmtEur(totalSpend), color: 'blue', icon: '💸' },
-          { label: 'Vertoningen', value: fmt(totalImpressions), color: 'teal', icon: '👁️' },
-          { label: 'Klikken', value: fmt(totalClicks), color: 'orange', icon: '🖱️' },
-          { label: 'Gem. ROAS', value: `${avgRoas.toFixed(2)}x`, color: 'purple', icon: '📈' },
-        ].map(({ label, value, color, icon }) => (
-          <div key={label} style={{
-            background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
-            padding: '20px', position: 'relative', overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,63,228,.07)',
-          }}>
-            <div style={{
-              position: 'absolute', top: 0, left: 0, right: 0, height: '3px', borderRadius: 'var(--radius) var(--radius) 0 0',
-              background: color === 'blue' ? 'linear-gradient(90deg,var(--accent1),var(--accent2))' :
-                color === 'teal' ? 'linear-gradient(90deg,var(--accent3),#00dfc0)' :
-                color === 'orange' ? 'linear-gradient(90deg,var(--accent4),#ffaa70)' :
-                'linear-gradient(90deg,#7c5ff5,var(--accent1))',
-            }} />
-            <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '1.4rem', opacity: .25 }}>{icon}</div>
-            <div style={{ fontSize: '.75rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '8px' }}>{label}</div>
-            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem' }}>{value}</div>
-          </div>
-        ))}
-      </div>
-
-      {/* Connected accounts */}
-      {adAccounts.length > 0 && (
-        <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', marginBottom: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
-          <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '12px' }}>Gekoppelde accounts</h3>
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            {adAccounts.map(acc => (
-              <div key={acc.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', background: 'var(--bg)', padding: '8px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
-                <span>{platformIcon(acc.platform)}</span>
-                <div>
-                  <div style={{ fontSize: '.82rem', fontWeight: 600 }}>{acc.platform_account_name || platformLabel(acc.platform)}</div>
-                  <div style={{ fontSize: '.7rem', color: 'var(--muted)' }}>
-                    {acc.last_synced_at ? `Gesynchroniseerd ${new Date(acc.last_synced_at).toLocaleDateString('nl-NL')}` : 'Nog niet gesynchroniseerd'}
-                  </div>
-                </div>
-                <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#00a67d', flexShrink: 0 }} />
-              </div>
+      {/* Filters */}
+      <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'center' }}>
+        {isAdmin && clients.length > 0 && (
+          <select
+            value={selectedClient}
+            onChange={e => setSelectedClient(e.target.value)}
+            style={{
+              padding: '8px 14px', borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--border)', background: 'var(--card)',
+              color: 'var(--text)', fontSize: '.85rem', cursor: 'pointer',
+            }}
+          >
+            <option value="all">Alle klanten</option>
+            {clients.map(c => (
+              <option key={c.id} value={c.id}>{c.company_name}</option>
             ))}
+          </select>
+        )}
+        <select
+          value={selectedYear}
+          onChange={e => setSelectedYear(Number(e.target.value))}
+          style={{
+            padding: '8px 14px', borderRadius: 'var(--radius-sm)',
+            border: '1px solid var(--border)', background: 'var(--card)',
+            color: 'var(--text)', fontSize: '.85rem', cursor: 'pointer',
+          }}
+        >
+          <option value={currentYear}>{currentYear}</option>
+          <option value={currentYear - 1}>{currentYear - 1}</option>
+        </select>
+      </div>
+
+      {/* 4 KPI cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+        {[
+          { label: 'Totaal uitgegeven', value: fmtEur(totalSpend), prev: prevSpend, current: totalSpend, color: '#1877f2', icon: '💸' },
+          { label: 'Totaal omzet', value: fmtEur(totalRevenue), prev: prevRevenue, current: totalRevenue, color: '#00a67d', icon: '💰' },
+          { label: 'Gemiddelde ROAS', value: `${avgRoas.toFixed(2)}×`, prev: prevRoas, current: avgRoas, color: roasColor(avgRoas), icon: '📈' },
+          { label: 'Totaal leads', value: fmtNum(totalLeads), prev: prevLeads, current: totalLeads, color: 'var(--accent4)', icon: '🎯' },
+        ].map(({ label, value, prev, current, color, icon }) => (
+          <div key={label} style={{ ...cardStyle, position: 'relative', overflow: 'hidden' }}>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: color,
+            }} />
+            <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '1.3rem', opacity: .2 }}>{icon}</div>
+            <div style={{ fontSize: '.72rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>
+              {label}
+            </div>
+            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem' }}>
+              {value}
+            </div>
+            <TrendArrow current={current} prev={prev} />
+          </div>
+        ))}
+      </div>
+
+      {/* Platform breakdown table */}
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>
+            Platform overzicht
           </div>
         </div>
-      )}
-
-      {/* Campaigns table */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
-          <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>
-            Campagnes {filteredCampaigns.length > 0 && `(${filteredCampaigns.length})`}
-          </h3>
+        <div style={{ overflowX: 'auto' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+            <thead>
+              <tr>
+                {['Platform', 'Uitgegeven', 'Omzet', 'ROAS', 'Leads', 'Vertoningen'].map(h => (
+                  <th key={h} style={thStyle}>{h}</th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {platformRows.map(pl => (
+                <tr key={pl.key}>
+                  <td style={{ ...tdStyle, fontWeight: 600 }}>
+                    <span style={{ marginRight: '6px' }}>{pl.icon}</span>
+                    {pl.label}
+                  </td>
+                  <td style={tdStyle}>{fmtEur(pl.spend)}</td>
+                  <td style={tdStyle}>{fmtEur(pl.revenue)}</td>
+                  <td style={{ ...tdStyle, fontWeight: 700, color: roasColor(pl.roas) }}>
+                    {pl.spend > 0 ? `${pl.roas.toFixed(2)}×` : '—'}
+                  </td>
+                  <td style={tdStyle}>{fmtNum(pl.leads)}</td>
+                  <td style={tdStyle}>{fmtNum(pl.impressions)}</td>
+                </tr>
+              ))}
+              {/* Totals row */}
+              <tr style={{ background: 'var(--bg)' }}>
+                <td style={{ ...tdStyle, fontWeight: 700, fontFamily: 'var(--font-syne), sans-serif' }}>Totaal</td>
+                <td style={{ ...tdStyle, fontWeight: 700 }}>{fmtEur(totalRow.spend)}</td>
+                <td style={{ ...tdStyle, fontWeight: 700 }}>{fmtEur(totalRow.revenue)}</td>
+                <td style={{ ...tdStyle, fontWeight: 700, color: roasColor(totalRow.roas) }}>
+                  {totalRow.spend > 0 ? `${totalRow.roas.toFixed(2)}×` : '—'}
+                </td>
+                <td style={{ ...tdStyle, fontWeight: 700 }}>{fmtNum(totalRow.leads)}</td>
+                <td style={{ ...tdStyle, fontWeight: 700 }}>{fmtNum(totalRow.impressions)}</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
-        {filteredCampaigns.length > 0 ? (
+      </div>
+
+      {/* Monthly trend chart */}
+      <div style={cardStyle}>
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>
+            Maandelijkse trend
+          </div>
+          <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>Laatste 6 maanden — uitgaven vs omzet</div>
+        </div>
+        {/* Legend */}
+        <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.74rem', color: 'var(--muted)' }}>
+            <span style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#1877f2', flexShrink: 0 }} />
+            Uitgaven
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.74rem', color: 'var(--muted)' }}>
+            <span style={{ width: '12px', height: '12px', borderRadius: '2px', background: '#00a67d', flexShrink: 0 }} />
+            Omzet
+          </div>
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', height: '140px' }}>
+          {last6Months.map((m, i) => {
+            const spendH = (monthlySpend[i] / maxBarVal) * 110
+            const revH = (monthlyRevenue[i] / maxBarVal) * 110
+            return (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '6px' }}>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'flex-end', height: '110px' }}>
+                  <div
+                    title={`Uitgaven: ${fmtEur(monthlySpend[i])}`}
+                    style={{
+                      width: '14px',
+                      height: `${Math.max(spendH, monthlySpend[i] > 0 ? 3 : 0)}px`,
+                      background: '#1877f2',
+                      borderRadius: '3px 3px 0 0',
+                      alignSelf: 'flex-end',
+                    }}
+                  />
+                  <div
+                    title={`Omzet: ${fmtEur(monthlyRevenue[i])}`}
+                    style={{
+                      width: '14px',
+                      height: `${Math.max(revH, monthlyRevenue[i] > 0 ? 3 : 0)}px`,
+                      background: '#00a67d',
+                      borderRadius: '3px 3px 0 0',
+                      alignSelf: 'flex-end',
+                    }}
+                  />
+                </div>
+                <div style={{ fontSize: '.7rem', color: 'var(--muted)' }}>{m.label}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* ROI entries table */}
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <div>
+            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>
+              ROI Entries
+            </div>
+            <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>
+              {sortedEntries.length} {sortedEntries.length === 1 ? 'entry' : 'entries'}
+            </div>
+          </div>
+          <Link href="/roi" style={{
+            fontSize: '.78rem', color: 'var(--accent1)', fontWeight: 600,
+            textDecoration: 'none',
+          }}>
+            Beheren →
+          </Link>
+        </div>
+        {sortedEntries.length === 0 ? (
+          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--muted)' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📭</div>
+            <div style={{ fontWeight: 600, marginBottom: '8px' }}>Geen data voor deze filters</div>
+            <div style={{ fontSize: '.85rem' }}>Pas de filters aan of voeg ROI entries toe</div>
+          </div>
+        ) : (
           <div style={{ overflowX: 'auto' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
-                <tr style={{ background: 'var(--bg)' }}>
-                  {['Platform', 'Campagne', 'Status', 'Uitgegeven', 'Vertoningen', 'Klikken', 'ROAS'].map(h => (
-                    <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '.75rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.05em', whiteSpace: 'nowrap' }}>{h}</th>
+                <tr>
+                  {([
+                    { key: 'month' as SortKey, label: 'Maand' },
+                    { key: 'year' as SortKey, label: 'Jaar' },
+                    { key: 'platform' as SortKey, label: 'Platform' },
+                    ...(isAdmin ? [{ key: 'client' as SortKey, label: 'Klant' }] : []),
+                    { key: 'spend' as SortKey, label: 'Uitgaven' },
+                    { key: 'revenue' as SortKey, label: 'Omzet' },
+                    { key: 'roas' as SortKey, label: 'ROAS' },
+                  ]).map(col => (
+                    <th
+                      key={col.key}
+                      onClick={() => toggleSort(col.key)}
+                      style={{ ...thStyle, cursor: 'pointer', userSelect: 'none' }}
+                    >
+                      {col.label}<SortIndicator k={col.key} />
+                    </th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {filteredCampaigns.map(c => {
-                  const m = sumMetrics(c)
-                  const roas = c.ad_metrics?.[0]?.roas
+                {sortedEntries.map(e => {
+                  const roas = (e.ad_spend || 0) > 0 ? (e.revenue || 0) / (e.ad_spend || 0) : 0
+                  const plConfig = AD_PLATFORMS.find(p => p.key === (e.platform || '').toLowerCase())
                   return (
-                    <tr key={c.id} style={{ borderTop: '1px solid var(--border)' }}>
-                      <td style={{ padding: '12px 16px', fontSize: '.82rem' }}>{platformIcon(c.ad_accounts?.platform)} {platformLabel(c.ad_accounts?.platform || '')}</td>
-                      <td style={{ padding: '12px 16px', fontSize: '.85rem', fontWeight: 600, maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.campaign_name || 'Campagne'}</td>
-                      <td style={{ padding: '12px 16px' }}>
-                        <span style={{ fontSize: '.72rem', padding: '3px 8px', borderRadius: '50px', background: c.status === 'ACTIVE' ? 'rgba(0,166,125,.1)' : 'rgba(107,120,168,.1)', color: c.status === 'ACTIVE' ? '#00a67d' : 'var(--muted)', fontWeight: 600 }}>
-                          {c.status || 'Onbekend'}
+                    <tr key={e.id}>
+                      <td style={tdStyle}>{MONTH_NAMES_SHORT[(e.month || 1) - 1] || e.month}</td>
+                      <td style={tdStyle}>{e.year}</td>
+                      <td style={{ ...tdStyle }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '5px',
+                          fontSize: '.78rem', fontWeight: 600,
+                          color: plConfig?.color || 'var(--muted)',
+                        }}>
+                          {plConfig?.icon || '📊'} {plConfig?.label || e.platform || '—'}
                         </span>
                       </td>
-                      <td style={{ padding: '12px 16px', fontSize: '.85rem' }}>{fmtEur(m.spend)}</td>
-                      <td style={{ padding: '12px 16px', fontSize: '.85rem' }}>{fmt(m.impressions)}</td>
-                      <td style={{ padding: '12px 16px', fontSize: '.85rem' }}>{fmt(m.clicks)}</td>
-                      <td style={{ padding: '12px 16px', fontSize: '.85rem', fontWeight: 600, color: roas > 2 ? 'var(--accent3)' : 'var(--text)' }}>
-                        {roas ? `${roas.toFixed(2)}x` : '-'}
+                      {isAdmin && (
+                        <td style={{ ...tdStyle, color: 'var(--muted)' }}>
+                          {e.clients?.company_name || '—'}
+                        </td>
+                      )}
+                      <td style={tdStyle}>{fmtEur(e.ad_spend || 0)}</td>
+                      <td style={tdStyle}>{fmtEur(e.revenue || 0)}</td>
+                      <td style={{ ...tdStyle, fontWeight: 700, color: roasColor(roas) }}>
+                        {(e.ad_spend || 0) > 0 ? `${roas.toFixed(2)}×` : '—'}
                       </td>
                     </tr>
                   )
                 })}
               </tbody>
             </table>
-          </div>
-        ) : (
-          <div style={{ padding: '48px', textAlign: 'center', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>📊</div>
-            <div style={{ fontWeight: 600 }}>Geen campagnedata</div>
-            <div style={{ fontSize: '.85rem', marginTop: '4px' }}>
-              {adAccounts.length === 0 ? 'Koppel eerst een advertentieplatform' : 'Data wordt dagelijks gesynchroniseerd'}
-            </div>
           </div>
         )}
       </div>

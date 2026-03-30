@@ -4,12 +4,15 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import type { UserProfile, Agency, BrandKit } from '@/types'
 
 interface Props {
   profile: UserProfile & { agencies?: Agency }
   agency: Agency | null
   brandKit: BrandKit | null
+  isOpen?: boolean
+  onClose?: () => void
 }
 
 interface NavItem {
@@ -37,9 +40,19 @@ const NAV_ITEMS: NavItem[] = [
 
 const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
 
-export default function Sidebar({ profile, agency, brandKit }: Props) {
+export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: Props) {
   const pathname = usePathname()
   const router = useRouter()
+  const [isMobile, setIsMobile] = useState(false)
+
+  useEffect(() => {
+    function checkMobile() {
+      setIsMobile(window.innerWidth < 768)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   const isAdmin = profile.role === 'admin' || profile.role === 'manager'
   const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL
@@ -62,7 +75,22 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
     .toUpperCase()
     .slice(0, 2) || '?'
 
+  const sidebarOpen = isOpen ?? true
+
   return (
+    <>
+      {/* Backdrop on mobile */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={onClose}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.45)',
+            zIndex: 99,
+          }}
+        />
+      )}
     <aside style={{
       width: 'var(--sidebar-width)',
       minHeight: '100vh',
@@ -75,12 +103,41 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
       bottom: 0,
       zIndex: 100,
       boxShadow: '4px 0 32px rgba(26,63,228,.22)',
+      transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
+      transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
     }}>
       {/* Logo */}
       <div style={{
         padding: '28px 24px 20px',
         borderBottom: '1px solid rgba(255,255,255,.15)',
+        position: 'relative',
       }}>
+        {/* Close button — mobile only */}
+        {isMobile && onClose && (
+          <button
+            onClick={onClose}
+            style={{
+              position: 'absolute',
+              top: '16px',
+              right: '16px',
+              background: 'rgba(255,255,255,.15)',
+              border: 'none',
+              borderRadius: '50%',
+              width: '28px',
+              height: '28px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: '#fff',
+              fontSize: '1rem',
+              cursor: 'pointer',
+              lineHeight: 1,
+            }}
+            aria-label="Sluiten"
+          >
+            ×
+          </button>
+        )}
         {logoUrl ? (
           <img src={logoUrl} alt={agencyName} style={{ height: '32px', objectFit: 'contain' }} />
         ) : (
@@ -210,6 +267,7 @@ export default function Sidebar({ profile, agency, brandKit }: Props) {
         </div>
       </div>
     </aside>
+    </>
   )
 }
 

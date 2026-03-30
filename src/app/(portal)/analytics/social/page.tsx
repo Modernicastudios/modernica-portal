@@ -7,14 +7,37 @@ export default async function SocialAnalyticsPage() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single()
+  const { data: profile } = await supabase
+    .from('user_profiles')
+    .select('*')
+    .eq('id', user.id)
+    .single()
+
   const agencyId = profile?.agency_id || ''
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isClient = !!profile?.client_id
 
-  const { data: socialAccounts } = await supabase
-    .from('social_accounts')
-    .select('*, social_metrics(date, followers, reach, impressions, engagement_rate)')
+  const sixMonthsAgo = new Date()
+  sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6)
+
+  let postsQuery = supabase
+    .from('content_posts')
+    .select('id, platform, status, scheduled_at, content_type, created_at')
     .eq('agency_id', agencyId)
-    .eq('is_active', true)
+    .gte('created_at', sixMonthsAgo.toISOString())
+    .order('scheduled_at', { ascending: false })
 
-  return <SocialAnalyticsClient accounts={socialAccounts || []} agencyId={agencyId} />
+  if (isClient && profile?.client_id) {
+    postsQuery = postsQuery.eq('client_id', profile.client_id)
+  }
+
+  const { data: posts } = await postsQuery
+
+  return (
+    <SocialAnalyticsClient
+      posts={posts || []}
+      isAdmin={isAdmin}
+      clientId={profile?.client_id || ''}
+    />
+  )
 }

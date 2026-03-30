@@ -1,109 +1,340 @@
 'use client'
 
-import Link from 'next/link'
-
-const PLATFORM_CONFIG: Record<string, { label: string; icon: string; color: string; bg: string }> = {
-  instagram: { label: 'Instagram', icon: '📸', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)' },
-  facebook: { label: 'Facebook', icon: '📘', color: '#1877f2', bg: 'linear-gradient(135deg,#1877f2,#42a5f5)' },
-  linkedin: { label: 'LinkedIn', icon: '💼', color: '#0077b5', bg: 'linear-gradient(135deg,#0077b5,#00a0dc)' },
-  tiktok: { label: 'TikTok', icon: '🎵', color: '#000', bg: 'linear-gradient(135deg,#010101,#69c9d0)' },
-  youtube: { label: 'YouTube', icon: '▶️', color: '#ff0000', bg: 'linear-gradient(135deg,#ff0000,#ff6b6b)' },
-}
+import { CSSProperties } from 'react'
 
 interface Props {
-  accounts: any[]
-  agencyId: string
+  posts: any[]
+  isAdmin: boolean
+  clientId: string
 }
 
-export default function SocialAnalyticsClient({ accounts, agencyId }: Props) {
-  if (accounts.length === 0) {
-    return (
-      <div className="animate-fade-up">
-        <div style={{
-          background: 'linear-gradient(135deg, var(--accent1), #2d5fff)',
-          borderRadius: 'var(--radius)', padding: '40px', textAlign: 'center',
-          color: '#fff', boxShadow: '0 8px 40px rgba(26,63,228,.3)',
-        }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>📱</div>
-          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.4rem', marginBottom: '8px' }}>
-            Koppel je social media accounts
-          </div>
-          <div style={{ opacity: .85, fontSize: '.9rem', marginBottom: '24px' }}>
-            Verbind Instagram, TikTok, LinkedIn en meer om analytics te zien
-          </div>
-          <Link href="/settings/integrations" style={{
-            background: '#fff', color: 'var(--accent1)', padding: '12px 28px',
-            borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: '.9rem',
-            textDecoration: 'none', display: 'inline-block',
-          }}>
-            🔗 Accounts koppelen
-          </Link>
-        </div>
-      </div>
-    )
+const PLATFORMS: { key: string; label: string; icon: string; color: string; accent: string }[] = [
+  { key: 'instagram', label: 'Instagram', icon: '📸', color: '#e1306c', accent: '#e1306c' },
+  { key: 'facebook', label: 'Facebook', icon: '📘', color: '#1877f2', accent: '#1877f2' },
+  { key: 'linkedin', label: 'LinkedIn', icon: '💼', color: '#0077b5', accent: '#0077b5' },
+  { key: 'tiktok', label: 'TikTok', icon: '🎵', color: '#010101', accent: '#69c9d0' },
+  { key: 'youtube', label: 'YouTube', icon: '▶️', color: '#ff0000', accent: '#ff6b6b' },
+]
+
+const PLATFORM_COLORS: Record<string, string> = {
+  instagram: '#e1306c',
+  facebook: '#1877f2',
+  linkedin: '#0077b5',
+  tiktok: '#010101',
+  youtube: '#ff0000',
+}
+
+const STATUS_LABELS: Record<string, string> = {
+  published: 'Gepubliceerd',
+  scheduled: 'Gepland',
+  pending_approval: 'Ter goedkeuring',
+  draft: 'Concept',
+  approved: 'Goedgekeurd',
+}
+
+const STATUS_COLORS: Record<string, { bg: string; color: string }> = {
+  published: { bg: 'rgba(0,166,125,.12)', color: '#00a67d' },
+  scheduled: { bg: 'rgba(26,63,228,.1)', color: 'var(--accent1)' },
+  pending_approval: { bg: 'rgba(255,170,0,.12)', color: '#cc8800' },
+  draft: { bg: 'rgba(107,120,168,.1)', color: 'var(--muted)' },
+  approved: { bg: 'rgba(0,166,125,.08)', color: '#00a67d' },
+}
+
+const CONTENT_TYPES = ['Reels', 'Post', 'Story', 'Carrousel']
+
+const MONTH_NAMES_SHORT = ['Jan', 'Feb', 'Mrt', 'Apr', 'Mei', 'Jun', 'Jul', 'Aug', 'Sep', 'Okt', 'Nov', 'Dec']
+
+function getLast6Months(): { year: number; month: number; label: string }[] {
+  const now = new Date()
+  const result = []
+  for (let i = 5; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    result.push({ year: d.getFullYear(), month: d.getMonth(), label: MONTH_NAMES_SHORT[d.getMonth()] })
+  }
+  return result
+}
+
+export default function SocialAnalyticsClient({ posts }: Props) {
+  const now = new Date()
+  const thisMonth = now.getMonth()
+  const thisYear = now.getFullYear()
+
+  // Platform breakdown (published posts per platform)
+  const platformCounts: Record<string, number> = {}
+  for (const p of PLATFORMS) platformCounts[p.key] = 0
+  for (const post of posts) {
+    const pl = (post.platform || '').toLowerCase()
+    if (platformCounts[pl] !== undefined) platformCounts[pl]++
+    else platformCounts[pl] = (platformCounts[pl] || 0) + 1
+  }
+
+  // Stats this month
+  const thisMonthPosts = posts.filter(p => {
+    const d = new Date(p.scheduled_at || p.created_at)
+    return d.getMonth() === thisMonth && d.getFullYear() === thisYear
+  })
+  const totalThisMonth = thisMonthPosts.length
+  const publishedThisMonth = thisMonthPosts.filter(p => p.status === 'published').length
+  const scheduledThisMonth = thisMonthPosts.filter(p => p.status === 'scheduled').length
+  const pendingThisMonth = thisMonthPosts.filter(p => p.status === 'pending_approval').length
+
+  // 6-month bar chart data
+  const last6 = getLast6Months()
+  const monthlyByPlatform: Record<string, number[]> = {}
+  for (const p of PLATFORMS) {
+    monthlyByPlatform[p.key] = Array(6).fill(0)
+  }
+  for (const post of posts) {
+    if (post.status !== 'published') continue
+    const d = new Date(post.scheduled_at || post.created_at)
+    const idx = last6.findIndex(m => m.year === d.getFullYear() && m.month === d.getMonth())
+    if (idx !== -1) {
+      const pl = (post.platform || '').toLowerCase()
+      if (monthlyByPlatform[pl]) monthlyByPlatform[pl][idx]++
+    }
+  }
+  const monthTotals = last6.map((_, i) =>
+    PLATFORMS.reduce((s, p) => s + (monthlyByPlatform[p.key]?.[i] || 0), 0)
+  )
+  const maxMonthTotal = Math.max(...monthTotals, 1)
+
+  // Content type breakdown
+  const typeCounts: Record<string, number> = {}
+  for (const t of CONTENT_TYPES) typeCounts[t.toLowerCase()] = 0
+  for (const post of posts) {
+    const t = (post.content_type || '').toLowerCase()
+    if (typeCounts[t] !== undefined) typeCounts[t]++
+    else typeCounts[t] = (typeCounts[t] || 0) + 1
+  }
+  const totalTyped = Object.values(typeCounts).reduce((a, b) => a + b, 0) || 1
+
+  // Last 10 published posts
+  const recentPublished = posts
+    .filter(p => p.status === 'published')
+    .sort((a, b) => new Date(b.scheduled_at || b.created_at).getTime() - new Date(a.scheduled_at || a.created_at).getTime())
+    .slice(0, 10)
+
+  const cardStyle: CSSProperties = {
+    background: 'var(--card)',
+    border: '1px solid var(--border)',
+    borderRadius: 'var(--radius)',
+    padding: '20px',
+    boxShadow: '0 2px 12px rgba(26,63,228,.06)',
+  }
+
+  const labelStyle: CSSProperties = {
+    fontSize: '.72rem',
+    color: 'var(--muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '.08em',
+    marginBottom: '6px',
   }
 
   return (
-    <div className="animate-fade-up">
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))', gap: '20px' }}>
-        {accounts.map(account => {
-          const cfg = PLATFORM_CONFIG[account.platform] || { label: account.platform, icon: '📱', color: '#666', bg: '#eee' }
-          const latestMetrics = account.social_metrics?.sort((a: any, b: any) => new Date(b.date).getTime() - new Date(a.date).getTime())[0]
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+      {/* Header */}
+      <div>
+        <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem', marginBottom: '4px' }}>
+          Content Overzicht
+        </h1>
+        <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>
+          Analyse van gepubliceerde en geplande content — laatste 6 maanden
+        </p>
+      </div>
 
-          return (
-            <div key={account.id} style={{
-              background: 'var(--card)', border: '1px solid var(--border)',
-              borderRadius: 'var(--radius)', overflow: 'hidden',
-              boxShadow: '0 2px 12px rgba(26,63,228,.06)',
-            }}>
-              {/* Platform header */}
-              <div style={{ background: cfg.bg, padding: '20px', color: '#fff' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '1.5rem' }}>{cfg.icon}</span>
-                  <div>
-                    <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem' }}>{cfg.label}</div>
-                    {account.platform_username && (
-                      <div style={{ fontSize: '.78rem', opacity: .85 }}>@{account.platform_username}</div>
-                    )}
-                  </div>
-                  <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '6px', background: 'rgba(255,255,255,.2)', padding: '4px 10px', borderRadius: '50px', fontSize: '.72rem', fontWeight: 600 }}>
-                    <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#4cff91' }} />
-                    Actief
-                  </div>
-                </div>
-                {latestMetrics?.followers && (
-                  <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.8rem' }}>
-                    {latestMetrics.followers.toLocaleString('nl-NL')}
-                    <span style={{ fontSize: '.85rem', fontWeight: 400, opacity: .8, marginLeft: '6px' }}>volgers</span>
-                  </div>
-                )}
+      {/* Platform breakdown cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(5, 1fr)', gap: '12px' }}>
+        {PLATFORMS.map(pl => (
+          <div key={pl.key} style={{
+            background: 'var(--card)',
+            border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)',
+            overflow: 'hidden',
+            boxShadow: '0 2px 8px rgba(26,63,228,.05)',
+          }}>
+            <div style={{ height: '4px', background: pl.color }} />
+            <div style={{ padding: '16px', textAlign: 'center' }}>
+              <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>{pl.icon}</div>
+              <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.6rem', color: pl.color }}>
+                {platformCounts[pl.key] || 0}
               </div>
-
-              {/* Metrics */}
-              <div style={{ padding: '16px' }}>
-                {latestMetrics ? (
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                    {[
-                      { label: 'Bereik', value: latestMetrics.reach?.toLocaleString('nl-NL') || '-' },
-                      { label: 'Vertoningen', value: latestMetrics.impressions?.toLocaleString('nl-NL') || '-' },
-                      { label: 'Engagement', value: latestMetrics.engagement_rate ? `${latestMetrics.engagement_rate.toFixed(2)}%` : '-' },
-                      { label: 'Datum', value: new Date(latestMetrics.date).toLocaleDateString('nl-NL') },
-                    ].map(({ label, value }) => (
-                      <div key={label} style={{ background: 'var(--bg)', padding: '10px', borderRadius: 'var(--radius-sm)' }}>
-                        <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>{label}</div>
-                        <div style={{ fontWeight: 700, fontSize: '.9rem' }}>{value}</div>
-                      </div>
-                    ))}
-                  </div>
-                ) : (
-                  <p style={{ color: 'var(--muted)', fontSize: '.85rem', textAlign: 'center', padding: '12px 0' }}>
-                    Data wordt morgen gesynchroniseerd
-                  </p>
-                )}
-              </div>
+              <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '4px' }}>{pl.label}</div>
             </div>
-          )
-        })}
+          </div>
+        ))}
+      </div>
+
+      {/* Stats row */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+        {[
+          { label: 'Posts deze maand', value: totalThisMonth, color: 'var(--accent1)', icon: '📅' },
+          { label: 'Gepubliceerd', value: publishedThisMonth, color: '#00a67d', icon: '✅' },
+          { label: 'Gepland', value: scheduledThisMonth, color: '#1877f2', icon: '🕐' },
+          { label: 'Ter goedkeuring', value: pendingThisMonth, color: '#cc8800', icon: '⏳' },
+        ].map(({ label, value, color, icon }) => (
+          <div key={label} style={{ ...cardStyle, position: 'relative', overflow: 'hidden' }}>
+            <div style={{
+              position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
+              background: color,
+            }} />
+            <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '1.3rem', opacity: .2 }}>{icon}</div>
+            <div style={labelStyle}>{label}</div>
+            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.8rem' }}>{value}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* 6-month bar chart */}
+      <div style={cardStyle}>
+        <div style={{ marginBottom: '16px' }}>
+          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>
+            Gepubliceerde posts per maand
+          </div>
+          <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '4px' }}>Laatste 6 maanden</div>
+        </div>
+        {/* Legend */}
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '16px' }}>
+          {PLATFORMS.map(pl => (
+            <div key={pl.key} style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '.74rem', color: 'var(--muted)' }}>
+              <span style={{ width: '10px', height: '10px', borderRadius: '2px', background: pl.color, flexShrink: 0 }} />
+              {pl.label}
+            </div>
+          ))}
+        </div>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'flex-end', height: '140px' }}>
+          {last6.map((m, i) => {
+            const total = monthTotals[i]
+            const barH = (total / maxMonthTotal) * 120
+            return (
+              <div key={i} style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '4px' }}>
+                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'flex-end', height: '120px', width: '100%', gap: '1px' }}>
+                  {PLATFORMS.map(pl => {
+                    const count = monthlyByPlatform[pl.key]?.[i] || 0
+                    if (count === 0) return null
+                    const h = (count / maxMonthTotal) * 120
+                    return (
+                      <div
+                        key={pl.key}
+                        title={`${pl.label}: ${count}`}
+                        style={{
+                          height: `${h}px`,
+                          background: pl.color,
+                          borderRadius: '2px',
+                          minHeight: count > 0 ? '3px' : '0',
+                          transition: 'height .3s',
+                        }}
+                      />
+                    )
+                  })}
+                  {total === 0 && (
+                    <div style={{ height: '3px', background: 'var(--border)', borderRadius: '2px' }} />
+                  )}
+                </div>
+                <div style={{ fontSize: '.7rem', color: 'var(--muted)', textAlign: 'center' }}>{m.label}</div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Content type breakdown */}
+      <div style={cardStyle}>
+        <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '16px' }}>
+          Content type verdeling
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          {CONTENT_TYPES.map((type, idx) => {
+            const count = typeCounts[type.toLowerCase()] || 0
+            const pct = Math.round((count / totalTyped) * 100)
+            const colors = ['var(--accent1)', 'var(--accent2)', 'var(--accent3)', 'var(--accent4)']
+            return (
+              <div key={type}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
+                  <span style={{ fontSize: '.82rem', fontWeight: 600 }}>{type}</span>
+                  <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>{count} ({pct}%)</span>
+                </div>
+                <div style={{ height: '6px', borderRadius: '4px', background: 'var(--border)', overflow: 'hidden' }}>
+                  <div style={{
+                    height: '100%',
+                    width: `${pct}%`,
+                    background: colors[idx % colors.length],
+                    borderRadius: '4px',
+                    transition: 'width .5s',
+                  }} />
+                </div>
+              </div>
+            )
+          })}
+        </div>
+      </div>
+
+      {/* Status timeline — last 10 published */}
+      <div style={{ ...cardStyle, padding: 0, overflow: 'hidden' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)' }}>
+          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>
+            Recente publicaties
+          </div>
+          <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginTop: '2px' }}>Laatste 10 gepubliceerde posts</div>
+        </div>
+        {recentPublished.length === 0 ? (
+          <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
+            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📭</div>
+            <div style={{ fontWeight: 600 }}>Nog geen gepubliceerde posts</div>
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <thead>
+                <tr style={{ background: 'var(--bg)' }}>
+                  {['Platform', 'Datum', 'Content type', 'Status'].map(h => (
+                    <th key={h} style={{
+                      padding: '10px 16px', textAlign: 'left',
+                      fontSize: '.73rem', fontWeight: 700,
+                      color: 'var(--muted)', textTransform: 'uppercase',
+                      letterSpacing: '.05em', whiteSpace: 'nowrap',
+                    }}>{h}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {recentPublished.map(post => {
+                  const pl = PLATFORMS.find(p => p.key === (post.platform || '').toLowerCase())
+                  const statusStyle = STATUS_COLORS[post.status] || { bg: 'rgba(107,120,168,.1)', color: 'var(--muted)' }
+                  const date = new Date(post.scheduled_at || post.created_at)
+                  return (
+                    <tr key={post.id} style={{ borderTop: '1px solid var(--border)' }}>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                          background: `${PLATFORM_COLORS[(post.platform || '').toLowerCase()] || '#666'}18`,
+                          color: PLATFORM_COLORS[(post.platform || '').toLowerCase()] || 'var(--muted)',
+                          padding: '3px 8px', borderRadius: '50px',
+                          fontSize: '.75rem', fontWeight: 600,
+                        }}>
+                          {pl?.icon || '📱'} {pl?.label || post.platform || '—'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '.82rem', color: 'var(--muted)' }}>
+                        {date.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </td>
+                      <td style={{ padding: '12px 16px', fontSize: '.82rem', textTransform: 'capitalize' }}>
+                        {post.content_type || '—'}
+                      </td>
+                      <td style={{ padding: '12px 16px' }}>
+                        <span style={{
+                          fontSize: '.72rem', padding: '3px 8px', borderRadius: '50px',
+                          background: statusStyle.bg, color: statusStyle.color, fontWeight: 600,
+                        }}>
+                          {STATUS_LABELS[post.status] || post.status || '—'}
+                        </span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   )

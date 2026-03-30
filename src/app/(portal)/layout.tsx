@@ -1,8 +1,7 @@
+import React from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
-import Sidebar from '@/components/layout/Sidebar'
-import Header from '@/components/layout/Header'
-import SupportButton from '@/components/layout/SupportButton'
+import PortalShell from '@/components/layout/PortalShell'
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient()
@@ -28,22 +27,15 @@ export default async function PortalLayout({ children }: { children: React.React
   } : {}
 
   return (
-    <div
-      className="shell"
-      style={{
-        display: 'flex',
-        minHeight: '100vh',
-        ...themeVars,
-      }}
-    >
-      <Sidebar profile={profile} agency={agency} brandKit={brandKit} />
-      <div style={{ marginLeft: 'var(--sidebar-width)', flex: 1, minHeight: '100vh', overflow: 'hidden' }}>
-        <Header profile={profile} agency={agency} userId={user.id} />
-        <main style={{ padding: '32px', animation: 'fadeUp 0.3s ease' }}>
-          {children}
-        </main>
-      </div>
-      <SupportButton agencyId={profile.agency_id || ''} userId={user.id} />
+    <div style={themeVars as React.CSSProperties}>
+      <PortalShell
+        profile={profile}
+        agency={agency}
+        brandKit={brandKit}
+        userId={user.id}
+      >
+        {children}
+      </PortalShell>
     </div>
   )
 }

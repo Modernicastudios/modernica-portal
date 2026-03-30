@@ -44,6 +44,7 @@ export default async function DashboardPage() {
     { data: pendingTasks },
     { data: thisWeekPosts },
     { count: pendingApprovalCount },
+    { data: brandKitRow },
   ] = await Promise.all([
     supabase
       .from('clients')
@@ -77,10 +78,51 @@ export default async function DashboardPage() {
       .select('*', { count: 'exact', head: true })
       .eq('agency_id', agencyId || '')
       .eq('status', 'pending_approval'),
+    supabase
+      .from('brand_kits')
+      .select('logo_url')
+      .eq('agency_id', agencyId || '')
+      .maybeSingle(),
   ])
+
+  // Check if setup is incomplete (admin without logo)
+  const showSetupBanner = isAdmin && !brandKitRow?.logo_url
 
   return (
     <div className="animate-fade-up">
+      {/* SETUP BANNER — admin only, when no logo configured */}
+      {showSetupBanner && (
+        <a
+          href="/onboarding"
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            background: 'linear-gradient(90deg, #f5a623 0%, #ffcc70 100%)',
+            borderRadius: 'var(--radius)',
+            padding: '14px 20px',
+            marginBottom: '20px',
+            textDecoration: 'none',
+            boxShadow: '0 2px 12px rgba(245,166,35,.25)',
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <span style={{ fontSize: '1.2rem' }}>🚀</span>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '.9rem', color: '#7a4800' }}>
+                Stel je agency in
+              </div>
+              <div style={{ fontSize: '.78rem', color: 'rgba(122,72,0,.75)' }}>
+                Logo, huisstijlkleuren en je eerste klant — het duurt 2 minuten
+              </div>
+            </div>
+          </div>
+          <span style={{ fontWeight: 700, fontSize: '.85rem', color: '#7a4800', whiteSpace: 'nowrap' }}>
+            Onboarding →
+          </span>
+        </a>
+      )}
+
       {/* HERO BANNER */}
       <div style={{
         background: 'linear-gradient(135deg, var(--accent1) 0%, #2d5fff 60%, #7c5ff5 100%)',
