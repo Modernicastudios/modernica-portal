@@ -1,0 +1,231 @@
+'use client'
+
+import Link from 'next/link'
+import { usePathname } from 'next/navigation'
+import { createClient } from '@/lib/supabase/client'
+import { useRouter } from 'next/navigation'
+import type { UserProfile, Agency, BrandKit } from '@/types'
+
+interface Props {
+  profile: UserProfile & { agencies?: Agency }
+  agency: Agency | null
+  brandKit: BrandKit | null
+}
+
+interface NavItem {
+  href: string
+  label: string
+  icon: string
+  adminOnly?: boolean
+  superAdminOnly?: boolean
+}
+
+const NAV_ITEMS: NavItem[] = [
+  { href: '/dashboard', label: 'Dashboard', icon: '⊞' },
+  { href: '/analytics/ads', label: 'Paid Ads', icon: '📊' },
+  { href: '/analytics/social', label: 'Social Organic', icon: '📱' },
+  { href: '/projects', label: 'Project Board', icon: '📋' },
+  { href: '/content', label: 'Content Kalender', icon: '📅' },
+  { href: '/chat', label: 'Berichten', icon: '💬' },
+  { href: '/clients', label: 'Klantbeheer', icon: '👥', adminOnly: true },
+  { href: '/settings/profile', label: 'Mijn Profiel', icon: '👤' },
+  { href: '/settings/agency', label: 'Agency Instellingen', icon: '⚙️', adminOnly: true },
+  { href: '/settings/integrations', label: 'Koppelingen', icon: '🔗', adminOnly: true },
+  { href: '/settings/billing', label: 'Abonnement', icon: '💳', adminOnly: true },
+  { href: '/admin', label: 'Platform Beheer', icon: '🛡️', superAdminOnly: true },
+]
+
+const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
+
+export default function Sidebar({ profile, agency, brandKit }: Props) {
+  const pathname = usePathname()
+  const router = useRouter()
+
+  const isAdmin = profile.role === 'admin' || profile.role === 'manager'
+  const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL
+  const isClient = !!profile.client_id
+
+  const logoUrl = brandKit?.logo_url || null
+  const agencyName = agency?.name || 'Modernica'
+
+  async function handleLogout() {
+    const supabase = createClient()
+    await supabase.auth.signOut()
+    router.push('/login')
+    router.refresh()
+  }
+
+  const initials = profile.full_name
+    ?.split(' ')
+    .map(n => n[0])
+    .join('')
+    .toUpperCase()
+    .slice(0, 2) || '?'
+
+  return (
+    <aside style={{
+      width: 'var(--sidebar-width)',
+      minHeight: '100vh',
+      background: 'var(--accent1)',
+      display: 'flex',
+      flexDirection: 'column',
+      position: 'fixed',
+      left: 0,
+      top: 0,
+      bottom: 0,
+      zIndex: 100,
+      boxShadow: '4px 0 32px rgba(26,63,228,.22)',
+    }}>
+      {/* Logo */}
+      <div style={{
+        padding: '28px 24px 20px',
+        borderBottom: '1px solid rgba(255,255,255,.15)',
+      }}>
+        {logoUrl ? (
+          <img src={logoUrl} alt={agencyName} style={{ height: '32px', objectFit: 'contain' }} />
+        ) : (
+          <>
+            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#fff', letterSpacing: '-0.5px' }}>
+              {agencyName}
+            </div>
+            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,.55)', marginTop: '2px', letterSpacing: '.05em', textTransform: 'uppercase' }}>
+              {isSuperAdmin ? 'Super Admin' : 'Portal'}
+            </div>
+          </>
+        )}
+      </div>
+
+      {/* Navigation */}
+      <nav style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>
+        {/* Client switcher for admins */}
+        {isAdmin && !isSuperAdmin && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
+              Overzicht
+            </div>
+            <NavLink href="/dashboard" label="Dashboard" icon="⊞" active={pathname === '/dashboard'} />
+            <NavLink href="/analytics/ads" label="Paid Ads" icon="📊" active={pathname.startsWith('/analytics/ads')} />
+            <NavLink href="/analytics/social" label="Social Organic" icon="📱" active={pathname.startsWith('/analytics/social')} />
+          </div>
+        )}
+
+        {!isAdmin && !isSuperAdmin && (
+          <div style={{ marginBottom: '16px' }}>
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
+              Mijn portaal
+            </div>
+            <NavLink href="/dashboard" label="Dashboard" icon="⊞" active={pathname === '/dashboard'} />
+          </div>
+        )}
+
+        {isAdmin && (
+          <>
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
+              Projecten
+            </div>
+            <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
+            <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname === '/content'} />
+            <NavLink href="/content/compose" label="Post aanmaken" icon="✍️" active={pathname === '/content/compose'} />
+            <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
+
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+              Beheer
+            </div>
+            <NavLink href="/clients" label="Klantbeheer" icon="👥" active={pathname.startsWith('/clients')} />
+            <NavLink href="/settings/integrations" label="Koppelingen" icon="🔗" active={pathname.startsWith('/settings/integrations')} />
+            <NavLink href="/settings/agency" label="Agency Instellingen" icon="⚙️" active={pathname.startsWith('/settings/agency')} />
+            <NavLink href="/settings/billing" label="Abonnement" icon="💳" active={pathname.startsWith('/settings/billing')} />
+          </>
+        )}
+
+        {!isAdmin && (
+          <>
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
+              Mijn projecten
+            </div>
+            <NavLink href="/projects" label="Project Board" icon="📋" active={pathname.startsWith('/projects')} />
+            <NavLink href="/content" label="Content Kalender" icon="📅" active={pathname.startsWith('/content')} />
+            <NavLink href="/chat" label="Berichten" icon="💬" active={pathname.startsWith('/chat')} />
+          </>
+        )}
+
+        {isSuperAdmin && (
+          <>
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+              Super Admin
+            </div>
+            <NavLink href="/admin" label="Platform Beheer" icon="🛡️" active={pathname.startsWith('/admin')} />
+          </>
+        )}
+
+        <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+          Account
+        </div>
+        <NavLink href="/settings/profile" label="Mijn Profiel" icon="👤" active={pathname.startsWith('/settings/profile')} />
+      </nav>
+
+      {/* User chip */}
+      <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,.15)' }}>
+        <div
+          onClick={handleLogout}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '10px',
+            padding: '10px 12px',
+            borderRadius: 'var(--radius-sm)',
+            background: 'rgba(255,255,255,.12)',
+            cursor: 'pointer',
+          }}
+        >
+          <div style={{
+            width: '32px', height: '32px', borderRadius: '50%',
+            background: profile.avatar_url ? 'none' : 'rgba(255,255,255,.25)',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontSize: '.75rem', fontWeight: 700, color: '#fff',
+            border: '2px solid rgba(255,255,255,.4)',
+            flexShrink: 0,
+            overflow: 'hidden',
+          }}>
+            {profile.avatar_url ? (
+              <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            ) : initials}
+          </div>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ fontSize: '.82rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+              {profile.full_name}
+            </div>
+            <div style={{ fontSize: '.7rem', color: 'rgba(255,255,255,.55)' }}>
+              Uitloggen
+            </div>
+          </div>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+function NavLink({ href, label, icon, active }: { href: string; label: string; icon: string; active: boolean }) {
+  return (
+    <Link
+      href={href}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: '10px',
+        padding: '10px 12px',
+        borderRadius: 'var(--radius-sm)',
+        fontSize: '.88rem',
+        color: active ? '#fff' : 'rgba(255,255,255,.6)',
+        background: active ? 'rgba(255,255,255,.18)' : 'transparent',
+        textDecoration: 'none',
+        transition: 'all .18s',
+        marginBottom: '2px',
+        fontWeight: active ? 600 : 400,
+      }}
+    >
+      <span style={{ fontSize: '1rem' }}>{icon}</span>
+      {label}
+    </Link>
+  )
+}

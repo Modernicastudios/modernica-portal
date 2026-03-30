@@ -1,26 +1,62 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
+  /* Modernica brand defaults — overridden per agency via inline style */
+  --accent1: #1a3fe4;
+  --accent2: #4f7bff;
+  --accent3: #00b89c;
+  --accent4: #ff7a30;
+  --bg: #f0f4ff;
+  --surface: #fff;
+  --card: #fff;
+  --card2: #eef1f9;
+  --border: rgba(30, 60, 180, 0.1);
+  --text: #0d1433;
+  --muted: #6b78a8;
+  --radius: 16px;
+  --radius-sm: 10px;
+  --sidebar-width: 240px;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+* {
+  box-sizing: border-box;
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'DM Sans', 'Inter', system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  min-height: 100vh;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
 }
+
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg); }
+::-webkit-scrollbar-thumb { background: var(--accent1); border-radius: 3px; }
+
+:focus-visible {
+  outline: 2px solid var(--accent1);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+.animate-fade-up { animation: fadeUp 0.3s ease; }
+.animate-fade-in { animation: fadeIn 0.2s ease; }
+.animate-spin { animation: spin 1s linear infinite; }
