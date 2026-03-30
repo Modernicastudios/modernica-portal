@@ -160,8 +160,8 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
 
       {/* Navigation */}
       <nav style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>
-        {/* Client switcher for admins */}
-        {isAdmin && !isSuperAdmin && (
+        {/* Top section */}
+        {(isAdmin || isSuperAdmin) && (
           <div style={{ marginBottom: '16px' }}>
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '4px 12px 8px' }}>
               Overzicht
@@ -194,7 +194,7 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
         <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
 
         {/* ADMIN ONLY */}
-        {isAdmin && (
+        {(isAdmin || isSuperAdmin) && (
           <>
             <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
               Creatie

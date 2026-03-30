@@ -1,7 +1,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import Link from 'next/link'
-import { Plus, CalendarDays } from 'lucide-react'
+import { Plus, CalendarDays, Sparkles } from 'lucide-react'
 
 const PLATFORM_COLORS: Record<string, string> = {
   instagram: '#e1306c',
@@ -136,7 +136,6 @@ export default async function DashboardPage() {
           boxShadow: '0 2px 12px rgba(245,166,35,.2)',
         }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <span>🚀</span>
             <span style={{ fontWeight: 700, fontSize: '.88rem', color: '#7a4800' }}>
               Stel je agency in — logo, kleuren en eerste klant
             </span>
@@ -150,7 +149,7 @@ export default async function DashboardPage() {
         <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h1 style={{ fontWeight: 800, fontSize: '1.7rem', color: 'var(--text)', margin: 0, lineHeight: 1.2 }}>
-              Goedendag, {firstName} 👋
+              Goedendag, {firstName}
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: '.88rem', marginTop: '4px', textTransform: 'capitalize' }}>
               {dayName} · {dateStr}
@@ -301,7 +300,7 @@ export default async function DashboardPage() {
             ) : (
               !todayMeetings?.length && (
                 <div style={{ padding: '32px 20px', textAlign: 'center', color: 'var(--muted)', fontSize: '.85rem' }}>
-                  <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>✨</div>
+                  <Sparkles size={28} style={{ marginBottom: '8px', opacity: 0.35 }} />
                   Niets gepland voor vandaag
                 </div>
               )

@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, Pencil, Trash2, Upload, X, LayoutGrid, Calendar, Table2, List, Link2 } from 'lucide-react'
+import { Plus, Pencil, Trash2, Upload, X, LayoutGrid, Calendar, Table2, List, Link2, Inbox, Send, FileText, SendHorizonal } from 'lucide-react'
 
 const PLATFORMS: Record<string, { label: string; color: string; bg: string; textColor: string }> = {
   instagram: { label: 'Instagram', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', textColor: '#fff' },
@@ -12,8 +12,8 @@ const PLATFORMS: Record<string, { label: string; color: string; bg: string; text
   facebook: { label: 'Facebook', color: '#1877f2', bg: '#1877f2', textColor: '#fff' },
 }
 
-const PLATFORM_ICONS: Record<string, string> = {
-  instagram: '📸', tiktok: '🎵', linkedin: '💼', youtube: '▶️', facebook: '📘',
+const PLATFORM_DOTS: Record<string, string> = {
+  instagram: '#e1306c', tiktok: '#010101', linkedin: '#0077b5', youtube: '#ff0000', facebook: '#1877f2',
 }
 
 const CONTENT_TYPES = ['Post', 'Story', 'Reel', 'Carousel', 'Video', 'Artikel']
@@ -58,7 +58,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
   function copyShareLink(post: any) {
     if (!post?.share_token) return
     const url = `${window.location.origin}/review/${post.share_token}`
-    navigator.clipboard.writeText(url).then(() => showToast('Link gekopieerd! ✓'))
+    navigator.clipboard.writeText(url).then(() => showToast('Link gekopieerd'))
   }
   const [activityTab, setActivityTab] = useState<'privaat' | 'publiek'>('privaat')
   const [activityMsg, setActivityMsg] = useState('')
@@ -202,7 +202,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                     transition: 'all .15s',
                   }}
                 >
-                  {pl.key !== 'all' && PLATFORM_ICONS[pl.key] + ' '}{pl.label}
+                  {pl.key !== 'all' && <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[pl.key] || '#6b7280', display: 'inline-block', marginRight: 5 }} />}{pl.label}
                 </button>
               )
             })}
@@ -344,7 +344,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                             color: pl.color === '#010101' ? '#444' : pl.color,
                           }}
                         >
-                          {PLATFORM_ICONS[post.platform]} {post.title || post.content_type}
+                          {post.title || post.content_type}
                         </div>
                       )
                     })}
@@ -364,7 +364,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
         <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', overflow: 'hidden' }}>
           {filtered.length === 0 ? (
             <div style={{ padding: '60px 40px', textAlign: 'center', color: 'var(--muted)' }}>
-              <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>📋</div>
+              <FileText size={40} style={{ marginBottom: '12px', opacity: 0.3 }} />
               <div style={{ fontWeight: 600, fontSize: '1rem', marginBottom: '6px', color: 'var(--text)' }}>Geen content gevonden</div>
               <div style={{ fontSize: '.85rem' }}>Maak een nieuwe post aan om te starten</div>
             </div>
@@ -455,7 +455,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                           border: `1px solid ${pl.color}30`,
                           whiteSpace: 'nowrap',
                         }}>
-                          {PLATFORM_ICONS[post.platform]} {pl.label}
+                          <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[post.platform] || '#6b7280', display: 'inline-block', marginRight: 5 }} />{pl.label}
                         </span>
                       </td>
 
@@ -534,7 +534,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
               {isAdmin && <button onClick={() => openPost()} style={{ marginLeft: 'auto', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '4px 12px', cursor: 'pointer', fontSize: '.78rem', color: 'var(--muted)' }}>+ Toevoegen</button>}
             </div>
             {upcomingPosts.length === 0 ? (
-              <EmptyState label="Geen geplande posts" icon="📭" />
+              <EmptyState label="Geen geplande posts" icon="inbox" />
             ) : upcomingPosts.map(post => <QueueCard key={post.id} post={post} onClick={() => openPost(post)} />)}
           </div>
           <div>
@@ -543,7 +543,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
               <span style={{ color: 'var(--muted)', fontSize: '.82rem' }}>{pastPosts.length} posts</span>
             </div>
             {pastPosts.length === 0 ? (
-              <EmptyState label="Nog niets gepubliceerd" icon="📤" />
+              <EmptyState label="Nog niets gepubliceerd" icon="send" />
             ) : pastPosts.map(post => <QueueCard key={post.id} post={post} past onClick={() => openPost(post)} />)}
           </div>
         </div>
@@ -593,7 +593,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                 <div style={{ marginTop: 'auto', padding: '12px', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)' }}>
                   <div style={{ fontSize: '.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>Platform</div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '1.1rem' }}>{PLATFORM_ICONS[form.platform]}</span>
+                    <span style={{ width: 10, height: 10, borderRadius: '50%', background: PLATFORM_DOTS[form.platform] || '#6b7280', display: 'inline-block' }} />
                     <span style={{ fontSize: '.82rem', fontWeight: 600, color: 'var(--text)' }}>{PLATFORMS[form.platform]?.label || 'Instagram'}</span>
                     <span style={{ marginLeft: 'auto', fontSize: '.7rem', color: 'var(--muted)', background: 'var(--card)', border: '1px solid var(--border)', padding: '1px 8px', borderRadius: '50px' }}>{form.content_type}</span>
                   </div>
@@ -657,7 +657,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                             background: form.platform === k ? `${v.color}18` : 'transparent',
                             color: form.platform === k ? v.color : 'var(--muted)',
                           }}>
-                            {PLATFORM_ICONS[k]} {v.label}
+                            <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[k] || '#6b7280', display: 'inline-block', marginRight: 5 }} />{v.label}
                           </button>
                         ))}
                       </div>
@@ -785,7 +785,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                     disabled={!activityMsg.trim()}
                     style={{ padding: '8px 12px', background: activityMsg.trim() ? 'var(--accent1)' : 'var(--border)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: activityMsg.trim() ? 'pointer' : 'not-allowed', fontSize: '.9rem', transition: 'background .15s' }}
                   >
-                    ➤
+                    <SendHorizonal size={16} />
                   </button>
                 </div>
               </div>
@@ -842,7 +842,7 @@ function BoardCard({ post, onClick, onDragStart, isDragging }: { post: any; onCl
           background: `${pl.color}15`, color: pl.color === '#010101' ? '#333' : pl.color,
           border: `1px solid ${pl.color}28`,
         }}>
-          {PLATFORM_ICONS[post.platform]} {pl.label}
+          <span style={{ width: 7, height: 7, borderRadius: '50%', background: PLATFORM_DOTS[post.platform] || '#6b7280', display: 'inline-block', marginRight: 5 }} />{pl.label}
         </span>
         <span style={{
           fontSize: '.65rem', fontWeight: 600, padding: '2px 8px', borderRadius: '50px',
@@ -902,8 +902,8 @@ function QueueCard({ post, past = false, onClick }: { post: any; past?: boolean;
       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.transform = 'translateX(2px)'; (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 14px rgba(0,0,0,.08)' }}
       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.transform = 'none'; (e.currentTarget as HTMLElement).style.boxShadow = '0 1px 4px rgba(0,0,0,.04)' }}
     >
-      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: pl.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem', flexShrink: 0 }}>
-        {PLATFORM_ICONS[post.platform]}
+      <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: pl.bg, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+        <span style={{ fontSize: '.65rem', fontWeight: 800, color: '#fff', textTransform: 'uppercase' }}>{(pl.label || 'PL').slice(0, 2)}</span>
       </div>
       <div style={{ flex: 1, minWidth: 0 }}>
         <div style={{ fontWeight: 600, fontSize: '.85rem', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', color: 'var(--text)' }}>
@@ -920,10 +920,13 @@ function QueueCard({ post, past = false, onClick }: { post: any; past?: boolean;
   )
 }
 
-function EmptyState({ label, icon }: { label: string; icon: string }) {
+function EmptyState({ label, icon }: { label: string; icon: 'inbox' | 'send' | 'file' }) {
+  const IconEl = icon === 'inbox' ? Inbox : icon === 'send' ? Send : FileText
   return (
     <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '48px 40px', textAlign: 'center', color: 'var(--muted)' }}>
-      <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>{icon}</div>
+      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '12px', opacity: 0.35 }}>
+        <IconEl size={40} />
+      </div>
       <div style={{ fontWeight: 600, fontSize: '.95rem', color: 'var(--text)' }}>{label}</div>
     </div>
   )
