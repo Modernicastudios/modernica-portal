@@ -55,6 +55,8 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
   const [toast, setToast] = useState<string | null>(null)
   const [activityTab, setActivityTab] = useState<'privaat' | 'publiek'>('privaat')
   const [activityMsg, setActivityMsg] = useState('')
+  const [dragId, setDragId] = useState<string | null>(null)
+  const [dragOver, setDragOver] = useState<string | null>(null)
 
   const now = new Date()
   const [viewMonth, setViewMonth] = useState(now.getMonth())
@@ -106,6 +108,19 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
   async function movePost(id: string, newStatus: string) {
     await supabase.from('content_posts').update({ status: newStatus }).eq('id', id)
     setPosts(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p))
+    if (editingPost?.id === id) setForm(f => ({ ...f, status: newStatus }))
+  }
+
+  function handleDragStart(e: React.DragEvent, id: string) {
+    setDragId(id)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  function handleDrop(e: React.DragEvent, colKey: string) {
+    e.preventDefault()
+    if (dragId) movePost(dragId, colKey)
+    setDragId(null)
+    setDragOver(null)
   }
 
   const monthName = new Date(viewYear, viewMonth).toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
@@ -186,7 +201,13 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
           {BOARD_COLUMNS.map(col => {
             const colPosts = filtered.filter(p => p.status === col.key)
             return (
-              <div key={col.key} style={{ minWidth: '280px', maxWidth: '280px', display: 'flex', flexDirection: 'column', gap: '0' }}>
+              <div
+                key={col.key}
+                onDragOver={e => { e.preventDefault(); setDragOver(col.key) }}
+                onDragLeave={() => setDragOver(null)}
+                onDrop={e => handleDrop(e, col.key)}
+                style={{ minWidth: '280px', maxWidth: '280px', display: 'flex', flexDirection: 'column', gap: '0', borderRadius: '10px', transition: 'background .15s', background: dragOver === col.key ? col.headerBg : 'transparent' }}
+              >
                 {/* Column header */}
                 <div style={{
                   display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px',
@@ -195,13 +216,13 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
                 }}>
                   <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: col.dotColor, flexShrink: 0 }} />
                   <span style={{ fontSize: '.72rem', fontWeight: 800, letterSpacing: '.1em', color: col.color, textTransform: 'uppercase' }}>{col.label}</span>
-                  <span style={{ marginLeft: 'auto', fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', background: 'var(--card)', borderRadius: '50px', padding: '1px 8px' }}>{colPosts.length}</span>
+                  <span style={{ marginLeft: 'auto', fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', background: 'var(--card)', borderRadius: '50px', padding: '1px 8px', border: '1px solid var(--border)' }}>{colPosts.length}</span>
                 </div>
 
                 {/* Cards */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minHeight: '60px' }}>
                   {colPosts.map(post => (
-                    <BoardCard key={post.id} post={post} onClick={() => openPost(post)} />
+                    <BoardCard key={post.id} post={post} onClick={() => openPost(post)} onDragStart={e => handleDragStart(e, post.id)} isDragging={dragId === post.id} />
                   ))}
                 </div>
 
@@ -595,7 +616,7 @@ const fieldSelectStyle: React.CSSProperties = {
   fontSize: '.82rem', background: 'var(--bg)', outline: 'none', cursor: 'pointer',
 }
 
-function BoardCard({ post, onClick }: { post: any; onClick: () => void }) {
+function BoardCard({ post, onClick, onDragStart, isDragging }: { post: any; onClick: () => void; onDragStart: (e: React.DragEvent) => void; isDragging: boolean }) {
   const pl = PLATFORMS[post.platform] || PLATFORMS.instagram
   const sc = STATUS_CONFIG[post.status] || STATUS_CONFIG.concept
   const dateStr = post.scheduled_at
@@ -604,14 +625,17 @@ function BoardCard({ post, onClick }: { post: any; onClick: () => void }) {
 
   return (
     <div
+      draggable
+      onDragStart={onDragStart}
       onClick={onClick}
       style={{
         background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
-        padding: '0', cursor: 'pointer', overflow: 'hidden',
-        transition: 'box-shadow .15s, transform .15s',
+        padding: '0', cursor: 'grab', overflow: 'hidden',
+        opacity: isDragging ? 0.4 : 1, transform: isDragging ? 'rotate(2deg)' : 'none',
+        transition: 'box-shadow .15s, transform .15s, opacity .15s',
       }}
-      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)' }}
-      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = 'none' }}
+      onMouseEnter={e => { if (!isDragging) { (e.currentTarget as HTMLElement).style.boxShadow = '0 4px 16px rgba(0,0,0,.1)'; (e.currentTarget as HTMLElement).style.transform = 'translateY(-1px)' } }}
+      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.boxShadow = 'none'; (e.currentTarget as HTMLElement).style.transform = isDragging ? 'rotate(2deg)' : 'none' }}
     >
       {/* Colored top strip */}
       <div style={{ height: '3px', background: pl.bg }} />
