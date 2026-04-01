@@ -5,17 +5,62 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import MobileHeader from './MobileHeader'
 import SupportButton from './SupportButton'
-import type { UserProfile, Agency, BrandKit } from '@/types'
+import { ClientFilterProvider, useClientFilter } from './ClientFilter'
+import type { UserProfile, Agency, BrandKit, Client } from '@/types'
+import { X } from 'lucide-react'
 
 interface Props {
   profile: UserProfile & { agencies?: Agency }
   agency: Agency | null
   brandKit: BrandKit | null
   userId: string
+  clients: Client[]
   children: React.ReactNode
 }
 
-export default function PortalShell({ profile, agency, brandKit, userId, children }: Props) {
+function ClientFilterBanner({ clients }: { clients: Client[] }) {
+  const { selectedClientId, setSelectedClientId } = useClientFilter()
+  const selectedClient = clients.find(c => c.id === selectedClientId) || null
+
+  if (!selectedClient) return null
+
+  return (
+    <div style={{
+      background: 'rgba(26,63,228,.06)',
+      borderBottom: '1px solid rgba(26,63,228,.15)',
+      padding: '8px 32px',
+      display: 'flex',
+      alignItems: 'center',
+      gap: '10px',
+      fontSize: '.82rem',
+      color: 'var(--accent1)',
+    }}>
+      <span style={{ fontWeight: 600 }}>Client filter actief:</span>
+      <span style={{ fontWeight: 700 }}>{selectedClient.company_name}</span>
+      <span style={{ color: 'var(--muted)', flex: 1 }}>— Alle overzichten tonen alleen data voor deze klant</span>
+      <button
+        onClick={() => setSelectedClientId(null)}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          background: 'rgba(26,63,228,.12)',
+          border: 'none',
+          borderRadius: '50px',
+          padding: '3px 10px',
+          fontSize: '.75rem',
+          color: 'var(--accent1)',
+          fontWeight: 600,
+          cursor: 'pointer',
+        }}
+      >
+        <X size={12} /> Filter wissen
+      </button>
+    </div>
+  )
+}
+
+function ShellInner({ profile, agency, brandKit, userId, clients, children }: Props) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [isMobile, setIsMobile] = useState(false)
 
@@ -23,7 +68,6 @@ export default function PortalShell({ profile, agency, brandKit, userId, childre
     function checkMobile() {
       const mobile = window.innerWidth < 768
       setIsMobile(mobile)
-      // On desktop, sidebar is always open (controlled by CSS transform in Sidebar)
       if (!mobile) setSidebarOpen(true)
     }
     checkMobile()
@@ -65,7 +109,8 @@ export default function PortalShell({ profile, agency, brandKit, userId, childre
         overflow: 'hidden',
         paddingTop: isMobile ? '56px' : 0,
       }}>
-        <Header profile={profile} agency={agency} userId={userId} />
+        <Header profile={profile} agency={agency} userId={userId} clients={clients} />
+        <ClientFilterBanner clients={clients} />
         <main style={{ padding: '32px', animation: 'fadeUp 0.3s ease' }}>
           {children}
         </main>
@@ -73,5 +118,13 @@ export default function PortalShell({ profile, agency, brandKit, userId, childre
 
       <SupportButton agencyId={profile.agency_id || ''} userId={userId} />
     </div>
+  )
+}
+
+export default function PortalShell(props: Props) {
+  return (
+    <ClientFilterProvider>
+      <ShellInner {...props} />
+    </ClientFilterProvider>
   )
 }

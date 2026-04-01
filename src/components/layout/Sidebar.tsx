@@ -10,7 +10,7 @@ import {
   LayoutDashboard, BarChart2, TrendingUp, Kanban, CalendarDays, CheckSquare,
   ThumbsUp, Calendar, Video, MessageSquare, Lightbulb, Image, PieChart,
   FileText, Users, Link2, Settings, CreditCard, Shield, User, LogOut, X,
-  BarChart3,
+  BarChart3, Clock,
 } from 'lucide-react'
 
 interface Props {
@@ -192,6 +192,7 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
         <NavLink href="/planning" label="Planning Kalender" icon={<Calendar size={16} />} active={pathname.startsWith('/planning')} />
         <NavLink href="/meetings" label="Vergaderingen" icon={<Video size={16} />} active={pathname.startsWith('/meetings')} />
         <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
+        <NavLink href="/tijd" label="Tijdregistratie" icon={<Clock size={16} />} active={pathname.startsWith('/tijd')} />
 
         {/* ADMIN ONLY */}
         {(isAdmin || isSuperAdmin) && (

@@ -20,6 +20,13 @@ export default async function PortalLayout({ children }: { children: React.React
   const brandKit = profile.agencies?.brand_kits?.[0] || null
   const agency = profile.agencies || null
 
+  // Fetch clients for the agency (for client filter)
+  const { data: clients } = await supabase
+    .from('clients')
+    .select('id, agency_id, company_name, industry, city, contact_email, created_at')
+    .eq('agency_id', profile.agency_id || '')
+    .order('company_name')
+
   // Build CSS custom properties for white-label theming
   const themeVars = brandKit ? {
     '--accent1': brandKit.primary_color || '#1a3fe4',
@@ -33,6 +40,7 @@ export default async function PortalLayout({ children }: { children: React.React
         agency={agency}
         brandKit={brandKit}
         userId={user.id}
+        clients={clients || []}
       >
         {children}
       </PortalShell>
