@@ -10,11 +10,12 @@ export default async function TijdPage() {
 
   const { data: profile } = await supabase
     .from('user_profiles')
-    .select('id, agency_id, role, email')
+    .select('id, agency_id, role')
     .eq('id', user.id)
     .single()
 
   if (!profile) redirect('/login')
+  if (profile.role === 'client') redirect('/dashboard')
 
   const thirtyDaysAgo = new Date()
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)

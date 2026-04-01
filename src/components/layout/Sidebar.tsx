@@ -272,7 +272,9 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
         <NavLink href="/planning" label="Planning Kalender" icon={<Calendar size={16} />} active={pathname.startsWith('/planning')} />
         <NavLink href="/meetings" label="Vergaderingen" icon={<Video size={16} />} active={pathname.startsWith('/meetings')} />
         <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
-        <NavLink href="/tijd" label="Tijdregistratie" icon={<Clock size={16} />} active={pathname.startsWith('/tijd')} />
+        {(isAdmin || isSuperAdmin) && (
+          <NavLink href="/tijd" label="Tijdregistratie" icon={<Clock size={16} />} active={pathname.startsWith('/tijd')} />
+        )}
 
         {/* ADMIN ONLY */}
         {(isAdmin || isSuperAdmin) && (
