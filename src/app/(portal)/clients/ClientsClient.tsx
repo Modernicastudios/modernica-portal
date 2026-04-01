@@ -4,7 +4,7 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
 import type { Client, UserProfile } from '@/types'
-import { Search, Users, X } from 'lucide-react'
+import { Search, Users, X, Trash2 } from 'lucide-react'
 
 interface ClientWithStats extends Client {
   activeProjects?: number
@@ -86,6 +86,16 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
       status:        (client.status as 'actief' | 'inactief') || 'actief',
     })
     setShowModal(true)
+  }
+
+  async function deleteClient(id: string, name: string) {
+    if (!confirm(`Klant "${name}" verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return
+    const { error } = await supabase.from('clients').delete().eq('id', id)
+    if (!error) {
+      setClients(prev => prev.filter(c => c.id !== id))
+      setShowModal(false)
+      showToast('Klant verwijderd')
+    }
   }
 
   async function saveClient() {
@@ -420,6 +430,21 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
               >
                 Annuleren
               </button>
+              {modalMode === 'edit' && editingId && (
+                <button
+                  onClick={() => {
+                    const client = clients.find(c => c.id === editingId)
+                    deleteClient(editingId, client?.company_name || 'Klant')
+                  }}
+                  style={{
+                    padding: '10px 14px', background: 'none', border: '1px solid #e53935',
+                    borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: '#e53935',
+                    fontSize: '.88rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px',
+                  }}
+                >
+                  <Trash2 size={14} /> Verwijderen
+                </button>
+              )}
               <button
                 onClick={saveClient}
                 disabled={loading || !form.company_name.trim()}

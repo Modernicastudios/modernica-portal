@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Plus, X, LayoutGrid, List } from 'lucide-react'
+import { Plus, X, LayoutGrid, List, Trash2 } from 'lucide-react'
 
 const STATUSES = [
   { key: 'backlog',          label: 'Backlog',             color: '#6b7280', bg: 'rgba(107,114,128,.08)', strip: '#d1d5db' },
@@ -77,6 +77,14 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
       showToast('Project aangemaakt!')
     }
     setLoading(false)
+  }
+
+  async function deleteProject(id: string) {
+    if (!confirm('Project verwijderen? Dit verwijdert ook alle taken en notities van dit project.')) return
+    await supabase.from('projects').delete().eq('id', id)
+    setProjects(prev => prev.filter(p => p.id !== id))
+    setSelectedProject(null)
+    showToast('Project verwijderd')
   }
 
   async function moveProject(id: string, newStatus: string) {
@@ -299,6 +307,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
           onClose={() => setSelectedProject(null)}
           onMove={moveProject}
           onUpdate={updated => setProjects(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p))}
+          onDelete={deleteProject}
           isAdmin={isAdmin}
         />
       )}
@@ -505,12 +514,13 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
 }
 
 // ── ProjectModal ───────────────────────────────────────────────────────────────
-function ProjectModal({ project, clients, onClose, onMove, onUpdate, isAdmin }: {
+function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, isAdmin }: {
   project: any
   clients: any[]
   onClose: () => void
   onMove: (id: string, status: string) => void
   onUpdate: (updated: any) => void
+  onDelete: (id: string) => void
   isAdmin: boolean
 }) {
   const [todos, setTodos]             = useState<any[]>([])
@@ -621,7 +631,20 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, isAdmin }: 
                   {project.title}
                 </h2>
               </div>
-              <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', flexShrink: 0, padding: '2px', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                {isAdmin && (
+                  <button
+                    onClick={() => onDelete(project.id)}
+                    title="Project verwijderen"
+                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: '#e53935', padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.75rem', fontWeight: 600 }}
+                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(229,57,53,.08)'; (e.currentTarget as HTMLElement).style.borderColor = '#e53935' }}
+                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
+                  >
+                    <Trash2 size={13} /> Verwijderen
+                  </button>
+                )}
+                <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '2px', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
+              </div>
             </div>
 
             {/* Tabs */}
