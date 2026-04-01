@@ -66,7 +66,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
   const isClient = !!profile.client_id
 
-  const { selectedClientId, setSelectedClientId, filterClients } = useClientFilter()
+  const { selectedClientId, setSelectedClientId, filterClients, filterLoaded } = useClientFilter()
   const [clientDropOpen, setClientDropOpen] = useState(false)
   const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
@@ -227,7 +227,10 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company_name}</span>
                 </button>
               ))}
-              {filterClients.length === 0 && (
+              {filterLoaded && filterClients.length === 0 && (
+                <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Geen klanten</div>
+              )}
+              {!filterLoaded && filterClients.length === 0 && (
                 <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Laden...</div>
               )}
             </div>

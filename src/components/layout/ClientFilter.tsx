@@ -1,6 +1,5 @@
 'use client'
 import { createContext, useContext, useState, useEffect } from 'react'
-import { createClient } from '@/lib/supabase/client'
 
 export interface FilterClient {
   id: string
@@ -16,33 +15,35 @@ export interface ClientFilterContextType {
   selectedClientId: string | null
   setSelectedClientId: (id: string | null) => void
   filterClients: FilterClient[]
+  filterLoaded: boolean
 }
 
 const ClientFilterContext = createContext<ClientFilterContextType>({
   selectedClientId: null,
   setSelectedClientId: () => {},
   filterClients: [],
+  filterLoaded: false,
 })
 
 export function ClientFilterProvider({ agencyId, children }: { agencyId: string; children: React.ReactNode }) {
   const [selectedClientId, setSelectedClientIdState] = useState<string | null>(null)
   const [filterClients, setFilterClients] = useState<FilterClient[]>([])
+  const [filterLoaded, setFilterLoaded] = useState(false)
 
   useEffect(() => {
     const stored = localStorage.getItem('selected_client_id')
     if (stored) setSelectedClientIdState(stored)
   }, [])
 
-  // Fetch clients using browser client (always works with user session)
+  // Fetch clients via API route (uses server-side Supabase client, bypasses RLS issues)
   useEffect(() => {
-    if (!agencyId) return
-    const supabase = createClient()
-    supabase
-      .from('clients')
-      .select('id, agency_id, company_name, industry, city, contact_email, created_at')
-      .eq('agency_id', agencyId)
-      .order('company_name')
-      .then(({ data }) => { if (data) setFilterClients(data) })
+    fetch('/api/clients')
+      .then(r => r.json())
+      .then((data: FilterClient[]) => {
+        if (Array.isArray(data)) setFilterClients(data)
+        setFilterLoaded(true)
+      })
+      .catch(() => { setFilterLoaded(true) })
   }, [agencyId])
 
   function setSelectedClientId(id: string | null) {
@@ -52,7 +53,7 @@ export function ClientFilterProvider({ agencyId, children }: { agencyId: string;
   }
 
   return (
-    <ClientFilterContext.Provider value={{ selectedClientId, setSelectedClientId, filterClients }}>
+    <ClientFilterContext.Provider value={{ selectedClientId, setSelectedClientId, filterClients, filterLoaded }}>
       {children}
     </ClientFilterContext.Provider>
   )
