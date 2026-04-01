@@ -37,7 +37,7 @@ export default async function ProjectsPage() {
       clients={clients || []}
       agencyId={agencyId}
       currentUserId={user.id}
-      isAdmin={profile?.role === 'admin' || profile?.role === 'manager'}
+      isAdmin={profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'}
     />
   )
 }

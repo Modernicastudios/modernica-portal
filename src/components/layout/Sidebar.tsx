@@ -48,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
 
-export default function Sidebar({ profile, agency, brandKit, clients = [], isOpen, onClose }: Props) {
+export default function Sidebar({ profile, agency, brandKit, clients: _clientsProp = [], isOpen, onClose }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [isMobile, setIsMobile] = useState(false)
@@ -66,9 +66,9 @@ export default function Sidebar({ profile, agency, brandKit, clients = [], isOpe
   const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
   const isClient = !!profile.client_id
 
-  const { selectedClientId, setSelectedClientId } = useClientFilter()
+  const { selectedClientId, setSelectedClientId, filterClients } = useClientFilter()
   const [clientDropOpen, setClientDropOpen] = useState(false)
-  const selectedClient = clients.find(c => c.id === selectedClientId) || null
+  const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
   const logoUrl = brandKit?.logo_url || null
   const agencyName = agency?.name || 'Modernica'
@@ -214,8 +214,8 @@ export default function Sidebar({ profile, agency, brandKit, clients = [], isOpe
               >
                 <Users size={14} style={{ opacity: .5 }} /> Alle klanten
               </button>
-              {clients.length > 0 && <div style={{ height: '1px', background: 'var(--border)', margin: '3px 0' }} />}
-              {clients.map(c => (
+              {filterClients.length > 0 && <div style={{ height: '1px', background: 'var(--border)', margin: '3px 0' }} />}
+              {filterClients.map(c => (
                 <button
                   key={c.id}
                   onClick={() => { setSelectedClientId(c.id); setClientDropOpen(false) }}
@@ -227,8 +227,8 @@ export default function Sidebar({ profile, agency, brandKit, clients = [], isOpe
                   <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company_name}</span>
                 </button>
               ))}
-              {clients.length === 0 && (
-                <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Nog geen klanten</div>
+              {filterClients.length === 0 && (
+                <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Laden...</div>
               )}
             </div>
           )}

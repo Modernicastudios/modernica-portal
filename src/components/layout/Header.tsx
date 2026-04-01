@@ -69,17 +69,17 @@ function getInitials(name: string): string {
 
 const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
 
-export default function Header({ profile, agency, userId, clients = [] }: Props) {
+export default function Header({ profile, agency, userId, clients: _clientsProp = [] }: Props) {
   const pathname = usePathname()
   const title = getTitle(pathname)
-  const { selectedClientId, setSelectedClientId } = useClientFilter()
+  const { selectedClientId, setSelectedClientId, filterClients } = useClientFilter()
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
   const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
   const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
 
-  const selectedClient = clients.find(c => c.id === selectedClientId) || null
+  const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -219,7 +219,7 @@ export default function Header({ profile, agency, userId, clients = [] }: Props)
                   Alle klanten
                 </button>
                 <div style={{ height: '1px', background: 'var(--border)', margin: '4px 0' }} />
-                {clients.map(client => (
+                {filterClients.map(client => (
                   <button
                     key={client.id}
                     onClick={() => { setSelectedClientId(client.id); setDropdownOpen(false) }}

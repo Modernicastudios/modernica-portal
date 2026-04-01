@@ -21,11 +21,13 @@ export default async function PortalLayout({ children }: { children: React.React
   const agency = profile.agencies || null
 
   // Fetch clients for the agency (for client filter)
-  const { data: clients } = await supabase
+  // Use RLS + explicit agency_id filter; if agency_id is missing, skip filter so RLS still returns correct rows
+  const clientsQuery = supabase
     .from('clients')
     .select('id, agency_id, company_name, industry, city, contact_email, created_at')
-    .eq('agency_id', profile.agency_id || '')
     .order('company_name')
+  if (profile.agency_id) clientsQuery.eq('agency_id', profile.agency_id)
+  const { data: clients } = await clientsQuery
 
   // Build CSS custom properties for white-label theming
   const themeVars = brandKit ? {

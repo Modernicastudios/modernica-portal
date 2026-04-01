@@ -18,9 +18,9 @@ interface Props {
   children: React.ReactNode
 }
 
-function ClientFilterBanner({ clients }: { clients: Client[] }) {
-  const { selectedClientId, setSelectedClientId } = useClientFilter()
-  const selectedClient = clients.find(c => c.id === selectedClientId) || null
+function ClientFilterBanner() {
+  const { selectedClientId, setSelectedClientId, filterClients } = useClientFilter()
+  const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
   if (!selectedClient) return null
 
@@ -111,7 +111,7 @@ function ShellInner({ profile, agency, brandKit, userId, clients, children }: Pr
         paddingTop: isMobile ? '56px' : 0,
       }}>
         <Header profile={profile} agency={agency} userId={userId} clients={clients} />
-        <ClientFilterBanner clients={clients} />
+        <ClientFilterBanner />
         <main style={{ padding: '32px', animation: 'fadeUp 0.3s ease' }}>
           {children}
         </main>
@@ -124,7 +124,7 @@ function ShellInner({ profile, agency, brandKit, userId, clients, children }: Pr
 
 export default function PortalShell(props: Props) {
   return (
-    <ClientFilterProvider>
+    <ClientFilterProvider agencyId={props.profile.agency_id || ''}>
       <ShellInner {...props} />
     </ClientFilterProvider>
   )

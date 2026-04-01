@@ -45,7 +45,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showAddModal, setShowAddModal]   = useState(false)
   const [addToStatus, setAddToStatus]     = useState('backlog')
-  const [newProject, setNewProject]       = useState({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '' })
+  const [newProject, setNewProject]       = useState({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '', deadline: '' })
   const [loading, setLoading]             = useState(false)
   const [toast, setToast]                 = useState<string | null>(null)
   const [dragId, setDragId]               = useState<string | null>(null)
@@ -64,7 +64,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
   async function createProject() {
     if (!newProject.title.trim()) return
     setLoading(true)
-    const payload = { ...newProject, status: addToStatus, agency_id: agencyId, client_id: newProject.client_id || null }
+    const payload = { ...newProject, status: addToStatus, agency_id: agencyId, client_id: newProject.client_id || null, deadline: newProject.deadline || null }
     const { data, error } = await supabase
       .from('projects')
       .insert(payload)
@@ -72,7 +72,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
       .single()
     if (!error && data) {
       setProjects(prev => [data, ...prev])
-      setNewProject({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '' })
+      setNewProject({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '', deadline: '' })
       setShowAddModal(false)
       showToast('Project aangemaakt!')
     }
@@ -95,7 +95,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
 
   function openAdd(status: string) {
     setAddToStatus(status)
-    setNewProject({ title: '', description: '', status, priority: 'normal', category: '', client_id: '' })
+    setNewProject({ title: '', description: '', status, priority: 'normal', category: '', client_id: '', deadline: '' })
     setShowAddModal(true)
   }
 
@@ -367,6 +367,15 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
                   {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                 </select>
               </div>
+              <div>
+                <label style={labelStyle}>Deadline <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optioneel)</span></label>
+                <input
+                  type="date"
+                  value={newProject.deadline}
+                  onChange={e => setNewProject(p => ({ ...p, deadline: e.target.value }))}
+                  style={inputStyle}
+                />
+              </div>
             </div>
             <div style={{ display: 'flex', gap: '10px', marginTop: '24px' }}>
               <button
@@ -391,6 +400,34 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
         </div>
       )}
     </div>
+  )
+}
+
+// ── Deadline helper ────────────────────────────────────────────────────────────
+function DeadlineChip({ deadline }: { deadline: string | null }) {
+  if (!deadline) return null
+  const today = new Date(); today.setHours(0,0,0,0)
+  const due   = new Date(deadline); due.setHours(0,0,0,0)
+  const diff  = Math.round((due.getTime() - today.getTime()) / 86400000)
+
+  let bg = 'rgba(107,114,128,.1)', color = '#6b7280', label = ''
+  if (diff < 0) {
+    bg = 'rgba(229,57,53,.1)'; color = '#e53935'
+    label = `${Math.abs(diff)}d te laat`
+  } else if (diff === 0) {
+    bg = 'rgba(229,57,53,.12)'; color = '#e53935'
+    label = 'Vandaag!'
+  } else if (diff <= 3) {
+    bg = 'rgba(255,122,48,.1)'; color = '#ff7a30'
+    label = `nog ${diff}d`
+  } else {
+    label = due.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
+  }
+
+  return (
+    <span style={{ fontSize: '.62rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px', background: bg, color, border: `1px solid ${color}33`, whiteSpace: 'nowrap' }}>
+      📅 {label}
+    </span>
   )
 }
 
@@ -494,8 +531,9 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
         )}
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '4px' }}>
-          <span style={{ fontSize: '.65rem', color: 'var(--muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: '4px', gap: '6px' }}>
+          <DeadlineChip deadline={project.deadline || null} />
+          <span style={{ fontSize: '.65rem', color: 'var(--muted)', marginLeft: 'auto' }}>
             {new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
           </span>
         </div>
@@ -518,11 +556,11 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
   const [notes, setNotes]             = useState<any[]>([])
   const [newTodo, setNewTodo]         = useState('')
   const [newNote, setNewNote]         = useState('')
-  const [activeTab, setActiveTab]     = useState<'taken' | 'notities' | 'details'>('taken')
   const [loaded, setLoaded]           = useState(false)
   const [currentStatus, setCurrentStatus] = useState(project.status)
   const [currentPriority, setCurrentPriority] = useState(project.priority || 'normal')
   const [currentClientId, setCurrentClientId] = useState(project.client_id || '')
+  const [currentDeadline, setCurrentDeadline] = useState<string>(project.deadline || '')
   const supabase = createClient()
 
   const statusCfg = STATUS_MAP[currentStatus] || STATUSES[0]
@@ -589,220 +627,199 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
     onUpdate({ id: project.id, client_id: clientId || null, clients: clientData ? { company_name: clientData.company_name } : null })
   }
 
+  async function changeDeadline(date: string) {
+    setCurrentDeadline(date)
+    await supabase.from('projects').update({ deadline: date || null }).eq('id', project.id)
+    onUpdate({ id: project.id, deadline: date || null })
+  }
+
   const doneTodos   = todos.filter(t => t.done).length
   const progressPct = todos.length > 0 ? Math.round((doneTodos / todos.length) * 100) : 0
 
   return (
     <div
-      style={{ position: 'fixed', inset: 0, background: 'rgba(13,20,51,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, padding: '16px' }}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(13,20,51,.6)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 500, padding: '20px' }}
       onClick={e => e.target === e.currentTarget && onClose()}
     >
-      <div style={{ background: 'var(--bg)', borderRadius: 'var(--radius)', width: '100%', maxWidth: '900px', height: '84vh', display: 'flex', overflow: 'hidden', boxShadow: '0 24px 80px rgba(0,0,0,.25)' }}>
+      <div style={{
+        background: 'var(--bg)', borderRadius: 'var(--radius)', width: '92vw', maxWidth: '960px',
+        height: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
+        boxShadow: '0 24px 80px rgba(0,0,0,.25)',
+      }}>
 
-        {/* LEFT: Main content */}
-        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
-          {/* Title bar */}
-          <div style={{ padding: '24px 28px 0', background: 'var(--card)', borderBottom: '1px solid var(--border)' }}>
-            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px', marginBottom: '16px' }}>
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px', flexWrap: 'wrap' }}>
-                  <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '2px 10px', borderRadius: '50px', background: statusCfg.bg, color: statusCfg.color, border: `1px solid ${statusCfg.color}33` }}>
-                    {statusCfg.label}
-                  </span>
-                  <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '2px 10px', borderRadius: '50px', background: prio.bg, color: prio.color, border: `1px solid ${prio.border}` }}>
-                    {prio.label}
-                  </span>
-                  {project.clients?.company_name && (
-                    <span style={{ fontSize: '.72rem', fontWeight: 600, padding: '2px 10px', borderRadius: '50px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.2)' }}>
-                      {project.clients.company_name}
-                    </span>
-                  )}
-                </div>
-                <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.2rem', lineHeight: 1.3, color: 'var(--text)' }}>
-                  {project.title}
-                </h2>
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                {isAdmin && (
-                  <button
-                    onClick={() => onDelete(project.id)}
-                    title="Project verwijderen"
-                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: '#e53935', padding: '5px 8px', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '.75rem', fontWeight: 600 }}
-                    onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(229,57,53,.08)'; (e.currentTarget as HTMLElement).style.borderColor = '#e53935' }}
-                    onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
-                  >
-                    <Trash2 size={13} /> Verwijderen
-                  </button>
-                )}
-                <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '2px', display: 'flex', alignItems: 'center' }}><X size={18} /></button>
-              </div>
+        {/* Sticky header bar */}
+        <div style={{
+          display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '12px',
+          padding: '20px 24px 16px', background: 'var(--card)', borderBottom: '1px solid var(--border)',
+          flexShrink: 0,
+        }}>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '6px', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '2px 10px', borderRadius: '50px', background: statusCfg.bg, color: statusCfg.color, border: `1px solid ${statusCfg.color}33` }}>
+                {statusCfg.label}
+              </span>
+              <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '2px 10px', borderRadius: '50px', background: prio.bg, color: prio.color, border: `1px solid ${prio.border}` }}>
+                {prio.label}
+              </span>
+              {project.clients?.company_name && (
+                <span style={{ fontSize: '.72rem', fontWeight: 600, padding: '2px 10px', borderRadius: '50px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.2)' }}>
+                  {project.clients.company_name}
+                </span>
+              )}
             </div>
-
-            {/* Tabs */}
-            <div style={{ display: 'flex', gap: '0' }}>
-              {([
-                { key: 'taken',    label: `Taken (${todos.length})` },
-                { key: 'notities', label: `Notities (${notes.length})` },
-                { key: 'details',  label: 'Details' },
-              ] as const).map(tab => (
-                <button
-                  key={tab.key}
-                  onClick={() => setActiveTab(tab.key)}
-                  style={{
-                    padding: '10px 18px', border: 'none', background: 'none', cursor: 'pointer',
-                    fontSize: '.82rem', fontWeight: activeTab === tab.key ? 700 : 500,
-                    color: activeTab === tab.key ? 'var(--accent1)' : 'var(--muted)',
-                    borderBottom: activeTab === tab.key ? '2px solid var(--accent1)' : '2px solid transparent',
-                    marginBottom: '-1px', transition: 'color .12s',
-                  }}
-                >
-                  {tab.label}
-                </button>
-              ))}
-            </div>
+            <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3, color: 'var(--text)', margin: 0 }}>
+              {project.title}
+            </h2>
           </div>
-
-          {/* Tab content */}
-          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px' }}>
-            {activeTab === 'taken' && (
-              <div>
-                {todos.length > 0 && (
-                  <div style={{ marginBottom: '20px', padding: '14px 16px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>{doneTodos} van {todos.length} afgerond</span>
-                      <span style={{ fontSize: '.8rem', fontWeight: 800, color: progressPct === 100 ? '#00b89c' : 'var(--accent1)', fontFamily: 'var(--font-syne), sans-serif' }}>{progressPct}%</span>
-                    </div>
-                    <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', background: progressPct === 100 ? '#00b89c' : 'var(--accent1)', borderRadius: '3px', width: `${progressPct}%`, transition: 'width .4s ease' }} />
-                    </div>
-                  </div>
-                )}
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '14px' }}>
-                  <input
-                    value={newTodo}
-                    onChange={e => setNewTodo(e.target.value)}
-                    onKeyDown={e => e.key === 'Enter' && addTodo()}
-                    placeholder="Nieuwe taak toevoegen..."
-                    style={{ flex: 1, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none' }}
-                  />
-                  <button
-                    onClick={addTodo}
-                    style={{ padding: '9px 16px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700, fontSize: '.85rem' }}
-                  >
-                    +
-                  </button>
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                  {todos.map(todo => (
-                    <div key={todo.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--card)', border: '1px solid var(--border)' }}>
-                      <div
-                        onClick={() => toggleTodo(todo)}
-                        style={{
-                          width: '18px', height: '18px', borderRadius: '5px',
-                          border: `2px solid ${todo.done ? '#00b89c' : 'var(--border)'}`,
-                          background: todo.done ? '#00b89c' : 'none',
-                          display: 'flex', alignItems: 'center', justifyContent: 'center',
-                          flexShrink: 0, cursor: 'pointer', transition: 'all .15s',
-                        }}
-                      >
-                        {todo.done && <span style={{ color: '#fff', fontSize: '.65rem', fontWeight: 900 }}>✓</span>}
-                      </div>
-                      <span
-                        onClick={() => toggleTodo(todo)}
-                        style={{ flex: 1, fontSize: '.85rem', cursor: 'pointer', textDecoration: todo.done ? 'line-through' : 'none', color: todo.done ? 'var(--muted)' : 'var(--text)', transition: 'color .15s' }}
-                      >
-                        {todo.title}
-                      </span>
-                      <button
-                        onClick={() => deleteTodo(todo.id)}
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1rem', opacity: 0, padding: '2px 6px', borderRadius: '4px', transition: 'opacity .12s' }}
-                        onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
-                        onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0' }}
-                      >
-                        ×
-                      </button>
-                    </div>
-                  ))}
-                  {todos.length === 0 && !loaded && (
-                    <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px', fontSize: '.85rem' }}>Laden...</div>
-                  )}
-                  {todos.length === 0 && loaded && (
-                    <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px', fontSize: '.85rem' }}>
-                      Geen taken nog. Voeg de eerste toe.
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {activeTab === 'notities' && (
-              <div>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '16px' }}>
-                  <textarea
-                    value={newNote}
-                    onChange={e => setNewNote(e.target.value)}
-                    placeholder="Notitie toevoegen..."
-                    rows={3}
-                    style={{ flex: 1, padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none', resize: 'none', fontFamily: 'inherit' }}
-                  />
-                  <button
-                    onClick={addNote}
-                    style={{ padding: '10px 16px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700, alignSelf: 'flex-end', fontSize: '.85rem' }}
-                  >
-                    +
-                  </button>
-                </div>
-                {notes.map(note => (
-                  <div key={note.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '14px 16px', borderRadius: 'var(--radius-sm)', marginBottom: '10px', borderLeft: '3px solid var(--accent1)' }}>
-                    <p style={{ fontSize: '.85rem', lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)' }}>{note.content}</p>
-                    <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginTop: '8px' }}>
-                      {new Date(note.created_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                ))}
-                {notes.length === 0 && loaded && (
-                  <div style={{ textAlign: 'center', color: 'var(--muted)', padding: '32px', fontSize: '.85rem' }}>Nog geen notities</div>
-                )}
-              </div>
-            )}
-
-            {activeTab === 'details' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {project.description && (
-                  <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '16px' }}>
-                    <div style={{ fontSize: '.72rem', color: 'var(--muted)', marginBottom: '6px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>Omschrijving</div>
-                    <p style={{ fontSize: '.88rem', lineHeight: 1.65, color: 'var(--text)' }}>{project.description}</p>
-                  </div>
-                )}
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
-                  {([
-                    { label: 'Categorie',  value: project.category || '—' },
-                    { label: 'Aangemaakt', value: new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) },
-                    { label: 'Bijgewerkt', value: new Date(project.updated_at || project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' }) },
-                    { label: 'Taken',      value: `${doneTodos}/${todos.length} afgerond` },
-                  ]).map(({ label, value }) => (
-                    <div key={label} style={{ background: 'var(--card)', border: '1px solid var(--border)', padding: '14px', borderRadius: 'var(--radius-sm)' }}>
-                      <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginBottom: '4px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '.06em' }}>{label}</div>
-                      <div style={{ fontWeight: 600, fontSize: '.9rem', color: 'var(--text)' }}>{value}</div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-          </div>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', padding: '4px', display: 'flex', alignItems: 'center', flexShrink: 0, marginTop: '2px' }}
+          >
+            <X size={20} />
+          </button>
         </div>
 
-        {/* RIGHT: Sidebar */}
-        <div style={{ width: '240px', flexShrink: 0, borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--card)', overflowY: 'auto' }}>
-          <div style={{ padding: '20px' }}>
-            <div style={{ fontSize: '.68rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '18px' }}>
-              Projectinfo
+        {/* Body: left + right columns */}
+        <div style={{ flex: 1, display: 'flex', overflow: 'hidden', minHeight: 0 }}>
+
+          {/* LEFT COLUMN — scrollable */}
+          <div style={{ flex: 1, overflowY: 'auto', padding: '24px 28px', minWidth: 0 }}>
+
+            {/* Omschrijving */}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={sectionHeaderStyle}>Omschrijving</div>
+              {project.description ? (
+                <p style={{ fontSize: '.88rem', lineHeight: 1.7, color: 'var(--text)', margin: 0 }}>{project.description}</p>
+              ) : (
+                <p style={{ fontSize: '.88rem', color: 'var(--muted)', fontStyle: 'italic', margin: 0 }}>Geen omschrijving</p>
+              )}
             </div>
 
-            {/* Status select */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={sidebarLabelStyle}>Status</div>
-              {isAdmin ? (
+            {/* Taken section */}
+            <div style={{ marginBottom: '28px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                <span style={sectionHeaderStyle}>Taken</span>
+                <span style={{ fontSize: '.7rem', fontWeight: 700, padding: '1px 8px', borderRadius: '50px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
+                  {todos.length}
+                </span>
+              </div>
+              {todos.length > 0 && (
+                <div style={{ marginBottom: '14px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '5px' }}>
+                    <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>{doneTodos} van {todos.length} afgerond</span>
+                    <span style={{ fontSize: '.78rem', fontWeight: 800, color: progressPct === 100 ? '#00b89c' : 'var(--accent1)', fontFamily: 'var(--font-syne), sans-serif' }}>{progressPct}%</span>
+                  </div>
+                  <div style={{ height: '5px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div style={{ height: '100%', background: progressPct === 100 ? '#00b89c' : 'var(--accent1)', borderRadius: '3px', width: `${progressPct}%`, transition: 'width .4s ease' }} />
+                  </div>
+                </div>
+              )}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '10px' }}>
+                {!loaded && todos.length === 0 && (
+                  <div style={{ color: 'var(--muted)', fontSize: '.83rem', padding: '8px 0' }}>Laden...</div>
+                )}
+                {loaded && todos.length === 0 && (
+                  <div style={{ color: 'var(--muted)', fontSize: '.83rem', padding: '8px 0', fontStyle: 'italic' }}>Nog geen taken.</div>
+                )}
+                {todos.map(todo => (
+                  <div key={todo.id} style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '9px 12px', borderRadius: 'var(--radius-sm)', background: 'var(--card)', border: '1px solid var(--border)' }}>
+                    <div
+                      onClick={() => toggleTodo(todo)}
+                      style={{
+                        width: '18px', height: '18px', borderRadius: '5px', flexShrink: 0,
+                        border: `2px solid ${todo.done ? '#00b89c' : 'var(--border)'}`,
+                        background: todo.done ? '#00b89c' : 'none',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
+                        cursor: 'pointer', transition: 'all .15s',
+                      }}
+                    >
+                      {todo.done && <span style={{ color: '#fff', fontSize: '.65rem', fontWeight: 900 }}>✓</span>}
+                    </div>
+                    <span
+                      onClick={() => toggleTodo(todo)}
+                      style={{ flex: 1, fontSize: '.85rem', cursor: 'pointer', textDecoration: todo.done ? 'line-through' : 'none', color: todo.done ? 'var(--muted)' : 'var(--text)', transition: 'color .15s' }}
+                    >
+                      {todo.title}
+                    </span>
+                    <button
+                      onClick={() => deleteTodo(todo.id)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1rem', opacity: 0, padding: '2px 6px', borderRadius: '4px', transition: 'opacity .12s' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.opacity = '1' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.opacity = '0' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <input
+                  value={newTodo}
+                  onChange={e => setNewTodo(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addTodo()}
+                  placeholder="Voeg taak toe..."
+                  style={{ flex: 1, padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none', color: 'var(--text)' }}
+                />
+                <button
+                  onClick={addTodo}
+                  style={{ padding: '9px 16px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700, fontSize: '.88rem', flexShrink: 0 }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+
+            {/* Notities section */}
+            <div>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                <span style={sectionHeaderStyle}>Notities</span>
+                <span style={{ fontSize: '.7rem', fontWeight: 700, padding: '1px 8px', borderRadius: '50px', background: 'var(--bg)', border: '1px solid var(--border)', color: 'var(--muted)' }}>
+                  {notes.length}
+                </span>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+                <textarea
+                  value={newNote}
+                  onChange={e => setNewNote(e.target.value)}
+                  placeholder="Notitie toevoegen..."
+                  rows={3}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none', resize: 'none', fontFamily: 'inherit', color: 'var(--text)', boxSizing: 'border-box' }}
+                />
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button
+                    onClick={addNote}
+                    style={{ padding: '8px 20px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700, fontSize: '.85rem' }}
+                  >
+                    Toevoegen
+                  </button>
+                </div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                {loaded && notes.length === 0 && (
+                  <div style={{ color: 'var(--muted)', fontSize: '.83rem', fontStyle: 'italic' }}>Nog geen notities.</div>
+                )}
+                {notes.map(note => (
+                  <div key={note.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent1)', padding: '14px 16px', borderRadius: 'var(--radius-sm)' }}>
+                    <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginBottom: '6px' }}>
+                      {new Date(note.created_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                    <p style={{ fontSize: '.85rem', lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)', margin: 0 }}>{note.content}</p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+
+          {/* RIGHT COLUMN — fixed 280px sidebar */}
+          <div style={{ width: '280px', flexShrink: 0, borderLeft: '1px solid var(--border)', display: 'flex', flexDirection: 'column', background: 'var(--card)', overflowY: 'auto' }}>
+            <div style={{ padding: '20px', flex: 1 }}>
+              <div style={{ fontSize: '.67rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '20px' }}>
+                Projectinfo
+              </div>
+
+              {/* Status */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Status</div>
                 <select
                   value={currentStatus}
                   onChange={e => changeStatus(e.target.value)}
@@ -810,17 +827,11 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
                 >
                   {STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                 </select>
-              ) : (
-                <span style={{ fontSize: '.8rem', fontWeight: 700, padding: '4px 12px', borderRadius: '50px', background: statusCfg.bg, color: statusCfg.color, display: 'inline-block' }}>
-                  {statusCfg.label}
-                </span>
-              )}
-            </div>
+              </div>
 
-            {/* Priority select */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={sidebarLabelStyle}>Prioriteit</div>
-              {isAdmin ? (
+              {/* Prioriteit */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Prioriteit</div>
                 <select
                   value={currentPriority}
                   onChange={e => changePriority(e.target.value)}
@@ -828,17 +839,11 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
                 >
                   {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
                 </select>
-              ) : (
-                <span style={{ fontSize: '.8rem', fontWeight: 700, padding: '4px 12px', borderRadius: '50px', background: prio.bg, color: prio.color, border: `1px solid ${prio.border}`, display: 'inline-block' }}>
-                  {prio.label}
-                </span>
-              )}
-            </div>
+              </div>
 
-            {/* Client select */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={sidebarLabelStyle}>Klant</div>
-              {isAdmin ? (
+              {/* Klant */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Klant</div>
                 <select
                   value={currentClientId}
                   onChange={e => changeClient(e.target.value)}
@@ -847,38 +852,82 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
                   <option value="">Intern</option>
                   {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
                 </select>
-              ) : (
-                <span style={{ fontSize: '.82rem', color: 'var(--text)' }}>
-                  {project.clients?.company_name || 'Intern'}
+              </div>
+
+              {/* Categorie */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Categorie</div>
+                <span style={{ fontSize: '.82rem', color: 'var(--text)' }}>{project.category || '—'}</span>
+              </div>
+
+              {/* Aangemaakt */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Aangemaakt</div>
+                <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>
+                  {new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
                 </span>
-              )}
-            </div>
+              </div>
 
-            {/* Category */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={sidebarLabelStyle}>Categorie</div>
-              <span style={{ fontSize: '.82rem', color: 'var(--text)' }}>{project.category || '—'}</span>
-            </div>
+              {/* Bijgewerkt */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Bijgewerkt</div>
+                <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>
+                  {new Date(project.updated_at || project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
+                </span>
+              </div>
 
-            {/* Date */}
-            <div style={{ marginBottom: '16px' }}>
-              <div style={sidebarLabelStyle}>Aangemaakt</div>
-              <span style={{ fontSize: '.78rem', color: 'var(--muted)' }}>
-                {new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short', year: 'numeric' })}
-              </span>
-            </div>
-
-            {/* Progress */}
-            {todos.length > 0 && (
-              <div style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
-                <div style={{ fontSize: '.68rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '12px' }}>Voortgang</div>
-                <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px', marginBottom: '8px' }}>
-                  <span style={{ fontSize: '1.6rem', fontWeight: 800, fontFamily: 'var(--font-syne), sans-serif', color: progressPct === 100 ? '#00b89c' : 'var(--accent1)', lineHeight: 1 }}>{progressPct}%</span>
-                  <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>{doneTodos}/{todos.length} taken</span>
+              {/* Deadline */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={sidebarLabelStyle}>Deadline <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>(optioneel)</span></div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <input
+                    type="date"
+                    value={currentDeadline}
+                    onChange={e => changeDeadline(e.target.value)}
+                    style={{ flex: 1, padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.78rem', background: 'var(--bg)', outline: 'none', color: 'var(--text)' }}
+                  />
+                  {currentDeadline && (
+                    <button
+                      onClick={() => changeDeadline('')}
+                      title="Deadline wissen"
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex', alignItems: 'center', padding: '4px', flexShrink: 0 }}
+                    >
+                      <X size={13} />
+                    </button>
+                  )}
                 </div>
-                <div style={{ height: '6px', background: 'var(--border)', borderRadius: '3px', overflow: 'hidden' }}>
-                  <div style={{ height: '100%', background: progressPct === 100 ? '#00b89c' : 'var(--accent1)', borderRadius: '3px', width: `${progressPct}%`, transition: 'width .4s' }} />
-                </div>
+                {currentDeadline && (
+                  <div style={{ marginTop: '5px' }}>
+                    <DeadlineChip deadline={currentDeadline} />
+                  </div>
+                )}
+              </div>
+
+              {/* Taken progress */}
+              <div style={{ marginBottom: '20px', paddingTop: '16px', borderTop: '1px solid var(--border)' }}>
+                <div style={sidebarLabelStyle}>Taken</div>
+                <span style={{ fontSize: '.82rem', color: 'var(--text)', fontWeight: 600 }}>
+                  {doneTodos} / {todos.length} afgerond
+                </span>
+              </div>
+            </div>
+
+            {/* Delete button pinned at bottom for admin */}
+            {isAdmin && (
+              <div style={{ padding: '16px 20px', borderTop: '1px solid var(--border)' }}>
+                <button
+                  onClick={() => onDelete(project.id)}
+                  style={{
+                    width: '100%', padding: '9px', background: 'none', border: '1px solid rgba(229,57,53,.35)',
+                    borderRadius: 'var(--radius-sm)', cursor: 'pointer', color: '#e53935',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
+                    fontSize: '.8rem', fontWeight: 700, transition: 'background .12s, border-color .12s',
+                  }}
+                  onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'rgba(229,57,53,.08)'; (e.currentTarget as HTMLElement).style.borderColor = '#e53935' }}
+                  onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'none'; (e.currentTarget as HTMLElement).style.borderColor = 'rgba(229,57,53,.35)' }}
+                >
+                  <Trash2 size={13} /> Verwijderen
+                </button>
               </div>
             )}
           </div>
@@ -902,6 +951,11 @@ const labelStyle: React.CSSProperties = {
 const sidebarLabelStyle: React.CSSProperties = {
   fontSize: '.68rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase',
   letterSpacing: '.07em', marginBottom: '6px',
+}
+
+const sectionHeaderStyle: React.CSSProperties = {
+  fontSize: '.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase' as const,
+  letterSpacing: '.08em', marginBottom: '10px', display: 'block',
 }
 
 const sidebarSelectStyle: React.CSSProperties = {
