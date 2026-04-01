@@ -2,23 +2,38 @@ import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
 export async function GET() {
-  const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return NextResponse.json([], { status: 401 })
+  try {
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
 
-  const { data: profile } = await supabase
-    .from('user_profiles')
-    .select('agency_id')
-    .eq('id', user.id)
-    .single()
+    if (authError || !user) {
+      console.error('[/api/clients] Auth error:', authError)
+      return NextResponse.json([], { status: 401 })
+    }
 
-  if (!profile?.agency_id) return NextResponse.json([])
+    const { data: profile, error: profileError } = await supabase
+      .from('user_profiles')
+      .select('agency_id')
+      .eq('id', user.id)
+      .single()
 
-  const { data: clients } = await supabase
-    .from('clients')
-    .select('id, agency_id, company_name, industry, city, contact_email, created_at')
-    .eq('agency_id', profile.agency_id)
-    .order('company_name')
+    if (profileError) console.error('[/api/clients] Profile error:', profileError)
+    if (!profile?.agency_id) {
+      console.error('[/api/clients] No agency_id for user', user.id)
+      return NextResponse.json([])
+    }
 
-  return NextResponse.json(clients || [])
+    const { data: clients, error: clientsError } = await supabase
+      .from('clients')
+      .select('*')
+      .eq('agency_id', profile.agency_id)
+      .order('company_name')
+
+    if (clientsError) console.error('[/api/clients] Clients error:', clientsError)
+
+    return NextResponse.json(clients || [])
+  } catch (e) {
+    console.error('[/api/clients] Unexpected error:', e)
+    return NextResponse.json([])
+  }
 }

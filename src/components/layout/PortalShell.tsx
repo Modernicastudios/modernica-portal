@@ -35,7 +35,7 @@ function ClientFilterBanner() {
       fontSize: '.82rem',
       color: 'var(--accent1)',
     }}>
-      <span style={{ fontWeight: 600 }}>Client filter actief:</span>
+      <span style={{ fontWeight: 600 }}>Gefilterd op klant:</span>
       <span style={{ fontWeight: 700 }}>{selectedClient.company_name}</span>
       <span style={{ color: 'var(--muted)', flex: 1 }}>— Alle overzichten tonen alleen data voor deze klant</span>
       <button

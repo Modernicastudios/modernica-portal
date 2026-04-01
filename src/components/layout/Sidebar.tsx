@@ -168,7 +168,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       {(isAdmin || isSuperAdmin) && (
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
           <div style={{ fontSize: '.6rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', marginBottom: '6px' }}>
-            Klant context
+            Filter op klant
           </div>
           <button
             onClick={() => setClientDropOpen(v => !v)}
