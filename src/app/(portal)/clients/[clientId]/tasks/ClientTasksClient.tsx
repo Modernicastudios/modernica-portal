@@ -32,6 +32,9 @@ export default function ClientTasksClient({ client, tasks: initialTasks, teamMem
   const [tasks, setTasks] = useState(initialTasks)
   const [filter, setFilter] = useState('all')
   const [showAdd, setShowAdd] = useState(false)
+  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [editDesc, setEditDesc] = useState<Record<string, string>>({})
+  const [savingDesc, setSavingDesc] = useState<string | null>(null)
   const [form, setForm] = useState({ title: '', description: '', priority: 'medium', due_date: '', assigned_to: '' })
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<string | null>(null)
@@ -76,6 +79,24 @@ export default function ClientTasksClient({ client, tasks: initialTasks, teamMem
     await supabase.from('client_tasks').delete().eq('id', taskId)
     setTasks(prev => prev.filter(t => t.id !== taskId))
     showToast('Taak verwijderd')
+  }
+
+  async function saveDescription(taskId: string) {
+    setSavingDesc(taskId)
+    const desc = editDesc[taskId] ?? ''
+    await supabase.from('client_tasks').update({ description: desc || null }).eq('id', taskId)
+    setTasks(prev => prev.map(t => t.id === taskId ? { ...t, description: desc || null } : t))
+    setSavingDesc(null)
+    showToast('Omschrijving opgeslagen')
+  }
+
+  function toggleExpand(taskId: string, currentDesc: string | null) {
+    if (expandedId === taskId) {
+      setExpandedId(null)
+    } else {
+      setExpandedId(taskId)
+      setEditDesc(prev => ({ ...prev, [taskId]: currentDesc || '' }))
+    }
   }
 
   const inputStyle = { width: '100%', padding: '9px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.88rem', background: 'var(--bg)', outline: 'none' }
@@ -137,76 +158,116 @@ export default function ClientTasksClient({ client, tasks: initialTasks, teamMem
           const priorityCfg = PRIORITY_CONFIG[task.priority as keyof typeof PRIORITY_CONFIG]
           const isOverdue = task.due_date && task.status !== 'done' && new Date(task.due_date) < new Date()
 
+          const isExpanded = expandedId === task.id
           return (
             <div key={task.id} style={{
-              background: 'var(--card)', border: `1px solid ${task.status === 'done' ? 'rgba(0,184,156,.15)' : 'var(--border)'}`,
-              borderRadius: 'var(--radius-sm)', padding: '16px',
-              display: 'flex', alignItems: 'flex-start', gap: '14px',
-              opacity: task.status === 'done' ? .7 : 1,
-              boxShadow: '0 1px 6px rgba(26,63,228,.05)',
+              background: 'var(--card)', border: `1px solid ${task.status === 'done' ? 'rgba(0,184,156,.15)' : isExpanded ? 'rgba(26,63,228,.2)' : 'var(--border)'}`,
+              borderRadius: 'var(--radius-sm)', overflow: 'hidden',
+              opacity: task.status === 'done' ? .75 : 1,
+              boxShadow: isExpanded ? '0 4px 16px rgba(26,63,228,.1)' : '0 1px 6px rgba(26,63,228,.05)',
+              transition: 'border-color .15s, box-shadow .15s',
             }}>
-              {/* Checkbox */}
-              <button
-                onClick={() => updateTaskStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
-                style={{
-                  width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0,
-                  border: `2px solid ${task.status === 'done' ? 'var(--accent3)' : 'var(--border)'}`,
-                  background: task.status === 'done' ? 'var(--accent3)' : 'none',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  cursor: 'pointer', marginTop: '2px',
-                }}
-              >
-                {task.status === 'done' && <span style={{ color: '#fff', fontSize: '.8rem' }}>✓</span>}
-              </button>
-
-              {/* Content */}
-              <div style={{ flex: 1 }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '4px' }}>
-                  <span style={{ fontWeight: 600, fontSize: '.92rem', textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>
-                    {task.title}
-                  </span>
-                  <span style={{ fontSize: '.68rem', padding: '2px 8px', borderRadius: '50px', background: statusCfg.bg, color: statusCfg.color, fontWeight: 600 }}>
-                    {statusCfg.label}
-                  </span>
-                  <span style={{ fontSize: '.68rem', fontWeight: 600, color: priorityCfg.color }}>
-                    {priorityCfg.label}
-                  </span>
-                  {isOverdue && (
-                    <span style={{ fontSize: '.68rem', padding: '2px 8px', borderRadius: '50px', background: 'rgba(229,57,53,.1)', color: '#e53935', fontWeight: 600 }}>
-                      ⚠️ Verlopen
-                    </span>
-                  )}
-                </div>
-                {task.description && (
-                  <div style={{ fontSize: '.82rem', color: 'var(--muted)', marginBottom: '6px' }}>{task.description}</div>
-                )}
-                <div style={{ display: 'flex', gap: '12px', fontSize: '.75rem', color: 'var(--muted)' }}>
-                  <span>👤 {task.user_profiles?.full_name || 'Onbekend'}</span>
-                  {task.assignee && <span>→ {task.assignee.full_name}</span>}
-                  {task.due_date && (
-                    <span style={{ color: isOverdue ? '#e53935' : 'var(--muted)' }}>
-                      📅 {new Date(task.due_date).toLocaleDateString('nl-NL')}
-                    </span>
-                  )}
-                </div>
-              </div>
-
-              {/* Status selector */}
-              <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
-                <select
-                  value={task.status}
-                  onChange={e => updateTaskStatus(task.id, e.target.value)}
-                  onClick={e => e.stopPropagation()}
-                  style={{ padding: '5px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '.75rem', background: 'var(--bg)', cursor: 'pointer' }}
+              {/* Main row */}
+              <div style={{ padding: '14px 16px', display: 'flex', alignItems: 'flex-start', gap: '14px' }}>
+                {/* Checkbox */}
+                <button
+                  onClick={() => updateTaskStatus(task.id, task.status === 'done' ? 'todo' : 'done')}
+                  style={{
+                    width: '22px', height: '22px', borderRadius: '6px', flexShrink: 0,
+                    border: `2px solid ${task.status === 'done' ? 'var(--accent3)' : 'var(--border)'}`,
+                    background: task.status === 'done' ? 'var(--accent3)' : 'none',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    cursor: 'pointer', marginTop: '2px',
+                  }}
                 >
-                  {Object.entries(STATUS_CONFIG).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}
-                </select>
-                {(isAdmin || task.created_by === currentUserId) && (
-                  <button onClick={() => deleteTask(task.id)} style={{ padding: '5px 10px', background: 'rgba(229,57,53,.08)', color: '#e53935', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '.75rem' }}>
-                    🗑
-                  </button>
-                )}
+                  {task.status === 'done' && <span style={{ color: '#fff', fontSize: '.8rem' }}>✓</span>}
+                </button>
+
+                {/* Content — click to expand */}
+                <div style={{ flex: 1, cursor: 'pointer' }} onClick={() => toggleExpand(task.id, task.description)}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', marginBottom: '3px' }}>
+                    <span style={{ fontWeight: 600, fontSize: '.92rem', textDecoration: task.status === 'done' ? 'line-through' : 'none' }}>
+                      {task.title}
+                    </span>
+                    <span style={{ fontSize: '.68rem', padding: '2px 8px', borderRadius: '50px', background: statusCfg.bg, color: statusCfg.color, fontWeight: 600 }}>
+                      {statusCfg.label}
+                    </span>
+                    <span style={{ fontSize: '.68rem', fontWeight: 600, color: priorityCfg.color }}>
+                      {priorityCfg.label}
+                    </span>
+                    {isOverdue && (
+                      <span style={{ fontSize: '.68rem', padding: '2px 8px', borderRadius: '50px', background: 'rgba(229,57,53,.1)', color: '#e53935', fontWeight: 600 }}>
+                        Verlopen
+                      </span>
+                    )}
+                  </div>
+                  {task.description && !isExpanded && (
+                    <div style={{ fontSize: '.78rem', color: 'var(--muted)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis', maxWidth: '420px' }}>
+                      {task.description}
+                    </div>
+                  )}
+                  <div style={{ display: 'flex', gap: '12px', fontSize: '.72rem', color: 'var(--muted)', marginTop: '4px' }}>
+                    {task.assignee && <span>→ {task.assignee.full_name}</span>}
+                    {task.due_date && (
+                      <span style={{ color: isOverdue ? '#e53935' : 'var(--muted)' }}>
+                        {new Date(task.due_date).toLocaleDateString('nl-NL')}
+                      </span>
+                    )}
+                    <span style={{ color: 'var(--accent1)', fontSize: '.68rem' }}>{isExpanded ? '▲ Inklappen' : '▼ Details'}</span>
+                  </div>
+                </div>
+
+                {/* Status + delete */}
+                <div style={{ display: 'flex', gap: '6px', flexShrink: 0 }}>
+                  <select
+                    value={task.status}
+                    onChange={e => updateTaskStatus(task.id, e.target.value)}
+                    onClick={e => e.stopPropagation()}
+                    style={{ padding: '5px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', fontSize: '.75rem', background: 'var(--bg)', cursor: 'pointer' }}
+                  >
+                    {Object.entries(STATUS_CONFIG).map(([key, v]) => <option key={key} value={key}>{v.label}</option>)}
+                  </select>
+                  {(isAdmin || task.created_by === currentUserId) && (
+                    <button onClick={() => deleteTask(task.id)} style={{ padding: '5px 10px', background: 'rgba(229,57,53,.08)', color: '#e53935', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '.75rem' }}>
+                      ×
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Expanded: editable description */}
+              {isExpanded && (
+                <div style={{ padding: '0 16px 16px 52px', borderTop: '1px solid var(--border)', paddingTop: '14px' }}>
+                  <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '8px' }}>
+                    Omschrijving / extra info
+                  </div>
+                  <textarea
+                    value={editDesc[task.id] ?? task.description ?? ''}
+                    onChange={e => setEditDesc(prev => ({ ...prev, [task.id]: e.target.value }))}
+                    placeholder="Voeg een omschrijving, instructies of context toe..."
+                    rows={3}
+                    style={{
+                      width: '100%', padding: '9px 12px', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)',
+                      outline: 'none', resize: 'vertical', fontFamily: 'inherit',
+                      color: 'var(--text)', boxSizing: 'border-box', lineHeight: 1.55,
+                    }}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '8px' }}>
+                    <button
+                      onClick={() => saveDescription(task.id)}
+                      disabled={savingDesc === task.id}
+                      style={{
+                        padding: '7px 18px', background: 'var(--accent1)', color: '#fff',
+                        border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer',
+                        fontWeight: 700, fontSize: '.82rem', opacity: savingDesc === task.id ? .7 : 1,
+                      }}
+                    >
+                      {savingDesc === task.id ? 'Opslaan...' : 'Opslaan'}
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}

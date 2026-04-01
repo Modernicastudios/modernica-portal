@@ -7,6 +7,7 @@ import { Plus, X, List, LayoutGrid, CheckSquare } from 'lucide-react'
 interface Todo {
   id: string
   title: string
+  description: string | null
   done: boolean
   due_date: string | null
   priority: string | null
@@ -98,6 +99,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
 
   // Modal state
   const [modalTitle, setModalTitle] = useState('')
+  const [modalDescription, setModalDescription] = useState('')
   const [modalProject, setModalProject] = useState('')
   const [modalPriority, setModalPriority] = useState('normaal')
   const [modalDueDate, setModalDueDate] = useState('')
@@ -109,6 +111,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
   function openAddModal() {
     setEditingTodo(null)
     setModalTitle('')
+    setModalDescription('')
     setModalProject('')
     setModalPriority('normaal')
     setModalDueDate('')
@@ -119,6 +122,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
   function openEditModal(todo: Todo) {
     setEditingTodo(todo)
     setModalTitle(todo.title)
+    setModalDescription(todo.description || '')
     setModalProject(todo.project_id || '')
     setModalPriority(todo.priority || 'normaal')
     setModalDueDate(todo.due_date ? todo.due_date.slice(0, 16) : '')
@@ -154,6 +158,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
     if (editingTodo) {
       const { error } = await supabase.from('project_todos').update({
         title: modalTitle.trim(),
+        description: modalDescription || null,
         project_id: modalProject || null,
         priority: modalPriority,
         due_date: modalDueDate || null,
@@ -164,7 +169,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
       } else {
         setTodos((prev) => prev.map((t) =>
           t.id === editingTodo.id
-            ? { ...t, title: modalTitle.trim(), project_id: modalProject || null, priority: modalPriority, due_date: modalDueDate || null, done: modalDone }
+            ? { ...t, title: modalTitle.trim(), description: modalDescription || null, project_id: modalProject || null, priority: modalPriority, due_date: modalDueDate || null, done: modalDone }
             : t
         ))
         addToast('Taak opgeslagen')
@@ -173,11 +178,12 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
     } else {
       const { data, error } = await supabase.from('project_todos').insert({
         title: modalTitle.trim(),
+        description: modalDescription || null,
         project_id: modalProject || null,
         priority: modalPriority,
         due_date: modalDueDate || null,
         done: false,
-      }).select('id,title,done,due_date,priority,created_at,project_id,meeting_id').single()
+      }).select('id,title,description,done,due_date,priority,created_at,project_id,meeting_id').single()
       if (error || !data) {
         addToast('Fout bij aanmaken', 'error')
       } else {
@@ -560,6 +566,30 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
             </label>
 
             <label style={{ display: 'block', marginBottom: 14 }}>
+              <span style={{ fontSize: '.8rem', fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Omschrijving <span style={{ fontWeight: 400 }}>(optioneel)</span></span>
+              <textarea
+                value={modalDescription}
+                onChange={(e) => setModalDescription(e.target.value)}
+                placeholder="Extra informatie, context of instructies..."
+                rows={3}
+                style={{
+                  width: '100%',
+                  background: 'var(--bg)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '8px 12px',
+                  fontSize: '.88rem',
+                  color: 'var(--text)',
+                  outline: 'none',
+                  boxSizing: 'border-box',
+                  resize: 'vertical',
+                  fontFamily: 'inherit',
+                  lineHeight: 1.5,
+                }}
+              />
+            </label>
+
+            <label style={{ display: 'block', marginBottom: 14 }}>
               <span style={{ fontSize: '.8rem', fontWeight: 600, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Project</span>
               <select
                 value={modalProject}
@@ -730,19 +760,34 @@ function TodoRow({
         {todo.done ? '✓' : ''}
       </button>
 
-      {/* Title */}
-      <span
+      {/* Title + description */}
+      <div
         onClick={() => onEdit(todo)}
-        style={{
-          flex: 1,
+        style={{ flex: 1, minWidth: 0 }}
+      >
+        <span style={{
           fontSize: '.9rem',
           color: todo.done ? 'var(--muted)' : 'var(--text)',
           textDecoration: todo.done ? 'line-through' : 'none',
           fontWeight: 500,
-        }}
-      >
-        {todo.title}
-      </span>
+          display: 'block',
+        }}>
+          {todo.title}
+        </span>
+        {todo.description && (
+          <span style={{
+            fontSize: '.76rem',
+            color: 'var(--muted)',
+            display: 'block',
+            marginTop: '2px',
+            overflow: 'hidden',
+            whiteSpace: 'nowrap',
+            textOverflow: 'ellipsis',
+          }}>
+            {todo.description}
+          </span>
+        )}
+      </div>
 
       {/* Priority chip — only if not normaal */}
       {priority !== 'normaal' && (

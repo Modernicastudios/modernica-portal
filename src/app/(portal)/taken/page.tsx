@@ -21,13 +21,13 @@ export default async function TakenPage() {
   // Query 1: todos linked to projects
   const { data: projectTodos } = await supabase
     .from('project_todos')
-    .select('id,title,done,due_date,priority,created_at,project_id,meeting_id,projects!inner(id,title,agency_id,clients(company_name))')
+    .select('id,title,description,done,due_date,priority,created_at,project_id,meeting_id,projects!inner(id,title,agency_id,clients(company_name))')
     .eq('projects.agency_id', agencyId)
 
   // Query 2: todos linked to meeting_notes (no project)
   const { data: meetingTodos } = await supabase
     .from('project_todos')
-    .select('id,title,done,due_date,priority,created_at,project_id,meeting_id,meeting_notes!inner(id,title,agency_id)')
+    .select('id,title,description,done,due_date,priority,created_at,project_id,meeting_id,meeting_notes!inner(id,title,agency_id)')
     .eq('meeting_notes.agency_id', agencyId)
     .is('project_id', null)
 
