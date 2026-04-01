@@ -181,7 +181,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
               onDragLeave={() => setDragOver(null)}
               onDrop={e => handleDrop(e, col.key)}
               style={{
-                minWidth: '284px', maxWidth: '284px', display: 'flex', flexDirection: 'column',
+                minWidth: '260px', maxWidth: '300px', flex: '1 1 260px', display: 'flex', flexDirection: 'column',
                 background: dragOver === col.key ? col.bg : 'transparent',
                 borderRadius: 'var(--radius)', transition: 'background .15s',
               }}
@@ -448,7 +448,7 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
         </div>
 
         {/* Title */}
-        <div style={{ fontWeight: 700, fontSize: '.88rem', lineHeight: 1.4, marginBottom: '6px', color: 'var(--text)', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>
+        <div style={{ fontWeight: 700, fontSize: '.88rem', lineHeight: 1.4, marginBottom: '6px', color: 'var(--text)', wordBreak: 'break-word', overflowWrap: 'break-word' }}>
           {project.title}
         </div>
 
@@ -466,6 +466,7 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
           <div style={{
             fontSize: '.74rem', color: 'var(--muted)', marginBottom: '10px', lineHeight: 1.55,
             overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical',
+            wordBreak: 'break-word', overflowWrap: 'break-word',
           }}>
             {project.description}
           </div>
