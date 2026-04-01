@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useClientFilter } from '@/components/layout/ClientFilter'
 import { Plus, X, LayoutGrid, List, Trash2 } from 'lucide-react'
 
 const STATUSES = [
@@ -53,12 +54,18 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
   const [viewMode, setViewMode]           = useState<ViewMode>('board')
 
   const supabase = createClient()
+  const { selectedClientId } = useClientFilter()
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
+  // Apply global client filter
+  const visibleProjects = selectedClientId
+    ? projects.filter(p => p.client_id === selectedClientId)
+    : projects
+
   const columns = STATUSES.map(s => ({
     ...s,
-    items: projects.filter(p => p.status === s.key),
+    items: visibleProjects.filter(p => p.status === s.key),
   }))
 
   async function createProject() {
@@ -132,7 +139,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
             Project Board
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>
-            {projects.length} projecten · Sleep kaarten om status te wijzigen
+            {visibleProjects.length} projecten{selectedClientId ? ' voor deze klant' : ''} · Sleep kaarten om status te wijzigen
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
@@ -252,10 +259,10 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
               <span key={h} style={{ fontSize: '.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em' }}>{h}</span>
             ))}
           </div>
-          {projects.length === 0 && (
+          {visibleProjects.length === 0 && (
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)', fontSize: '.88rem' }}>Geen projecten gevonden</div>
           )}
-          {projects.map((project, i) => {
+          {visibleProjects.map((project, i) => {
             const st = STATUS_MAP[project.status] || STATUSES[0]
             const pr = PRIORITIES[project.priority] || PRIORITIES.normal
             return (
@@ -265,7 +272,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
                 style={{
                   display: 'grid', gridTemplateColumns: '2fr 1fr 1fr 1fr 1fr',
                   padding: '13px 20px', cursor: 'pointer',
-                  borderBottom: i < projects.length - 1 ? '1px solid var(--border)' : 'none',
+                  borderBottom: i < visibleProjects.length - 1 ? '1px solid var(--border)' : 'none',
                   transition: 'background .12s',
                 }}
                 onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--bg)' }}

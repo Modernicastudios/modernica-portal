@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { useClientFilter } from '@/components/layout/ClientFilter'
 import type { Client, UserProfile } from '@/types'
 import { Search, Users, X, Trash2 } from 'lucide-react'
 
@@ -57,6 +58,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
   const [search, setSearch]             = useState('')
 
   const supabase = createClient()
+  const { selectedClientId, setSelectedClientId } = useClientFilter()
 
   function showToast(msg: string) {
     setToast(msg)
@@ -160,10 +162,13 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
     showToast('Link gekopieerd!')
   }
 
-  const filtered = clients.filter(c =>
-    c.company_name.toLowerCase().includes(search.toLowerCase()) ||
-    (c.contact_email || '').toLowerCase().includes(search.toLowerCase())
-  )
+  const filtered = clients.filter(c => {
+    if (selectedClientId && c.id !== selectedClientId) return false
+    return (
+      c.company_name.toLowerCase().includes(search.toLowerCase()) ||
+      (c.contact_email || '').toLowerCase().includes(search.toLowerCase())
+    )
+  })
 
   return (
     <div className="animate-fade-up">

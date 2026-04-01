@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useClientFilter } from '@/components/layout/ClientFilter'
 import { Plus, X, List, LayoutGrid, CheckSquare } from 'lucide-react'
 
 interface Todo {
@@ -14,7 +15,7 @@ interface Todo {
   created_at: string
   project_id: string | null
   meeting_id: string | null
-  projects?: { id: string; title: string; agency_id?: string; clients?: { company_name: string } | null } | null
+  projects?: { id: string; title: string; agency_id?: string; client_id?: string | null; clients?: { company_name: string } | null } | null
   meeting_notes?: { id: string; title: string; agency_id?: string } | null
 }
 
@@ -96,6 +97,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
   const [editingTodo, setEditingTodo] = useState<Todo | null>(null)
   const [dragOverCol, setDragOverCol] = useState<string | null>(null)
   const { toasts, addToast } = useToasts()
+  const { selectedClientId } = useClientFilter()
 
   // Modal state
   const [modalTitle, setModalTitle] = useState('')
@@ -229,6 +231,11 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
     if (filterProject && t.project_id !== filterProject) return false
     if (filterPriority && (t.priority || 'normaal') !== filterPriority) return false
     if (searchQuery && !t.title.toLowerCase().includes(searchQuery.toLowerCase())) return false
+    // Global client filter: only show todos whose project belongs to the selected client
+    if (selectedClientId && t.projects) {
+      const projectClientId = (t.projects as any).client_id
+      if (projectClientId !== selectedClientId) return false
+    }
     return true
   })
 
