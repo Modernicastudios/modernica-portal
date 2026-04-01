@@ -493,17 +493,7 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
         )}
 
         {/* Footer */}
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '6px', marginTop: '4px' }}>
-          {/* Assignee avatar placeholder */}
-          <div style={{
-            width: '24px', height: '24px', borderRadius: '50%',
-            background: 'linear-gradient(135deg, var(--accent1), var(--accent2))',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '.65rem', color: '#fff', fontWeight: 700, flexShrink: 0,
-          }}>
-            ?
-          </div>
-          {/* Date */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', marginTop: '4px' }}>
           <span style={{ fontSize: '.65rem', color: 'var(--muted)' }}>
             {new Date(project.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })}
           </span>
