@@ -5,18 +5,20 @@ import { usePathname } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import type { UserProfile, Agency, BrandKit } from '@/types'
+import type { UserProfile, Agency, BrandKit, Client } from '@/types'
+import { useClientFilter } from './ClientFilter'
 import {
   LayoutDashboard, BarChart2, TrendingUp, Kanban, CalendarDays, CheckSquare,
   ThumbsUp, Calendar, Video, MessageSquare, Lightbulb, Image, PieChart,
   FileText, Users, Link2, Settings, CreditCard, Shield, User, LogOut, X,
-  BarChart3, Clock,
+  BarChart3, Clock, ChevronDown,
 } from 'lucide-react'
 
 interface Props {
   profile: UserProfile & { agencies?: Agency }
   agency: Agency | null
   brandKit: BrandKit | null
+  clients?: Client[]
   isOpen?: boolean
   onClose?: () => void
 }
@@ -46,7 +48,7 @@ const NAV_ITEMS: NavItem[] = [
 
 const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
 
-export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: Props) {
+export default function Sidebar({ profile, agency, brandKit, clients = [], isOpen, onClose }: Props) {
   const pathname = usePathname()
   const router = useRouter()
   const [isMobile, setIsMobile] = useState(false)
@@ -60,9 +62,13 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
 
-  const isAdmin = profile.role === 'admin' || profile.role === 'manager'
-  const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL
+  const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
+  const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
   const isClient = !!profile.client_id
+
+  const { selectedClientId, setSelectedClientId } = useClientFilter()
+  const [clientDropOpen, setClientDropOpen] = useState(false)
+  const selectedClient = clients.find(c => c.id === selectedClientId) || null
 
   const logoUrl = brandKit?.logo_url || null
   const agencyName = agency?.name || 'Modernica'
@@ -157,6 +163,77 @@ export default function Sidebar({ profile, agency, brandKit, isOpen, onClose }: 
           </>
         )}
       </div>
+
+      {/* Client switcher — admin only */}
+      {(isAdmin || isSuperAdmin) && (
+        <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
+          <div style={{ fontSize: '.6rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', marginBottom: '6px' }}>
+            Klant context
+          </div>
+          <button
+            onClick={() => setClientDropOpen(v => !v)}
+            style={{
+              width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+              background: selectedClient ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.1)',
+              border: `1px solid ${selectedClient ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.15)'}`,
+              borderRadius: '8px', padding: '7px 10px', cursor: 'pointer',
+              color: '#fff', fontSize: '.8rem', fontWeight: selectedClient ? 700 : 400,
+            }}
+          >
+            {selectedClient ? (
+              <>
+                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(255,255,255,.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.6rem', fontWeight: 800, flexShrink: 0 }}>
+                  {selectedClient.company_name.slice(0,2).toUpperCase()}
+                </span>
+                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                  {selectedClient.company_name}
+                </span>
+                <span onClick={e => { e.stopPropagation(); setSelectedClientId(null) }} style={{ opacity: .7, display: 'flex', alignItems: 'center' }}>
+                  <X size={13} />
+                </span>
+              </>
+            ) : (
+              <>
+                <Users size={14} style={{ opacity: .7, flexShrink: 0 }} />
+                <span style={{ flex: 1, textAlign: 'left', opacity: .75 }}>Alle klanten</span>
+                <ChevronDown size={13} style={{ opacity: .6 }} />
+              </>
+            )}
+          </button>
+
+          {clientDropOpen && (
+            <div style={{
+              position: 'absolute', top: 'calc(100% - 2px)', left: '14px', right: '14px',
+              background: 'var(--card)', border: '1px solid var(--border)',
+              borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,.18)',
+              zIndex: 200, maxHeight: '260px', overflowY: 'auto', padding: '4px',
+            }}>
+              <button
+                onClick={() => { setSelectedClientId(null); setClientDropOpen(false) }}
+                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '7px', border: 'none', background: !selectedClientId ? 'rgba(26,63,228,.07)' : 'transparent', color: !selectedClientId ? 'var(--accent1)' : 'var(--text)', fontSize: '.82rem', fontWeight: !selectedClientId ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}
+              >
+                <Users size={14} style={{ opacity: .5 }} /> Alle klanten
+              </button>
+              {clients.length > 0 && <div style={{ height: '1px', background: 'var(--border)', margin: '3px 0' }} />}
+              {clients.map(c => (
+                <button
+                  key={c.id}
+                  onClick={() => { setSelectedClientId(c.id); setClientDropOpen(false) }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '7px', border: 'none', background: selectedClientId === c.id ? 'rgba(26,63,228,.07)' : 'transparent', color: selectedClientId === c.id ? 'var(--accent1)' : 'var(--text)', fontSize: '.82rem', fontWeight: selectedClientId === c.id ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.6rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                    {c.company_name.slice(0,2).toUpperCase()}
+                  </span>
+                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company_name}</span>
+                </button>
+              ))}
+              {clients.length === 0 && (
+                <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Nog geen klanten</div>
+              )}
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Navigation */}
       <nav style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>

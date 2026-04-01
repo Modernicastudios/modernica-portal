@@ -97,6 +97,7 @@ function ShellInner({ profile, agency, brandKit, userId, clients, children }: Pr
         profile={profile}
         agency={agency}
         brandKit={brandKit}
+        clients={clients}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />
