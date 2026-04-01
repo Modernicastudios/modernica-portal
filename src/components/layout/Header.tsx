@@ -76,8 +76,8 @@ export default function Header({ profile, agency, userId, clients = [] }: Props)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const dropdownRef = useRef<HTMLDivElement>(null)
 
-  const isAdmin = profile.role === 'admin' || profile.role === 'manager'
-  const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL
+  const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
+  const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
 
   const selectedClient = clients.find(c => c.id === selectedClientId) || null
 
@@ -117,7 +117,7 @@ export default function Header({ profile, agency, userId, clients = [] }: Props)
 
       <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
         {/* Client selector — admin only */}
-        {(isAdmin || isSuperAdmin) && clients.length > 0 && (
+        {(isAdmin || isSuperAdmin) && (
           <div ref={dropdownRef} style={{ position: 'relative' }}>
             <button
               onClick={() => setDropdownOpen(v => !v)}
