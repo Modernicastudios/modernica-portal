@@ -146,7 +146,8 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
       // Revert on failure
       setProjects(prevProjects)
       if (selectedProject?.id === id) setSelectedProject((p: any) => ({ ...p, status: selectedProject.status }))
-      showToast('Fout: status kon niet worden opgeslagen. Probeer opnieuw.')
+      showToast(`Fout: ${error.message}`)
+      console.error('moveProject error:', error)
     }
   }
 
