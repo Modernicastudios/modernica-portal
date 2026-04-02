@@ -231,6 +231,7 @@ export default function RoiClient({ entries, clients, agencyId, isAdmin, clientI
   // ── Save entry ───────────────────────────────────────────────────────────
 
   async function handleSave() {
+    if (!isAdmin) return
     if (!formData.client_id) { showToast('Selecteer een klant', 'error'); return }
     setSaving(true)
     const { data, error } = await supabase
@@ -260,6 +261,7 @@ export default function RoiClient({ entries, clients, agencyId, isAdmin, clientI
   // ── Delete entry ─────────────────────────────────────────────────────────
 
   async function handleDelete(id: string) {
+    if (!isAdmin) return
     const { error } = await supabase.from('roi_entries').delete().eq('id', id)
     if (error) { showToast('Fout bij verwijderen', 'error'); return }
     setLocalEntries(prev => prev.filter(e => e.id !== id))

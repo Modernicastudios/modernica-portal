@@ -17,15 +17,22 @@ export default async function TakenPage() {
 
   const agencyId: string = profile.agency_id || ''
   const isAdmin = profile.role === 'admin' || profile.role === 'manager'
+  const isClient = profile.role === 'client'
+  const clientId = profile.client_id || null
 
   // Query 1: todos linked to projects
-  const { data: projectTodos } = await supabase
+  let projectTodosQuery = supabase
     .from('project_todos')
     .select('id,title,description,done,due_date,priority,created_at,project_id,meeting_id,projects!inner(id,title,agency_id,client_id,clients(company_name))')
     .eq('projects.agency_id', agencyId)
+  // Clients only see todos for their own projects
+  if (isClient && clientId) {
+    projectTodosQuery = projectTodosQuery.eq('projects.client_id', clientId) as typeof projectTodosQuery
+  }
+  const { data: projectTodos } = await projectTodosQuery
 
-  // Query 2: todos linked to meeting_notes (no project)
-  const { data: meetingTodos } = await supabase
+  // Query 2: todos linked to meeting_notes (no project) — clients don't have meeting access
+  const { data: meetingTodos } = isClient ? { data: [] } : await supabase
     .from('project_todos')
     .select('id,title,description,done,due_date,priority,created_at,project_id,meeting_id,meeting_notes!inner(id,title,agency_id)')
     .eq('meeting_notes.agency_id', agencyId)

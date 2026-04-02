@@ -18,6 +18,7 @@ interface Props {
   clients: ClientWithStats[]
   pendingUsers: UserProfile[]
   agencyId: string
+  isAdmin: boolean
 }
 
 type ModalMode = 'add' | 'edit'
@@ -46,7 +47,7 @@ const emptyForm: ClientForm = {
   status: 'actief',
 }
 
-export default function ClientsClient({ clients: initialClients, pendingUsers, agencyId }: Props) {
+export default function ClientsClient({ clients: initialClients, pendingUsers, agencyId, isAdmin }: Props) {
   const [clients, setClients]           = useState<ClientWithStats[]>(initialClients)
   const [showModal, setShowModal]       = useState(false)
   const [modalMode, setModalMode]       = useState<ModalMode>('add')
@@ -91,6 +92,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
   }
 
   async function deleteClient(id: string, name: string) {
+    if (!isAdmin) return
     if (!confirm(`Klant "${name}" verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return
     const { error } = await supabase.from('clients').delete().eq('id', id)
     if (!error) {
@@ -101,7 +103,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
   }
 
   async function saveClient() {
-    if (!form.company_name.trim()) return
+    if (!isAdmin || !form.company_name.trim()) return
     setLoading(true)
 
     if (modalMode === 'add') {

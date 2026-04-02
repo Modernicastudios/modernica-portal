@@ -144,6 +144,7 @@ export default function MediaClient({ assets: initialAssets, clients, agencyId, 
   )
 
   async function deleteAsset(asset: any) {
+    if (!isAdmin) return
     const { error: storageError } = await supabase.storage
       .from('media-library')
       .remove([asset.storage_path])

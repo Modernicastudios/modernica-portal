@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useClientFilter } from '@/components/layout/ClientFilter'
-import { Plus, X, LayoutGrid, List, Trash2 } from 'lucide-react'
+import { Plus, X, LayoutGrid, List, Trash2, FolderOpen } from 'lucide-react'
 
 const STATUSES = [
   { key: 'backlog',          label: 'Backlog',             color: '#6b7280', bg: 'rgba(107,114,128,.08)', strip: '#d1d5db' },
@@ -29,39 +29,77 @@ const PRIORITY_STRIP: Record<string, string> = {
 
 const CATEGORIES = ['Paid Ads', 'Social', 'Content', 'SEO', 'Design', 'Strategy', 'Development']
 
+const CAMPAIGN_COLORS = [
+  '#1a3fe4', '#9c27b0', '#ff7a30', '#00b89c', '#e53935',
+  '#f59e0b', '#0ea5e9', '#10b981', '#ec4899', '#6366f1',
+]
+
 const STATUS_MAP = Object.fromEntries(STATUSES.map(s => [s.key, s]))
 
 interface Props {
   projects: any[]
   clients: any[]
+  groups: any[]
   agencyId: string
   currentUserId: string
+  currentClientId: string   // client_id van de ingelogde gebruiker (leeg als admin)
   isAdmin: boolean
 }
 
 type ViewMode = 'board' | 'list'
 
-export default function ProjectsClient({ projects: initialProjects, clients, agencyId, currentUserId, isAdmin }: Props) {
+export default function ProjectsClient({ projects: initialProjects, clients, groups: initialGroups, agencyId, currentUserId, currentClientId, isAdmin }: Props) {
   const [projects, setProjects]           = useState(initialProjects)
+  const [groups, setGroups]               = useState(initialGroups)
   const [selectedProject, setSelectedProject] = useState<any>(null)
   const [showAddModal, setShowAddModal]   = useState(false)
   const [addToStatus, setAddToStatus]     = useState('backlog')
-  const [newProject, setNewProject]       = useState({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '', deadline: '' })
+  const [newProject, setNewProject]       = useState({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '', deadline: '', group_id: '' })
   const [loading, setLoading]             = useState(false)
   const [toast, setToast]                 = useState<string | null>(null)
   const [dragId, setDragId]               = useState<string | null>(null)
   const [dragOver, setDragOver]           = useState<string | null>(null)
   const [viewMode, setViewMode]           = useState<ViewMode>('board')
+  const [selectedGroupId, setSelectedGroupId] = useState<string>('')
+  const [filterPriority, setFilterPriority] = useState<string>('')
+  const [filterCategory, setFilterCategory] = useState<string>('')
+  const [filterClient, setFilterClient] = useState<string>('')
+  const [sortBy, setSortBy] = useState<string>('newest')
 
   const supabase = createClient()
-  const { selectedClientId } = useClientFilter()
+  const { selectedClientId, filterClients } = useClientFilter()
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
-  // Apply global client filter
-  const visibleProjects = selectedClientId
-    ? projects.filter(p => p.client_id === selectedClientId)
-    : projects
+  // Groups filtered by selected client (if one is active)
+  const relevantGroups = selectedClientId
+    ? groups.filter(g => !g.client_id || g.client_id === selectedClientId)
+    : groups
+
+  // Apply global client filter + local group filter + local filters
+  const visibleProjects = projects
+    .filter(p => !selectedClientId || p.client_id === selectedClientId)
+    .filter(p => !selectedGroupId || p.group_id === selectedGroupId)
+    .filter(p => !filterPriority || p.priority === filterPriority)
+    .filter(p => !filterCategory || p.category === filterCategory)
+    .filter(p => !filterClient || p.client_id === filterClient)
+    .sort((a, b) => {
+      if (sortBy === 'deadline_asc') {
+        if (!a.deadline && !b.deadline) return 0
+        if (!a.deadline) return 1
+        if (!b.deadline) return -1
+        return new Date(a.deadline).getTime() - new Date(b.deadline).getTime()
+      }
+      if (sortBy === 'deadline_desc') {
+        if (!a.deadline && !b.deadline) return 0
+        if (!a.deadline) return 1
+        if (!b.deadline) return -1
+        return new Date(b.deadline).getTime() - new Date(a.deadline).getTime()
+      }
+      if (sortBy === 'oldest') return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+      // newest (default)
+      return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    })
 
   const columns = STATUSES.map(s => ({
     ...s,
@@ -71,15 +109,17 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
   async function createProject() {
     if (!newProject.title.trim()) return
     setLoading(true)
-    const payload = { ...newProject, status: addToStatus, agency_id: agencyId, client_id: newProject.client_id || null, deadline: newProject.deadline || null }
+    // Clients: auto-koppel aan hun eigen client_id
+    const resolvedClientId = !isAdmin && currentClientId ? currentClientId : (newProject.client_id || null)
+    const payload = { ...newProject, status: addToStatus, agency_id: agencyId, client_id: resolvedClientId, deadline: newProject.deadline || null, group_id: newProject.group_id || null }
     const { data, error } = await supabase
       .from('projects')
       .insert(payload)
-      .select('*, clients(company_name), project_todos(id, done)')
+      .select('*, clients!client_id(company_name), project_groups!group_id(id, name, color), project_todos(id, done)')
       .single()
     if (!error && data) {
       setProjects(prev => [data, ...prev])
-      setNewProject({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '', deadline: '' })
+      setNewProject({ title: '', description: '', status: 'backlog', priority: 'normal', category: '', client_id: '', deadline: '', group_id: '' })
       setShowAddModal(false)
       showToast('Project aangemaakt!')
     }
@@ -87,6 +127,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
   }
 
   async function deleteProject(id: string) {
+    if (!isAdmin) return
     if (!confirm('Project verwijderen? Dit verwijdert ook alle taken en notities van dit project.')) return
     await supabase.from('projects').delete().eq('id', id)
     setProjects(prev => prev.filter(p => p.id !== id))
@@ -95,14 +136,23 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
   }
 
   async function moveProject(id: string, newStatus: string) {
-    await supabase.from('projects').update({ status: newStatus }).eq('id', id)
+    // Optimistic update
+    const prevProjects = projects
     setProjects(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p))
     if (selectedProject?.id === id) setSelectedProject((p: any) => ({ ...p, status: newStatus }))
+
+    const { error } = await supabase.from('projects').update({ status: newStatus }).eq('id', id)
+    if (error) {
+      // Revert on failure
+      setProjects(prevProjects)
+      if (selectedProject?.id === id) setSelectedProject((p: any) => ({ ...p, status: selectedProject.status }))
+      showToast('Fout: status kon niet worden opgeslagen. Probeer opnieuw.')
+    }
   }
 
   function openAdd(status: string) {
     setAddToStatus(status)
-    setNewProject({ title: '', description: '', status, priority: 'normal', category: '', client_id: '', deadline: '' })
+    setNewProject({ title: '', description: '', status, priority: 'normal', category: '', client_id: selectedClientId || '', deadline: '', group_id: selectedGroupId || '' })
     setShowAddModal(true)
   }
 
@@ -133,16 +183,19 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
       )}
 
       {/* Header */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '28px', flexWrap: 'wrap', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px', flexWrap: 'wrap', gap: '12px' }}>
         <div>
           <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.5rem', marginBottom: '4px' }}>
             Project Board
           </h1>
           <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>
-            {visibleProjects.length} projecten{selectedClientId ? ' voor deze klant' : ''} · Sleep kaarten om status te wijzigen
+            {visibleProjects.length} projecten
+            {selectedClientId ? ' voor deze klant' : ''}
+            {selectedGroupId ? ` · ${groups.find(g => g.id === selectedGroupId)?.name}` : ''}
+            {' · Sleep kaarten om status te wijzigen'}
           </p>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {/* View toggle */}
           <div style={{ display: 'flex', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', padding: '3px', gap: '2px' }}>
             {([{ key: 'board', label: 'Board' }, { key: 'list', label: 'Lijst' }] as const).map(v => (
@@ -161,21 +214,134 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
               </button>
             ))}
           </div>
-          {isAdmin && (
+          <button
+            onClick={() => openAdd('backlog')}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '6px',
+              background: 'var(--accent1)', color: '#fff', border: 'none',
+              borderRadius: 'var(--radius-sm)', padding: '10px 20px',
+              fontSize: '.88rem', fontWeight: 700, cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(26,63,228,.3)',
+            }}
+          >
+            <Plus size={16} /> Nieuw project
+          </button>
+        </div>
+      </div>
+
+      {/* Campaign filter pills */}
+      {relevantGroups.length > 0 && (
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+          <span style={{ fontSize: '.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <FolderOpen size={13} /> Campagne:
+          </span>
+          <button
+            onClick={() => setSelectedGroupId('')}
+            style={{
+              padding: '4px 12px', borderRadius: '50px', border: '1px solid var(--border)',
+              background: !selectedGroupId ? 'var(--accent1)' : 'var(--card)',
+              color: !selectedGroupId ? '#fff' : 'var(--muted)',
+              fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', transition: 'all .15s',
+            }}
+          >
+            Alle
+          </button>
+          {relevantGroups.map(g => (
             <button
-              onClick={() => openAdd('backlog')}
+              key={g.id}
+              onClick={() => setSelectedGroupId(selectedGroupId === g.id ? '' : g.id)}
               style={{
-                display: 'flex', alignItems: 'center', gap: '6px',
-                background: 'var(--accent1)', color: '#fff', border: 'none',
-                borderRadius: 'var(--radius-sm)', padding: '10px 20px',
-                fontSize: '.88rem', fontWeight: 700, cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(26,63,228,.3)',
+                padding: '4px 12px', borderRadius: '50px', cursor: 'pointer', transition: 'all .15s',
+                fontSize: '.75rem', fontWeight: 600,
+                border: `1px solid ${g.color}55`,
+                background: selectedGroupId === g.id ? g.color : `${g.color}12`,
+                color: selectedGroupId === g.id ? '#fff' : g.color,
+                display: 'flex', alignItems: 'center', gap: '5px',
               }}
             >
-              <Plus size={16} /> Nieuw project
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: selectedGroupId === g.id ? '#fff' : g.color, flexShrink: 0 }} />
+              {g.name}
             </button>
-          )}
+          ))}
         </div>
+      )}
+
+      {/* Filter bar */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', flexWrap: 'wrap' }}>
+        <span style={{ fontSize: '.7rem', fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', whiteSpace: 'nowrap' }}>Filter:</span>
+
+        {/* Klant filter */}
+        {filterClients.length > 0 && (
+          <select
+            value={filterClient}
+            onChange={e => setFilterClient(e.target.value)}
+            style={{
+              padding: '4px 10px', borderRadius: '6px', border: `1px solid ${filterClient ? 'var(--accent1)' : 'var(--border)'}`,
+              background: filterClient ? 'rgba(26,63,228,.07)' : 'var(--card)', color: filterClient ? 'var(--accent1)' : 'var(--muted)',
+              fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none',
+            }}
+          >
+            <option value="">Alle klanten</option>
+            {filterClients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+          </select>
+        )}
+
+        {/* Prioriteit filter */}
+        <select
+          value={filterPriority}
+          onChange={e => setFilterPriority(e.target.value)}
+          style={{
+            padding: '4px 10px', borderRadius: '6px', border: `1px solid ${filterPriority ? 'var(--accent1)' : 'var(--border)'}`,
+            background: filterPriority ? 'rgba(26,63,228,.07)' : 'var(--card)', color: filterPriority ? 'var(--accent1)' : 'var(--muted)',
+            fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none',
+          }}
+        >
+          <option value="">Alle prioriteiten</option>
+          {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
+        </select>
+
+        {/* Categorie filter */}
+        <select
+          value={filterCategory}
+          onChange={e => setFilterCategory(e.target.value)}
+          style={{
+            padding: '4px 10px', borderRadius: '6px', border: `1px solid ${filterCategory ? 'var(--accent1)' : 'var(--border)'}`,
+            background: filterCategory ? 'rgba(26,63,228,.07)' : 'var(--card)', color: filterCategory ? 'var(--accent1)' : 'var(--muted)',
+            fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none',
+          }}
+        >
+          <option value="">Alle categorieën</option>
+          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+        </select>
+
+        {/* Sortering */}
+        <select
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+          style={{
+            padding: '4px 10px', borderRadius: '6px', border: `1px solid ${sortBy !== 'newest' ? 'var(--accent1)' : 'var(--border)'}`,
+            background: sortBy !== 'newest' ? 'rgba(26,63,228,.07)' : 'var(--card)', color: sortBy !== 'newest' ? 'var(--accent1)' : 'var(--muted)',
+            fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none',
+          }}
+        >
+          <option value="newest">Nieuwste eerst</option>
+          <option value="oldest">Oudste eerst</option>
+          <option value="deadline_asc">Deadline ↑ (vroegst eerst)</option>
+          <option value="deadline_desc">Deadline ↓ (latest eerst)</option>
+        </select>
+
+        {/* Reset filters */}
+        {(filterPriority || filterCategory || filterClient || sortBy !== 'newest') && (
+          <button
+            onClick={() => { setFilterPriority(''); setFilterCategory(''); setFilterClient(''); setSortBy('newest') }}
+            style={{
+              padding: '4px 10px', borderRadius: '6px', border: '1px solid var(--border)',
+              background: 'none', color: 'var(--muted)', fontSize: '.72rem', fontWeight: 600, cursor: 'pointer',
+            }}
+          >
+            ✕ Reset
+          </button>
+        )}
       </div>
 
       {/* Board view */}
@@ -207,7 +373,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
                   <span style={{ fontSize: '.7rem', fontWeight: 700, color: col.color, background: col.bg, borderRadius: '50px', padding: '1px 9px', border: `1px solid ${col.color}33` }}>
                     {col.items.length}
                   </span>
-                  {isAdmin && (
+                  {(
                     <button
                       onClick={() => openAdd(col.key)}
                       title="Toevoegen"
@@ -293,7 +459,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
                   <span style={{ fontSize: '.72rem', fontWeight: 700, padding: '3px 10px', borderRadius: '50px', background: pr.bg, color: pr.color, border: `1px solid ${pr.border}` }}>{pr.label}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
-                  <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>{project.clients?.company_name || 'Intern'}</span>
+                  <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>{filterClients.find(c => c.id === project.client_id)?.company_name || project.clients?.company_name || 'Intern'}</span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center' }}>
                   <span style={{ fontSize: '.75rem', color: 'var(--muted)' }}>
@@ -311,10 +477,16 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
         <ProjectModal
           project={selectedProject}
           clients={clients}
+          groups={groups}
+          agencyId={agencyId}
           onClose={() => setSelectedProject(null)}
           onMove={moveProject}
-          onUpdate={updated => setProjects(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p))}
+          onUpdate={updated => {
+            setProjects(prev => prev.map(p => p.id === updated.id ? { ...p, ...updated } : p))
+            setSelectedProject((prev: any) => prev ? { ...prev, ...updated } : null)
+          }}
           onDelete={deleteProject}
+          onGroupCreate={newGroup => setGroups(prev => [...prev, newGroup])}
           isAdmin={isAdmin}
         />
       )}
@@ -367,11 +539,23 @@ export default function ProjectsClient({ projects: initialProjects, clients, age
                   </select>
                 </div>
               </div>
+              {isAdmin && (
+                <div>
+                  <label style={labelStyle}>Klant</label>
+                  <select value={newProject.client_id} onChange={e => setNewProject(p => ({ ...p, client_id: e.target.value, group_id: '' }))} style={inputStyle}>
+                    <option value="">Intern</option>
+                    {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+                  </select>
+                </div>
+              )}
               <div>
-                <label style={labelStyle}>Klant</label>
-                <select value={newProject.client_id} onChange={e => setNewProject(p => ({ ...p, client_id: e.target.value }))} style={inputStyle}>
-                  <option value="">Intern</option>
-                  {clients.map(c => <option key={c.id} value={c.id}>{c.company_name}</option>)}
+                <label style={labelStyle}>Campagne <span style={{ color: 'var(--muted)', fontWeight: 400 }}>(optioneel)</span></label>
+                <select value={newProject.group_id} onChange={e => setNewProject(p => ({ ...p, group_id: e.target.value }))} style={inputStyle}>
+                  <option value="">Geen campagne</option>
+                  {(newProject.client_id
+                    ? groups.filter(g => !g.client_id || g.client_id === newProject.client_id)
+                    : groups
+                  ).map(g => <option key={g.id} value={g.id}>{g.name}</option>)}
                 </select>
               </div>
               <div>
@@ -458,6 +642,10 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
   const doneTodos = todos.filter((t: any) => t.done).length
   const prio      = PRIORITIES[project.priority as string] || PRIORITIES.normal
   const stripColor = PRIORITY_STRIP[project.priority as string] ?? 'var(--border)'
+  const { filterClients } = useClientFilter()
+  // Use live client name from context (fresh API data), fallback to server-joined data
+  const clientName = filterClients.find(c => c.id === project.client_id)?.company_name
+    || project.clients?.company_name
 
   return (
     <div
@@ -479,6 +667,22 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
       <div style={{ height: '3px', background: stripColor }} />
 
       <div style={{ padding: '12px 14px' }}>
+        {/* Campaign badge */}
+        {project.project_groups?.name && (
+          <div style={{ marginBottom: '6px' }}>
+            <span style={{
+              fontSize: '.62rem', fontWeight: 700, padding: '2px 8px', borderRadius: '50px',
+              background: `${project.project_groups.color}18`,
+              color: project.project_groups.color,
+              border: `1px solid ${project.project_groups.color}40`,
+              display: 'inline-flex', alignItems: 'center', gap: '4px',
+            }}>
+              <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: project.project_groups.color, flexShrink: 0 }} />
+              {project.project_groups.name}
+            </span>
+          </div>
+        )}
+
         {/* Category + priority chips */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '5px', marginBottom: '8px', flexWrap: 'wrap' }}>
           {project.category && (
@@ -497,10 +701,10 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
         </div>
 
         {/* Client badge */}
-        {project.clients?.company_name && (
+        {clientName && (
           <div style={{ marginBottom: '8px' }}>
             <span style={{ fontSize: '.65rem', fontWeight: 600, padding: '2px 8px', borderRadius: '50px', background: 'rgba(0,184,156,.1)', color: '#00b89c', border: '1px solid rgba(0,184,156,.2)' }}>
-              {project.clients.company_name}
+              {clientName}
             </span>
           </div>
         )}
@@ -550,13 +754,16 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
 }
 
 // ── ProjectModal ───────────────────────────────────────────────────────────────
-function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, isAdmin }: {
+function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onUpdate, onDelete, onGroupCreate, isAdmin }: {
   project: any
   clients: any[]
+  groups: any[]
+  agencyId: string
   onClose: () => void
   onMove: (id: string, status: string) => void
   onUpdate: (updated: any) => void
   onDelete: (id: string) => void
+  onGroupCreate: (group: any) => void
   isAdmin: boolean
 }) {
   const [todos, setTodos]             = useState<any[]>([])
@@ -568,6 +775,16 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
   const [currentPriority, setCurrentPriority] = useState(project.priority || 'normal')
   const [currentClientId, setCurrentClientId] = useState(project.client_id || '')
   const [currentDeadline, setCurrentDeadline] = useState<string>(project.deadline || '')
+  const [currentCategory, setCurrentCategory] = useState(project.category || '')
+  const [currentGroupId, setCurrentGroupId] = useState(project.group_id || '')
+  const [editingTitle, setEditingTitle] = useState(false)
+  const [titleValue, setTitleValue] = useState(project.title)
+  const [editingDesc, setEditingDesc] = useState(false)
+  const [descValue, setDescValue] = useState(project.description || '')
+  // Inline group create
+  const [creatingGroup, setCreatingGroup] = useState(false)
+  const [newGroupName, setNewGroupName] = useState('')
+  const [newGroupColor, setNewGroupColor] = useState('#1a3fe4')
   const supabase = createClient()
 
   const statusCfg = STATUS_MAP[currentStatus] || STATUSES[0]
@@ -602,6 +819,7 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
   }
 
   async function deleteTodo(id: string) {
+    if (!isAdmin) return
     await supabase.from('project_todos').delete().eq('id', id)
     setTodos(prev => prev.filter(t => t.id !== id))
   }
@@ -622,8 +840,10 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
   }
 
   async function changePriority(newPrio: string) {
+    const prev = currentPriority
     setCurrentPriority(newPrio)
-    await supabase.from('projects').update({ priority: newPrio }).eq('id', project.id)
+    const { error } = await supabase.from('projects').update({ priority: newPrio }).eq('id', project.id)
+    if (error) { setCurrentPriority(prev); return }
     onUpdate({ id: project.id, priority: newPrio })
   }
 
@@ -638,6 +858,49 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
     setCurrentDeadline(date)
     await supabase.from('projects').update({ deadline: date || null }).eq('id', project.id)
     onUpdate({ id: project.id, deadline: date || null })
+  }
+
+  async function saveTitle() {
+    const val = titleValue.trim()
+    if (!val) { setTitleValue(project.title); setEditingTitle(false); return }
+    setEditingTitle(false)
+    await supabase.from('projects').update({ title: val }).eq('id', project.id)
+    onUpdate({ id: project.id, title: val })
+  }
+
+  async function saveDescription() {
+    setEditingDesc(false)
+    await supabase.from('projects').update({ description: descValue || null }).eq('id', project.id)
+    onUpdate({ id: project.id, description: descValue || null })
+  }
+
+  async function changeCategory(cat: string) {
+    setCurrentCategory(cat)
+    await supabase.from('projects').update({ category: cat || null }).eq('id', project.id)
+    onUpdate({ id: project.id, category: cat || null })
+  }
+
+  async function changeGroup(groupId: string) {
+    setCurrentGroupId(groupId)
+    await supabase.from('projects').update({ group_id: groupId || null }).eq('id', project.id)
+    const groupData = groups.find((g: any) => g.id === groupId)
+    onUpdate({ id: project.id, group_id: groupId || null, project_groups: groupData || null })
+  }
+
+  async function createAndAssignGroup() {
+    if (!newGroupName.trim()) return
+    const { data } = await supabase
+      .from('project_groups')
+      .insert({ name: newGroupName.trim(), color: newGroupColor, agency_id: agencyId, client_id: currentClientId || null })
+      .select()
+      .single()
+    if (data) {
+      onGroupCreate(data)
+      await changeGroup(data.id)
+      setCreatingGroup(false)
+      setNewGroupName('')
+      setNewGroupColor('#1a3fe4')
+    }
   }
 
   const doneTodos   = todos.filter(t => t.done).length
@@ -673,10 +936,41 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
                   {project.clients.company_name}
                 </span>
               )}
+              {(() => {
+                const grp = groups.find((g: any) => g.id === currentGroupId)
+                return grp ? (
+                  <span style={{ fontSize: '.72rem', fontWeight: 600, padding: '2px 10px', borderRadius: '50px', background: `${grp.color}15`, color: grp.color, border: `1px solid ${grp.color}35`, display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ width: '5px', height: '5px', borderRadius: '50%', background: grp.color }} />
+                    {grp.name}
+                  </span>
+                ) : null
+              })()}
             </div>
-            <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3, color: 'var(--text)', margin: 0 }}>
-              {project.title}
-            </h2>
+            {editingTitle ? (
+              <input
+                autoFocus
+                value={titleValue}
+                onChange={e => setTitleValue(e.target.value)}
+                onBlur={saveTitle}
+                onKeyDown={e => { if (e.key === 'Enter') saveTitle(); if (e.key === 'Escape') { setTitleValue(project.title); setEditingTitle(false) } }}
+                style={{
+                  fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.25rem',
+                  lineHeight: 1.3, color: 'var(--text)', margin: 0, border: 'none',
+                  borderBottom: '2px solid var(--accent1)', outline: 'none', background: 'transparent',
+                  width: '100%', padding: '0 0 2px',
+                }}
+              />
+            ) : (
+              <h2
+                onClick={() => setEditingTitle(true)}
+                title="Klik om te bewerken"
+                style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.25rem', lineHeight: 1.3, color: 'var(--text)', margin: 0, cursor: 'text', borderBottom: '1px dashed transparent', transition: 'border-color .15s' }}
+                onMouseEnter={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'var(--border)' }}
+                onMouseLeave={e => { (e.currentTarget as HTMLElement).style.borderBottomColor = 'transparent' }}
+              >
+                {titleValue}
+              </h2>
+            )}
           </div>
           <button
             onClick={onClose}
@@ -694,11 +988,63 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
 
             {/* Omschrijving */}
             <div style={{ marginBottom: '28px' }}>
-              <div style={sectionHeaderStyle}>Omschrijving</div>
-              {project.description ? (
-                <p style={{ fontSize: '.88rem', lineHeight: 1.7, color: 'var(--text)', margin: 0 }}>{project.description}</p>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px' }}>
+                <span style={sectionHeaderStyle}>Omschrijving</span>
+                {!editingDesc && (
+                  <button
+                    onClick={() => setEditingDesc(true)}
+                    style={{ background: 'none', border: '1px solid var(--border)', borderRadius: '5px', padding: '3px 10px', fontSize: '.72rem', fontWeight: 600, color: 'var(--muted)', cursor: 'pointer', transition: 'all .12s' }}
+                    onMouseEnter={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--accent1)'; el.style.color = 'var(--accent1)' }}
+                    onMouseLeave={e => { const el = e.currentTarget as HTMLElement; el.style.borderColor = 'var(--border)'; el.style.color = 'var(--muted)' }}
+                  >
+                    ✏ Bewerken
+                  </button>
+                )}
+              </div>
+              {editingDesc ? (
+                <div>
+                  <textarea
+                    autoFocus
+                    value={descValue}
+                    onChange={e => setDescValue(e.target.value)}
+                    onKeyDown={e => { if (e.key === 'Escape') { setDescValue(project.description || ''); setEditingDesc(false) } }}
+                    rows={5}
+                    placeholder="Omschrijving toevoegen..."
+                    style={{
+                      width: '100%', padding: '10px 12px',
+                      border: '1px solid var(--accent1)', borderRadius: 'var(--radius-sm)',
+                      fontSize: '.88rem', lineHeight: 1.7, background: 'var(--bg)',
+                      outline: 'none', resize: 'vertical', fontFamily: 'inherit',
+                      color: 'var(--text)', boxSizing: 'border-box',
+                    }}
+                  />
+                  <div style={{ display: 'flex', gap: '8px', marginTop: '8px' }}>
+                    <button
+                      onClick={saveDescription}
+                      style={{ padding: '7px 18px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700, fontSize: '.83rem' }}
+                    >
+                      Opslaan
+                    </button>
+                    <button
+                      onClick={() => { setDescValue(project.description || ''); setEditingDesc(false) }}
+                      style={{ padding: '7px 14px', background: 'none', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '.83rem', color: 'var(--muted)' }}
+                    >
+                      Annuleren
+                    </button>
+                  </div>
+                </div>
               ) : (
-                <p style={{ fontSize: '.88rem', color: 'var(--muted)', fontStyle: 'italic', margin: 0 }}>Geen omschrijving</p>
+                <p
+                  style={{
+                    fontSize: '.88rem', lineHeight: 1.7, margin: 0,
+                    color: descValue ? 'var(--text)' : 'var(--muted)',
+                    fontStyle: descValue ? 'normal' : 'italic',
+                    padding: '6px 0',
+                    whiteSpace: 'pre-wrap',
+                  }}
+                >
+                  {descValue || 'Nog geen omschrijving. Klik op Bewerken om er een toe te voegen.'}
+                </p>
               )}
             </div>
 
@@ -864,7 +1210,80 @@ function ProjectModal({ project, clients, onClose, onMove, onUpdate, onDelete, i
               {/* Categorie */}
               <div style={{ marginBottom: '16px' }}>
                 <div style={sidebarLabelStyle}>Categorie</div>
-                <span style={{ fontSize: '.82rem', color: 'var(--text)' }}>{project.category || '—'}</span>
+                <select
+                  value={currentCategory}
+                  onChange={e => changeCategory(e.target.value)}
+                  style={sidebarSelectStyle}
+                >
+                  <option value="">Geen</option>
+                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                </select>
+              </div>
+
+              {/* Campagne */}
+              <div style={{ marginBottom: '16px' }}>
+                <div style={{ ...sidebarLabelStyle, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                  <span>Campagne</span>
+                  {isAdmin && (
+                    <button
+                      onClick={() => setCreatingGroup(v => !v)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--accent1)', fontSize: '.65rem', fontWeight: 700, padding: 0 }}
+                    >
+                      {creatingGroup ? '✕ Annuleer' : '+ Nieuw'}
+                    </button>
+                  )}
+                </div>
+                {creatingGroup ? (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <input
+                      autoFocus
+                      value={newGroupName}
+                      onChange={e => setNewGroupName(e.target.value)}
+                      onKeyDown={e => { if (e.key === 'Enter') createAndAssignGroup(); if (e.key === 'Escape') setCreatingGroup(false) }}
+                      placeholder="Campagne naam..."
+                      style={{ ...sidebarSelectStyle, fontSize: '.8rem' }}
+                    />
+                    <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+                      {CAMPAIGN_COLORS.map(c => (
+                        <button
+                          key={c}
+                          onClick={() => setNewGroupColor(c)}
+                          style={{
+                            width: '20px', height: '20px', borderRadius: '50%', background: c,
+                            border: newGroupColor === c ? '2px solid var(--text)' : '2px solid transparent',
+                            cursor: 'pointer', padding: 0, flexShrink: 0,
+                            boxShadow: newGroupColor === c ? '0 0 0 2px var(--bg)' : 'none',
+                          }}
+                        />
+                      ))}
+                    </div>
+                    <button
+                      onClick={createAndAssignGroup}
+                      disabled={!newGroupName.trim()}
+                      style={{
+                        padding: '6px', background: newGroupColor, color: '#fff', border: 'none',
+                        borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700,
+                        fontSize: '.78rem', opacity: newGroupName.trim() ? 1 : 0.5,
+                      }}
+                    >
+                      Aanmaken & koppelen
+                    </button>
+                  </div>
+                ) : (
+                  <select
+                    value={currentGroupId}
+                    onChange={e => changeGroup(e.target.value)}
+                    style={sidebarSelectStyle}
+                  >
+                    <option value="">Geen campagne</option>
+                    {(currentClientId
+                      ? groups.filter((g: any) => !g.client_id || g.client_id === currentClientId)
+                      : groups
+                    ).map((g: any) => (
+                      <option key={g.id} value={g.id}>{g.name}</option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               {/* Aangemaakt */}

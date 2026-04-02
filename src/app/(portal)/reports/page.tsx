@@ -17,6 +17,8 @@ export default async function ReportsPage() {
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
   const agencyId = profile?.agency_id
 
+  if (profile?.role === 'client') redirect('/dashboard')
+
   const [
     { count: clientCount },
     { data: projects },

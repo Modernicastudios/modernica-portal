@@ -104,6 +104,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
   }
 
   async function deletePost(id: string) {
+    if (!isAdmin) return
     await supabase.from('content_posts').delete().eq('id', id)
     setPosts(prev => prev.filter(p => p.id !== id))
     setShowModal(false)
@@ -111,6 +112,7 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
   }
 
   async function movePost(id: string, newStatus: string) {
+    if (!isAdmin) return
     await supabase.from('content_posts').update({ status: newStatus }).eq('id', id)
     setPosts(prev => prev.map(p => p.id === id ? { ...p, status: newStatus } : p))
     if (editingPost?.id === id) setForm(f => ({ ...f, status: newStatus }))

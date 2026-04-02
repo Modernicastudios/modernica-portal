@@ -11,13 +11,16 @@ export default async function ClientWorkspacePage({ params }: { params: Promise<
   const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single()
   const agencyId = profile?.agency_id || ''
 
+  // Clients have no access to the client workspace management pages
+  if (profile?.role === 'client') redirect('/dashboard')
+
   const [
     { data: client },
     { data: projects },
     { data: tasks },
     { data: teamMembers },
   ] = await Promise.all([
-    supabase.from('clients').select('*').eq('id', clientId).single(),
+    supabase.from('clients').select('*').eq('id', clientId).eq('agency_id', agencyId).single(),
     supabase
       .from('projects')
       .select('*, project_todos(id, done)')

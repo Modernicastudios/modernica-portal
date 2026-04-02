@@ -31,10 +31,10 @@ export default async function PlanningPage() {
       .order('scheduled_at', { ascending: true }),
     supabase
       .from('projects')
-      .select('id,title,status,due_date,client_id,clients(company_name)')
+      .select('id,title,status,deadline,client_id,clients(company_name)')
       .eq('agency_id', agencyId)
-      .not('due_date', 'is', null)
-      .order('due_date', { ascending: true }),
+      .not('deadline', 'is', null)
+      .order('deadline', { ascending: true }),
     supabase
       .from('meeting_notes')
       .select('id,title,meeting_date,status,client_id,clients(company_name)')

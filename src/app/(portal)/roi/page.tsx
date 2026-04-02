@@ -16,7 +16,9 @@ export default async function RoiPage() {
 
   const agencyId = profile?.agency_id || ''
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
-  const isClient = !!profile?.client_id
+  const isClient = profile?.role === 'client'
+
+  if (isClient) redirect('/dashboard')
 
   let clientsQuery = supabase
     .from('clients')

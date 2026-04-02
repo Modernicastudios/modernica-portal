@@ -145,6 +145,7 @@ export default function TakenClient({ todos: initialTodos, projects, meetings, a
   }
 
   async function deleteTodo(id: string) {
+    if (!isAdmin) return
     setTodos((prev) => prev.filter((t) => t.id !== id))
     const { error } = await supabase.from('project_todos').delete().eq('id', id)
     if (error) {

@@ -268,6 +268,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
   async function handleSave() {
+    if (!isAdmin) return
     if (!form.title.trim()) { showToast('Titel is verplicht', 'error'); return }
     setSaving(true)
     const payload = {
@@ -290,6 +291,7 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
   }
 
   async function handleDelete(id: string) {
+    if (!isAdmin) return
     const { error } = await supabase.from('content_posts').delete().eq('id', id)
     if (error) { showToast('Verwijderen mislukt', 'error'); return }
     setIdeas(prev => prev.filter(i => i.id !== id))
@@ -717,14 +719,16 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
                           >
                             <ArrowRight size={14} />
                           </button>
-                          <button
-                            className="icon-btn"
-                            title="Verwijderen"
-                            onClick={() => handleDelete(idea.id)}
-                            style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-                          >
-                            <Trash2 size={14} />
-                          </button>
+                          {isAdmin && (
+                            <button
+                              className="icon-btn"
+                              title="Verwijderen"
+                              onClick={() => handleDelete(idea.id)}
+                              style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                            >
+                              <Trash2 size={14} />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>

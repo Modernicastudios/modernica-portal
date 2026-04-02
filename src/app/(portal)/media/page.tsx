@@ -14,8 +14,10 @@ export default async function MediaPage() {
     .single()
 
   const agencyId = profile?.agency_id
-
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+
+  // Clients have no direct access to agency media library
+  if (profile?.role === 'client') redirect('/dashboard')
 
   const { data: assets } = await supabase
     .from('media_assets')

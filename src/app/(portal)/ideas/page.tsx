@@ -16,6 +16,9 @@ export default async function IdeasPage() {
   const agencyId = profile?.agency_id || ''
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 
+  // Clients have no access to ideas board — redirect to their workspace
+  if (profile?.role === 'client') redirect('/dashboard')
+
   const { data: ideas } = await supabase
     .from('content_posts')
     .select('*, clients(company_name)')

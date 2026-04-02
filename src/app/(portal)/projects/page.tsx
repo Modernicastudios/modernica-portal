@@ -2,6 +2,8 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import ProjectsClient from './ProjectsClient'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ProjectsPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -13,15 +15,15 @@ export default async function ProjectsPage() {
   const clientId = profile?.client_id
 
   // Clients only see their own projects
-  const query = supabase
+  let query = supabase
     .from('projects')
-    .select('*, clients(company_name), project_todos(id, done)')
+    .select('*, clients!client_id(company_name), project_groups!group_id(id, name, color), project_todos(id, done)')
     .order('created_at', { ascending: false })
 
   if (clientId) {
-    query.eq('client_id', clientId)
+    query = query.eq('client_id', clientId) as typeof query
   } else {
-    query.eq('agency_id', agencyId)
+    query = query.eq('agency_id', agencyId) as typeof query
   }
 
   const { data: projects } = await query
@@ -31,12 +33,20 @@ export default async function ProjectsPage() {
     .select('id, company_name')
     .eq('agency_id', agencyId)
 
+  const { data: groups } = await supabase
+    .from('project_groups')
+    .select('id, name, color, client_id')
+    .eq('agency_id', agencyId)
+    .order('name')
+
   return (
     <ProjectsClient
       projects={projects || []}
       clients={clients || []}
+      groups={groups || []}
       agencyId={agencyId}
       currentUserId={user.id}
+      currentClientId={clientId || ''}
       isAdmin={profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'}
     />
   )

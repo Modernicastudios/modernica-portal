@@ -67,6 +67,7 @@ export default function ClientWorkspaceClient({
   const openTasks      = tasks.filter(t => t.status !== 'done').length
 
   async function saveEdit() {
+    if (!isAdmin) return
     setSaving(true)
     const { data, error } = await supabase
       .from('clients')
@@ -83,6 +84,7 @@ export default function ClientWorkspaceClient({
   }
 
   async function deleteClient() {
+    if (!isAdmin) return
     if (!confirm(`Klant "${client.company_name}" definitief verwijderen? Dit kan niet ongedaan worden gemaakt.`)) return
     await supabase.from('clients').delete().eq('id', client.id)
     router.push('/clients')

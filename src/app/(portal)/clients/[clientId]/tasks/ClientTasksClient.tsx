@@ -76,12 +76,14 @@ export default function ClientTasksClient({ client, tasks: initialTasks, teamMem
   }
 
   async function deleteTask(taskId: string) {
+    if (!isAdmin) return
     await supabase.from('client_tasks').delete().eq('id', taskId)
     setTasks(prev => prev.filter(t => t.id !== taskId))
     showToast('Taak verwijderd')
   }
 
   async function saveDescription(taskId: string) {
+    if (!isAdmin) return
     setSavingDesc(taskId)
     const desc = editDesc[taskId] ?? ''
     await supabase.from('client_tasks').update({ description: desc || null }).eq('id', taskId)

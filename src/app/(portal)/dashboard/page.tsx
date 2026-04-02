@@ -55,46 +55,66 @@ export default async function DashboardPage() {
     { data: platformPostsRaw },
   ] = await Promise.all([
     // Pending approvals
-    supabase
-      .from('content_posts')
-      .select('*', { count: 'exact', head: true })
-      .eq('agency_id', agencyId)
-      .eq('status', 'pending_approval'),
+    (() => {
+      let q = supabase
+        .from('content_posts')
+        .select('*', { count: 'exact', head: true })
+        .eq('agency_id', agencyId)
+        .eq('status', 'pending_approval')
+      if (clientId) q = q.eq('client_id', clientId) as typeof q
+      return q
+    })(),
 
     // Posts vandaag
-    supabase
-      .from('content_posts')
-      .select('id, title, platform, scheduled_at, status, clients(company_name)')
-      .eq('agency_id', agencyId)
-      .gte('scheduled_at', todayStart.toISOString())
-      .lte('scheduled_at', todayEnd.toISOString())
-      .order('scheduled_at', { ascending: true }),
+    (() => {
+      let q = supabase
+        .from('content_posts')
+        .select('id, title, platform, scheduled_at, status, clients(company_name)')
+        .eq('agency_id', agencyId)
+        .gte('scheduled_at', todayStart.toISOString())
+        .lte('scheduled_at', todayEnd.toISOString())
+        .order('scheduled_at', { ascending: true })
+      if (clientId) q = q.eq('client_id', clientId) as typeof q
+      return q
+    })(),
 
     // Komende posts (morgen t/m 7 dagen)
-    supabase
-      .from('content_posts')
-      .select('id, title, platform, scheduled_at, status, clients(company_name)')
-      .eq('agency_id', agencyId)
-      .gt('scheduled_at', todayEnd.toISOString())
-      .lte('scheduled_at', in7days.toISOString())
-      .order('scheduled_at', { ascending: true })
-      .limit(6),
+    (() => {
+      let q = supabase
+        .from('content_posts')
+        .select('id, title, platform, scheduled_at, status, clients(company_name)')
+        .eq('agency_id', agencyId)
+        .gt('scheduled_at', todayEnd.toISOString())
+        .lte('scheduled_at', in7days.toISOString())
+        .order('scheduled_at', { ascending: true })
+        .limit(6)
+      if (clientId) q = q.eq('client_id', clientId) as typeof q
+      return q
+    })(),
 
     // Actieve projecten
-    supabase
-      .from('projects')
-      .select('id, title, status, priority, clients(company_name)')
-      .eq('agency_id', agencyId)
-      .in('status', ['in_progress', 'waiting_feedback', 'review', 'blocked'])
-      .order('updated_at', { ascending: false })
-      .limit(5),
+    (() => {
+      let q = supabase
+        .from('projects')
+        .select('id, title, status, priority, clients(company_name)')
+        .eq('agency_id', agencyId)
+        .in('status', ['in_progress', 'waiting_feedback', 'review', 'blocked'])
+        .order('updated_at', { ascending: false })
+        .limit(5)
+      if (clientId) q = q.eq('client_id', clientId) as typeof q
+      return q
+    })(),
 
     // Open taken
-    supabase
-      .from('project_todos')
-      .select('id, title, projects(title, clients(company_name))')
-      .eq('done', false)
-      .limit(5),
+    (() => {
+      let q = supabase
+        .from('project_todos')
+        .select('id, title, projects!inner(title, agency_id, clients(company_name))')
+        .eq('done', false)
+        .eq('projects.agency_id', agencyId)
+        .limit(5)
+      return q
+    })(),
 
     // Vergaderingen vandaag
     supabase

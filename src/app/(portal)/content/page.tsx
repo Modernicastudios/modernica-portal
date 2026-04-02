@@ -9,12 +9,14 @@ export default async function ContentPage() {
 
   const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single()
   const agencyId = profile?.agency_id || ''
+  const isClient = profile?.role === 'client'
+  const clientId = profile?.client_id || null
 
   const now = new Date()
   const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString()
   const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).toISOString()
 
-  const { data: posts } = await supabase
+  let postsQuery = supabase
     .from('content_posts')
     .select('*, share_token, clients(company_name)')
     .eq('agency_id', agencyId)
@@ -22,10 +24,16 @@ export default async function ContentPage() {
     .lte('scheduled_at', endOfMonth)
     .order('scheduled_at')
 
-  const { data: clients } = await supabase
-    .from('clients')
-    .select('id, company_name')
-    .eq('agency_id', agencyId)
+  // Clients only see their own posts
+  if (isClient && clientId) {
+    postsQuery = postsQuery.eq('client_id', clientId) as typeof postsQuery
+  }
 
-  return <ContentClient posts={posts || []} clients={clients || []} agencyId={agencyId} isAdmin={profile?.role !== 'client'} />
+  const { data: posts } = await postsQuery
+
+  const { data: clients } = isClient
+    ? { data: [] }
+    : await supabase.from('clients').select('id, company_name').eq('agency_id', agencyId)
+
+  return <ContentClient posts={posts || []} clients={clients || []} agencyId={agencyId} isAdmin={!isClient} />
 }

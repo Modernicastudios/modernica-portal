@@ -22,7 +22,7 @@ interface Project {
   id: string
   title: string
   status: string
-  due_date: string
+  deadline: string
   client_id: string | null
   clients?: { company_name: string } | null
 }
@@ -144,8 +144,8 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
     }
 
     for (const pr of projects) {
-      if (!pr.due_date) continue
-      const d = new Date(pr.due_date)
+      if (!pr.deadline) continue
+      const d = new Date(pr.deadline)
       evs.push({
         id: `proj-${pr.id}`,
         type: 'deadline',
