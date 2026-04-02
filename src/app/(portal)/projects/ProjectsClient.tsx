@@ -828,12 +828,19 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
 
   async function addNote() {
     if (!newNote.trim()) return
-    const { data } = await supabase
+    const content = newNote.trim()
+    setNewNote('')
+    const { data, error } = await supabase
       .from('project_notes')
-      .insert({ project_id: project.id, content: newNote })
+      .insert({ project_id: project.id, content })
       .select()
       .single()
-    if (data) { setNotes(prev => [data, ...prev]); setNewNote('') }
+    if (data) {
+      setNotes(prev => [data, ...prev])
+    } else {
+      setNewNote(content) // zet tekst terug als het mislukt
+      console.error('addNote error:', error)
+    }
   }
 
   async function changeStatus(newStatus: string) {
@@ -1132,20 +1139,30 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
                   {notes.length}
                 </span>
               </div>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '16px' }}>
+              <div style={{ marginBottom: '16px' }}>
                 <textarea
                   value={newNote}
                   onChange={e => setNewNote(e.target.value)}
-                  placeholder="Notitie toevoegen..."
+                  onKeyDown={e => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault()
+                      addNote()
+                    }
+                  }}
+                  placeholder="Notitie typen en Enter drukken om op te slaan... (Shift+Enter voor nieuwe regel)"
                   rows={3}
-                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none', resize: 'none', fontFamily: 'inherit', color: 'var(--text)', boxSizing: 'border-box' }}
+                  style={{ width: '100%', padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none', resize: 'none', fontFamily: 'inherit', color: 'var(--text)', boxSizing: 'border-box', transition: 'border-color .15s' }}
+                  onFocus={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--accent1)' }}
+                  onBlur={e => { (e.currentTarget as HTMLElement).style.borderColor = 'var(--border)' }}
                 />
-                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                  <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>↵ Enter om op te slaan</span>
                   <button
                     onClick={addNote}
-                    style={{ padding: '8px 20px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 700, fontSize: '.85rem' }}
+                    disabled={!newNote.trim()}
+                    style={{ padding: '7px 18px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: 'var(--radius-sm)', cursor: newNote.trim() ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: '.83rem', opacity: newNote.trim() ? 1 : 0.45 }}
                   >
-                    Toevoegen
+                    Opslaan
                   </button>
                 </div>
               </div>
@@ -1155,8 +1172,13 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
                 )}
                 {notes.map(note => (
                   <div key={note.id} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent1)', padding: '14px 16px', borderRadius: 'var(--radius-sm)' }}>
-                    <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginBottom: '6px' }}>
-                      {new Date(note.created_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--accent1)' }}>
+                        {new Date(note.created_at).toLocaleDateString('nl-NL', { day: 'numeric', month: 'long', year: 'numeric' })}
+                      </span>
+                      <span style={{ fontSize: '.7rem', color: 'var(--muted)' }}>
+                        om {new Date(note.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
+                      </span>
                     </div>
                     <p style={{ fontSize: '.85rem', lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)', margin: 0 }}>{note.content}</p>
                   </div>
