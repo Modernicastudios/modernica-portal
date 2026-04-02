@@ -9,6 +9,7 @@ const STATUSES = [
   { key: 'backlog',          label: 'Backlog',             color: '#6b7280', bg: 'rgba(107,114,128,.08)', strip: '#d1d5db' },
   { key: 'in_progress',      label: 'In uitvoering',       color: '#1a3fe4', bg: 'rgba(26,63,228,.08)',   strip: '#1a3fe4' },
   { key: 'waiting_feedback', label: 'Wachten op reactie',  color: '#ff7a30', bg: 'rgba(255,122,48,.08)',  strip: '#ff7a30' },
+  { key: 'needs_response',   label: 'Antwoord geven',      color: '#0ea5e9', bg: 'rgba(14,165,233,.08)',  strip: '#0ea5e9' },
   { key: 'blocked',          label: 'Geblokkeerd',         color: '#e53935', bg: 'rgba(229,57,53,.08)',   strip: '#e53935' },
   { key: 'review',           label: 'Review',              color: '#9c27b0', bg: 'rgba(156,39,176,.08)',  strip: '#9c27b0' },
   { key: 'approved',         label: 'Goedgekeurd',         color: '#00b89c', bg: 'rgba(0,184,156,.08)',   strip: '#00b89c' },
