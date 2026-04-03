@@ -832,7 +832,7 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
     setNewNote('')
     const { data, error } = await supabase
       .from('project_notes')
-      .insert({ project_id: project.id, content })
+      .insert({ project_id: project.id, body: content })
       .select()
       .single()
     if (data) {
@@ -1180,7 +1180,7 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
                         om {new Date(note.created_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <p style={{ fontSize: '.85rem', lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)', margin: 0 }}>{note.content}</p>
+                    <p style={{ fontSize: '.85rem', lineHeight: 1.65, whiteSpace: 'pre-wrap', color: 'var(--text)', margin: 0 }}>{note.body}</p>
                   </div>
                 ))}
               </div>
