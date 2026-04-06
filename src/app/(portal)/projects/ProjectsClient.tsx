@@ -830,16 +830,22 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
     if (!newNote.trim()) return
     const content = newNote.trim()
     setNewNote('')
+    // Optimistic: toon direct
+    const tempId = `temp-${Date.now()}`
+    const tempNote = { id: tempId, project_id: project.id, body: content, created_at: new Date().toISOString() }
+    setNotes(prev => [tempNote, ...prev])
+
     const { data, error } = await supabase
       .from('project_notes')
       .insert({ project_id: project.id, body: content })
       .select()
       .single()
+
     if (data) {
-      setNotes(prev => [data, ...prev])
+      setNotes(prev => prev.map(n => n.id === tempId ? data : n))
     } else {
-      setNewNote(content) // zet tekst terug als het mislukt
       console.error('addNote error:', error)
+      // laat de noot staan zodat hij zichtbaar blijft, ook als select faalt
     }
   }
 
