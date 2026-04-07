@@ -3,6 +3,7 @@
 import React, { useState, useMemo, CSSProperties } from 'react'
 import { Calendar, AlertTriangle, Video, X } from 'lucide-react'
 import { PlatformIcon, PLATFORM_COLORS as IMPORTED_PLATFORM_COLORS } from '@/components/ui/PlatformIcon'
+import { useClientFilter } from '@/components/layout/ClientFilter'
 
 // ---------------------------------------------------------------------------
 // Types
@@ -54,6 +55,7 @@ interface CalEvent {
   date: Date
   color: string
   client: string
+  client_id: string | null
   status: string
   platform?: string
   icon: string
@@ -114,6 +116,8 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
   const today = new Date()
   today.setHours(0, 0, 0, 0)
 
+  const { selectedClientId } = useClientFilter()
+
   const [viewMonth, setViewMonth] = useState<number>(today.getMonth())
   const [viewYear, setViewYear] = useState<number>(today.getFullYear())
   const [view, setView] = useState<ViewType>('month')
@@ -137,6 +141,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         date: d,
         color: PLATFORM_COLORS[platform] || '#888',
         client: p.clients?.company_name || '',
+        client_id: p.client_id,
         status: p.status || '',
         platform,
         icon: '',
@@ -153,6 +158,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         date: d,
         color: getDeadlineColor(d),
         client: pr.clients?.company_name || '',
+        client_id: pr.client_id,
         status: pr.status || '',
         icon: '',
       })
@@ -168,6 +174,7 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
         date: d,
         color: '#00b89c',
         client: m.clients?.company_name || '',
+        client_id: m.client_id,
         status: m.status || '',
         icon: '',
       })
@@ -177,12 +184,15 @@ export default function PlanningClient({ posts, projects, meetings, isAdmin, cli
   }, [posts, projects, meetings])
 
   const filteredEvents = useMemo<CalEvent[]>(() => {
-    if (filter === 'all') return allEvents
-    if (filter === 'content') return allEvents.filter((e) => e.type === 'content')
-    if (filter === 'deadlines') return allEvents.filter((e) => e.type === 'deadline')
-    if (filter === 'meetings') return allEvents.filter((e) => e.type === 'meeting')
-    return allEvents
-  }, [allEvents, filter])
+    let evs = allEvents
+    // Klant filter (globaal via sidebar)
+    if (selectedClientId) evs = evs.filter(e => e.client_id === selectedClientId)
+    // Type filter
+    if (filter === 'content')   evs = evs.filter(e => e.type === 'content')
+    if (filter === 'deadlines') evs = evs.filter(e => e.type === 'deadline')
+    if (filter === 'meetings')  evs = evs.filter(e => e.type === 'meeting')
+    return evs
+  }, [allEvents, filter, selectedClientId])
 
   // ---------------------------------------------------------------------------
   // Calendar grid helpers
