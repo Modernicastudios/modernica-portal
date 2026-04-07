@@ -111,6 +111,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
         .from('clients')
         .insert({
           company_name:  form.company_name,
+          email:         form.contact_email || '',
           industry:      form.industry || null,
           city:          form.city || null,
           contact_email: form.contact_email || null,
@@ -132,6 +133,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
         .from('clients')
         .update({
           company_name:  form.company_name,
+          email:         form.contact_email || '',
           industry:      form.industry || null,
           city:          form.city || null,
           contact_email: form.contact_email || null,
