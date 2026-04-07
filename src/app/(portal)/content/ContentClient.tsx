@@ -93,13 +93,14 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
     setLoading(true)
     const payload = { ...form, client_id: form.client_id || null }
     if (editingPost) {
-      const { data } = await supabase.from('content_posts').update(payload).eq('id', editingPost.id).select('*, clients(company_name)').single()
-      if (data) { setPosts(prev => prev.map(p => p.id === data.id ? data : p)); showToast('Post bijgewerkt!') }
+      const { data, error } = await supabase.from('content_posts').update(payload).eq('id', editingPost.id).select('*, clients(company_name)').single()
+      if (data) { setPosts(prev => prev.map(p => p.id === data.id ? data : p)); setShowModal(false); showToast('Post bijgewerkt!') }
+      else { showToast(`Fout: ${error?.message || 'Opslaan mislukt'}`) }
     } else {
-      const { data } = await supabase.from('content_posts').insert({ ...payload, agency_id: agencyId }).select('*, clients(company_name)').single()
-      if (data) { setPosts(prev => [...prev, data]); showToast('Post aangemaakt!') }
+      const { data, error } = await supabase.from('content_posts').insert({ ...payload, agency_id: agencyId }).select('*, clients(company_name)').single()
+      if (data) { setPosts(prev => [...prev, data]); setShowModal(false); showToast('Post aangemaakt!') }
+      else { showToast(`Fout: ${error?.message || 'Opslaan mislukt'}`) }
     }
-    setShowModal(false)
     setLoading(false)
   }
 

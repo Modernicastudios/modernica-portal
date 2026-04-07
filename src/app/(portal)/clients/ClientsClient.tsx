@@ -124,6 +124,8 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
         if (inviteEmail) await sendInvite(data.id, inviteEmail)
         setShowModal(false)
         showToast('Klant toegevoegd!')
+      } else {
+        showToast(`Fout: ${error?.message || 'Opslaan mislukt'}`)
       }
     } else if (editingId) {
       const { data, error } = await supabase
@@ -142,6 +144,8 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
         setClients(prev => prev.map(c => c.id === editingId ? { ...c, ...data } : c))
         setShowModal(false)
         showToast('Klant bijgewerkt!')
+      } else {
+        showToast(`Fout: ${error?.message || 'Opslaan mislukt'}`)
       }
     }
     setLoading(false)

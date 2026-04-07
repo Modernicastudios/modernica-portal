@@ -78,7 +78,9 @@ export default function ClientWorkspaceClient({
     if (!error && data) {
       setClient(data)
       setEditMode(false)
-      showToast('Klant bijgewerkt')
+      showToast('Klant bijgewerkt ✓')
+    } else {
+      showToast(`Fout: ${error?.message || 'Opslaan mislukt'}`)
     }
     setSaving(false)
   }

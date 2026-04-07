@@ -1016,7 +1016,13 @@ function ProjectModal({ project, clients, groups, agencyId, categories, statuses
   const [creatingGroup, setCreatingGroup] = useState(false)
   const [newGroupName, setNewGroupName] = useState('')
   const [newGroupColor, setNewGroupColor] = useState('#1a3fe4')
+  const [modalToast, setModalToast] = useState<{ msg: string; ok: boolean } | null>(null)
   const supabase = createClient()
+
+  function showModalToast(msg: string, ok = true) {
+    setModalToast({ msg, ok })
+    setTimeout(() => setModalToast(null), 3500)
+  }
 
   const statusMap = Object.fromEntries(statuses.map(s => [s.key, s]))
   const statusCfg = statusMap[currentStatus] || statuses[0]
@@ -1093,15 +1099,19 @@ function ProjectModal({ project, clients, groups, agencyId, categories, statuses
   }
 
   async function changeClient(clientId: string) {
+    const prev = currentClientId
     setCurrentClientId(clientId)
-    await supabase.from('projects').update({ client_id: clientId || null }).eq('id', project.id)
+    const { error } = await supabase.from('projects').update({ client_id: clientId || null }).eq('id', project.id)
+    if (error) { setCurrentClientId(prev); showModalToast(`Fout: ${error.message}`, false); return }
     const clientData = clients.find(c => c.id === clientId)
     onUpdate({ id: project.id, client_id: clientId || null, clients: clientData ? { company_name: clientData.company_name } : null })
   }
 
   async function changeDeadline(date: string) {
+    const prev = currentDeadline
     setCurrentDeadline(date)
-    await supabase.from('projects').update({ deadline: date || null }).eq('id', project.id)
+    const { error } = await supabase.from('projects').update({ deadline: date || null }).eq('id', project.id)
+    if (error) { setCurrentDeadline(prev); showModalToast(`Fout: ${error.message}`, false); return }
     onUpdate({ id: project.id, deadline: date || null })
   }
 
@@ -1109,25 +1119,32 @@ function ProjectModal({ project, clients, groups, agencyId, categories, statuses
     const val = titleValue.trim()
     if (!val) { setTitleValue(project.title); setEditingTitle(false); return }
     setEditingTitle(false)
-    await supabase.from('projects').update({ title: val }).eq('id', project.id)
+    const { error } = await supabase.from('projects').update({ title: val }).eq('id', project.id)
+    if (error) { showModalToast(`Fout: ${error.message}`, false); return }
     onUpdate({ id: project.id, title: val })
+    showModalToast('Opgeslagen ✓')
   }
 
   async function saveDescription() {
     setEditingDesc(false)
-    await supabase.from('projects').update({ description: descValue || null }).eq('id', project.id)
+    const { error } = await supabase.from('projects').update({ description: descValue || null }).eq('id', project.id)
+    if (error) { showModalToast(`Fout: ${error.message}`, false); return }
     onUpdate({ id: project.id, description: descValue || null })
+    showModalToast('Opgeslagen ✓')
   }
 
   async function changeCategory(cat: string) {
+    const prev = currentCategory
     setCurrentCategory(cat)
-    await supabase.from('projects').update({ category: cat || null }).eq('id', project.id)
-    onUpdate({ id: project.id, category: cat || null })
+    const { error } = await supabase.from('projects').update({ category: cat || null }).eq('id', project.id)
+    if (error) { setCurrentCategory(prev); showModalToast(`Fout: ${error.message}`, false) }
   }
 
   async function changeGroup(groupId: string) {
+    const prev = currentGroupId
     setCurrentGroupId(groupId)
-    await supabase.from('projects').update({ group_id: groupId || null }).eq('id', project.id)
+    const { error } = await supabase.from('projects').update({ group_id: groupId || null }).eq('id', project.id)
+    if (error) { setCurrentGroupId(prev); showModalToast(`Fout: ${error.message}`, false); return }
     const groupData = groups.find((g: any) => g.id === groupId)
     onUpdate({ id: project.id, group_id: groupId || null, project_groups: groupData || null })
   }
@@ -1159,8 +1176,20 @@ function ProjectModal({ project, clients, groups, agencyId, categories, statuses
       <div style={{
         background: 'var(--bg)', borderRadius: 'var(--radius)', width: '92vw', maxWidth: '960px',
         height: '88vh', display: 'flex', flexDirection: 'column', overflow: 'hidden',
-        boxShadow: '0 24px 80px rgba(0,0,0,.25)',
+        boxShadow: '0 24px 80px rgba(0,0,0,.25)', position: 'relative',
       }}>
+
+        {/* Modal toast */}
+        {modalToast && (
+          <div style={{
+            position: 'absolute', top: '12px', left: '50%', transform: 'translateX(-50%)',
+            zIndex: 10, padding: '8px 18px', borderRadius: '8px', fontSize: '.82rem', fontWeight: 600,
+            background: modalToast.ok ? '#00b89c' : '#e53935', color: '#fff',
+            boxShadow: '0 4px 16px rgba(0,0,0,.2)', whiteSpace: 'nowrap',
+          }}>
+            {modalToast.msg}
+          </div>
+        )}
 
         {/* Sticky header bar */}
         <div style={{
