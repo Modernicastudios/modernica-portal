@@ -110,6 +110,16 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
     await saveStatuses(statuses.filter(s => s.key !== key))
   }
 
+  async function moveStatus(key: string, dir: -1 | 1) {
+    const idx = statuses.findIndex(s => s.key === key)
+    if (idx === -1) return
+    const newIdx = idx + dir
+    if (newIdx < 0 || newIdx >= statuses.length) return
+    const updated = [...statuses]
+    ;[updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]]
+    await saveStatuses(updated)
+  }
+
   async function saveCategories(updated: string[]) {
     setCategories(updated)
     await supabase.from('agencies').update({ project_categories: updated }).eq('id', agencyId)
@@ -270,8 +280,25 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
                 }}>
                   <div style={{ fontSize: '.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '12px' }}>Statussen beheren</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
-                    {statuses.map(s => (
-                      <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                    {statuses.map((s, i) => (
+                      <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 10px', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                        {/* Volgorde pijltjes */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flexShrink: 0 }}>
+                          <button
+                            onClick={() => moveStatus(s.key, -1)}
+                            disabled={i === 0}
+                            style={{ background: 'none', border: 'none', cursor: i === 0 ? 'default' : 'pointer', color: i === 0 ? 'var(--border)' : 'var(--muted)', fontSize: '.6rem', lineHeight: 1, padding: '1px 3px' }}
+                            onMouseEnter={e => { if (i !== 0) (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = i === 0 ? 'var(--border)' : 'var(--muted)' }}
+                          >▲</button>
+                          <button
+                            onClick={() => moveStatus(s.key, 1)}
+                            disabled={i === statuses.length - 1}
+                            style={{ background: 'none', border: 'none', cursor: i === statuses.length - 1 ? 'default' : 'pointer', color: i === statuses.length - 1 ? 'var(--border)' : 'var(--muted)', fontSize: '.6rem', lineHeight: 1, padding: '1px 3px' }}
+                            onMouseEnter={e => { if (i !== statuses.length - 1) (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
+                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = i === statuses.length - 1 ? 'var(--border)' : 'var(--muted)' }}
+                          >▼</button>
+                        </div>
                         <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
                         <span style={{ flex: 1, fontSize: '.83rem', fontWeight: 500 }}>{s.label}</span>
                         <button
