@@ -302,10 +302,11 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
                       <div
                         key={s.key}
                         draggable
-                        onDragStart={() => setDragStatus(s.key)}
-                        onDragOver={e => { e.preventDefault(); setDragOverStatus(s.key) }}
-                        onDragLeave={() => setDragOverStatus(null)}
-                        onDrop={() => handleStatusDrop(s.key)}
+                        onDragStart={e => { e.stopPropagation(); setDragStatus(s.key) }}
+                        onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverStatus(s.key) }}
+                        onDragLeave={e => { e.stopPropagation(); setDragOverStatus(null) }}
+                        onDrop={e => { e.preventDefault(); e.stopPropagation(); handleStatusDrop(s.key) }}
+                        onDragEnd={e => { e.stopPropagation(); setDragStatus(null); setDragOverStatus(null) }}
                         style={{
                           display: 'flex', alignItems: 'center', gap: '8px',
                           padding: '7px 10px', borderRadius: '6px',
@@ -495,10 +496,11 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
                   <div
                     key={cat}
                     draggable
-                    onDragStart={() => setDragCat(cat)}
-                    onDragOver={e => { e.preventDefault(); setDragOverCat(cat) }}
-                    onDragLeave={() => setDragOverCat(null)}
-                    onDrop={() => handleCatDrop(cat)}
+                    onDragStart={e => { e.stopPropagation(); setDragCat(cat) }}
+                    onDragOver={e => { e.preventDefault(); e.stopPropagation(); setDragOverCat(cat) }}
+                    onDragLeave={e => { e.stopPropagation(); setDragOverCat(null) }}
+                    onDrop={e => { e.preventDefault(); e.stopPropagation(); handleCatDrop(cat) }}
+                    onDragEnd={e => { e.stopPropagation(); setDragCat(null); setDragOverCat(null) }}
                     style={{
                       display: 'flex', alignItems: 'center', gap: '8px',
                       padding: '6px 10px', borderRadius: '6px',
