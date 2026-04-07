@@ -18,6 +18,7 @@ interface Props {
   clients: ClientWithStats[]
   pendingUsers: UserProfile[]
   agencyId: string
+  userId: string
   isAdmin: boolean
 }
 
@@ -47,7 +48,7 @@ const emptyForm: ClientForm = {
   status: 'actief',
 }
 
-export default function ClientsClient({ clients: initialClients, pendingUsers, agencyId, isAdmin }: Props) {
+export default function ClientsClient({ clients: initialClients, pendingUsers, agencyId, userId, isAdmin }: Props) {
   const [clients, setClients]           = useState<ClientWithStats[]>(initialClients)
   const [showModal, setShowModal]       = useState(false)
   const [modalMode, setModalMode]       = useState<ModalMode>('add')
@@ -156,7 +157,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
   async function sendInvite(clientId: string, email: string) {
     const token   = crypto.randomUUID()
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { error } = await supabase.from('client_invitations').insert({ agency_id: agencyId, client_id: clientId, email: email || '', token, expires_at: expires, accepted: false })
+    const { error } = await supabase.from('client_invitations').insert({ agency_id: agencyId, client_id: clientId, email: email || '', invited_by: userId, token, expires_at: expires, accepted: false })
     if (error) { showToast(`Fout uitnodiging: ${error.message}`); return }
     const link = `${window.location.origin}/accept-invitation?token=${token}`
     await navigator.clipboard.writeText(link)
@@ -166,7 +167,7 @@ export default function ClientsClient({ clients: initialClients, pendingUsers, a
   async function copyInviteLink(clientId: string) {
     const token   = crypto.randomUUID()
     const expires = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString()
-    const { error } = await supabase.from('client_invitations').insert({ agency_id: agencyId, client_id: clientId, email: '', token, expires_at: expires, accepted: false })
+    const { error } = await supabase.from('client_invitations').insert({ agency_id: agencyId, client_id: clientId, email: '', invited_by: userId, token, expires_at: expires, accepted: false })
     if (error) { showToast(`Fout: ${error.message}`); return }
     const link = `${window.location.origin}/accept-invitation?token=${token}`
     await navigator.clipboard.writeText(link)

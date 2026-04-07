@@ -73,6 +73,7 @@ export default async function ClientsPage() {
       clients={enrichedClients}
       pendingUsers={pendingUsers || []}
       agencyId={agencyId}
+      userId={user.id}
       isAdmin={profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'}
     />
   )
