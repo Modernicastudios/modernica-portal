@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { useClientFilter } from '@/components/layout/ClientFilter'
 import { Plus, Pencil, Trash2, Upload, X, LayoutGrid, Calendar, Table2, List, Link2, Inbox, Send, FileText, SendHorizonal } from 'lucide-react'
 import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
@@ -44,6 +45,7 @@ const EMPTY_FORM = {
 
 export default function ContentClient({ posts: initialPosts, clients, agencyId, isAdmin }: Props) {
   const [posts, setPosts] = useState(initialPosts)
+  const { selectedClientId } = useClientFilter()
   const [view, setView] = useState<'board' | 'calendar' | 'table' | 'queue'>('board')
   const [platformFilter, setPlatformFilter] = useState('all')
   const [showModal, setShowModal] = useState(false)
@@ -71,7 +73,9 @@ export default function ContentClient({ posts: initialPosts, clients, agencyId, 
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
 
-  const filtered = platformFilter === 'all' ? posts : posts.filter(p => p.platform === platformFilter)
+  const filtered = posts
+    .filter(p => platformFilter === 'all' || p.platform === platformFilter)
+    .filter(p => !selectedClientId || p.client_id === selectedClientId)
 
   function openPost(post?: any, defaultStatus?: string) {
     if (post) {
