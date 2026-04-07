@@ -5,15 +5,24 @@ import { createClient } from '@/lib/supabase/client'
 import { useClientFilter } from '@/components/layout/ClientFilter'
 import { Plus, X, LayoutGrid, List, Trash2, FolderOpen } from 'lucide-react'
 
-const STATUSES = [
-  { key: 'backlog',          label: 'Backlog',             color: '#6b7280', bg: 'rgba(107,114,128,.08)', strip: '#d1d5db' },
-  { key: 'in_progress',      label: 'In uitvoering',       color: '#1a3fe4', bg: 'rgba(26,63,228,.08)',   strip: '#1a3fe4' },
-  { key: 'waiting_feedback', label: 'Wachten op reactie',  color: '#ff7a30', bg: 'rgba(255,122,48,.08)',  strip: '#ff7a30' },
-  { key: 'needs_response',   label: 'Antwoord geven',      color: '#0ea5e9', bg: 'rgba(14,165,233,.08)',  strip: '#0ea5e9' },
-  { key: 'blocked',          label: 'Geblokkeerd',         color: '#e53935', bg: 'rgba(229,57,53,.08)',   strip: '#e53935' },
-  { key: 'review',           label: 'Review',              color: '#9c27b0', bg: 'rgba(156,39,176,.08)',  strip: '#9c27b0' },
-  { key: 'approved',         label: 'Goedgekeurd',         color: '#00b89c', bg: 'rgba(0,184,156,.08)',   strip: '#00b89c' },
-  { key: 'archived',         label: 'Archief',             color: '#9ca3af', bg: 'rgba(156,163,175,.08)', strip: '#9ca3af' },
+const DEFAULT_STATUSES = [
+  { key: 'backlog',          label: 'Backlog',             color: '#6b7280', strip: '#d1d5db' },
+  { key: 'in_progress',      label: 'In uitvoering',       color: '#1a3fe4', strip: '#1a3fe4' },
+  { key: 'waiting_feedback', label: 'Wachten op reactie',  color: '#ff7a30', strip: '#ff7a30' },
+  { key: 'needs_response',   label: 'Antwoord geven',      color: '#0ea5e9', strip: '#0ea5e9' },
+  { key: 'blocked',          label: 'Geblokkeerd',         color: '#e53935', strip: '#e53935' },
+  { key: 'review',           label: 'Review',              color: '#9c27b0', strip: '#9c27b0' },
+  { key: 'approved',         label: 'Goedgekeurd',         color: '#00b89c', strip: '#00b89c' },
+  { key: 'archived',         label: 'Archief',             color: '#9ca3af', strip: '#9ca3af' },
+]
+
+function buildStatus(s: { key: string; label: string; color: string; strip: string }) {
+  return { ...s, bg: `${s.color}18` }
+}
+
+const STATUS_COLORS = [
+  '#6b7280','#1a3fe4','#ff7a30','#0ea5e9','#e53935',
+  '#9c27b0','#00b89c','#f59e0b','#10b981','#ec4899',
 ]
 
 const PRIORITIES: Record<string, { label: string; color: string; bg: string; border: string }> = {
@@ -35,7 +44,7 @@ const CAMPAIGN_COLORS = [
   '#f59e0b', '#0ea5e9', '#10b981', '#ec4899', '#6366f1',
 ]
 
-const STATUS_MAP = Object.fromEntries(STATUSES.map(s => [s.key, s]))
+// STATUS_MAP is now computed dynamically from state
 
 interface Props {
   projects: any[]
@@ -46,11 +55,12 @@ interface Props {
   currentClientId: string
   isAdmin: boolean
   categories: string[]
+  statuses: { key: string; label: string; color: string; strip: string }[]
 }
 
 type ViewMode = 'board' | 'list'
 
-export default function ProjectsClient({ projects: initialProjects, clients, groups: initialGroups, agencyId, currentUserId, currentClientId, isAdmin, categories: initialCategories }: Props) {
+export default function ProjectsClient({ projects: initialProjects, clients, groups: initialGroups, agencyId, currentUserId, currentClientId, isAdmin, categories: initialCategories, statuses: initialStatuses }: Props) {
   const [projects, setProjects]           = useState(initialProjects)
   const [groups, setGroups]               = useState(initialGroups)
   const [selectedProject, setSelectedProject] = useState<any>(null)
@@ -66,6 +76,10 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
   const [categories, setCategories] = useState<string[]>(initialCategories)
   const [showCatManager, setShowCatManager] = useState(false)
   const [newCatName, setNewCatName] = useState('')
+  const [statuses, setStatuses] = useState(initialStatuses.map(buildStatus))
+  const [showStatusManager, setShowStatusManager] = useState(false)
+  const [newStatusLabel, setNewStatusLabel] = useState('')
+  const [newStatusColor, setNewStatusColor] = useState('#1a3fe4')
   const [filterPriority, setFilterPriority] = useState<string>('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [filterClient, setFilterClient] = useState<string>('')
@@ -74,7 +88,27 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
   const supabase = createClient()
   const { selectedClientId, filterClients } = useClientFilter()
 
+  const STATUS_MAP = Object.fromEntries(statuses.map(s => [s.key, s]))
+
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
+  async function saveStatuses(updated: typeof statuses) {
+    setStatuses(updated)
+    await supabase.from('agencies').update({ project_statuses: updated.map(({ bg: _bg, ...s }) => s) }).eq('id', agencyId)
+  }
+
+  async function addStatus() {
+    const label = newStatusLabel.trim()
+    if (!label) return
+    const key = label.toLowerCase().replace(/\s+/g, '_').replace(/[^a-z0-9_]/g, '')
+    if (statuses.find(s => s.key === key)) return
+    setNewStatusLabel('')
+    await saveStatuses([...statuses, buildStatus({ key, label, color: newStatusColor, strip: newStatusColor })])
+  }
+
+  async function removeStatus(key: string) {
+    await saveStatuses(statuses.filter(s => s.key !== key))
+  }
 
   async function saveCategories(updated: string[]) {
     setCategories(updated)
@@ -122,7 +156,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
       return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
     })
 
-  const columns = STATUSES.map(s => ({
+  const columns = statuses.map(s => ({
     ...s,
     items: visibleProjects.filter(p => p.status === s.key),
   }))
@@ -218,6 +252,65 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
           </p>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          {/* Status manager */}
+          {isAdmin && (
+            <div style={{ position: 'relative' }}>
+              <button
+                onClick={() => setShowStatusManager(v => !v)}
+                title="Statussen beheren"
+                style={{ display: 'flex', alignItems: 'center', gap: '5px', padding: '8px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', background: showStatusManager ? 'var(--accent1)' : 'var(--card)', color: showStatusManager ? '#fff' : 'var(--muted)', fontSize: '.78rem', fontWeight: 600, cursor: 'pointer' }}
+              >
+                ⚙ Statussen
+              </button>
+              {showStatusManager && (
+                <div style={{
+                  position: 'absolute', top: '42px', right: 0, zIndex: 200,
+                  background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                  boxShadow: '0 8px 32px rgba(0,0,0,.15)', padding: '18px', minWidth: '280px',
+                }}>
+                  <div style={{ fontSize: '.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '12px' }}>Statussen beheren</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
+                    {statuses.map(s => (
+                      <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                        <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
+                        <span style={{ flex: 1, fontSize: '.83rem', fontWeight: 500 }}>{s.label}</span>
+                        <button
+                          onClick={() => removeStatus(s.key)}
+                          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '1rem', lineHeight: 1, padding: '0 2px' }}
+                          onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#e53935' }}
+                          onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted)' }}
+                        >×</button>
+                      </div>
+                    ))}
+                  </div>
+                  <div style={{ fontSize: '.72rem', fontWeight: 700, color: 'var(--muted)', marginBottom: '8px' }}>Nieuwe status toevoegen</div>
+                  <input
+                    value={newStatusLabel}
+                    onChange={e => setNewStatusLabel(e.target.value)}
+                    onKeyDown={e => e.key === 'Enter' && addStatus()}
+                    placeholder="Naam (bijv. In review)..."
+                    style={{ width: '100%', padding: '7px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', color: 'var(--text)', boxSizing: 'border-box', marginBottom: '8px' }}
+                  />
+                  <div style={{ display: 'flex', gap: '6px', marginBottom: '8px', flexWrap: 'wrap' }}>
+                    {STATUS_COLORS.map(c => (
+                      <div
+                        key={c}
+                        onClick={() => setNewStatusColor(c)}
+                        style={{ width: '22px', height: '22px', borderRadius: '50%', background: c, cursor: 'pointer', border: newStatusColor === c ? '3px solid var(--text)' : '2px solid transparent', transition: 'border .1s' }}
+                      />
+                    ))}
+                  </div>
+                  <button
+                    onClick={addStatus}
+                    disabled={!newStatusLabel.trim()}
+                    style={{ width: '100%', padding: '8px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: '6px', cursor: newStatusLabel.trim() ? 'pointer' : 'not-allowed', fontWeight: 700, fontSize: '.83rem', opacity: newStatusLabel.trim() ? 1 : 0.45 }}
+                  >
+                    + Status toevoegen
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
           {/* View toggle */}
           <div style={{ display: 'flex', background: 'var(--bg)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', overflow: 'hidden', padding: '3px', gap: '2px' }}>
             {([{ key: 'board', label: 'Board' }, { key: 'list', label: 'Lijst' }] as const).map(v => (
@@ -503,7 +596,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
             <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)', fontSize: '.88rem' }}>Geen projecten gevonden</div>
           )}
           {visibleProjects.map((project, i) => {
-            const st = STATUS_MAP[project.status] || STATUSES[0]
+            const st = STATUS_MAP[project.status] || statuses[0]
             const pr = PRIORITIES[project.priority] || PRIORITIES.normal
             return (
               <div
@@ -554,6 +647,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
           groups={groups}
           agencyId={agencyId}
           categories={categories}
+          statuses={statuses}
           onClose={() => setSelectedProject(null)}
           onMove={moveProject}
           onUpdate={updated => {
@@ -829,12 +923,13 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
 }
 
 // ── ProjectModal ───────────────────────────────────────────────────────────────
-function ProjectModal({ project, clients, groups, agencyId, categories, onClose, onMove, onUpdate, onDelete, onGroupCreate, isAdmin }: {
+function ProjectModal({ project, clients, groups, agencyId, categories, statuses, onClose, onMove, onUpdate, onDelete, onGroupCreate, isAdmin }: {
   project: any
   clients: any[]
   groups: any[]
   agencyId: string
   categories: string[]
+  statuses: { key: string; label: string; color: string; strip: string; bg: string }[]
   onClose: () => void
   onMove: (id: string, status: string) => void
   onUpdate: (updated: any) => void
@@ -863,7 +958,8 @@ function ProjectModal({ project, clients, groups, agencyId, categories, onClose,
   const [newGroupColor, setNewGroupColor] = useState('#1a3fe4')
   const supabase = createClient()
 
-  const statusCfg = STATUS_MAP[currentStatus] || STATUSES[0]
+  const statusMap = Object.fromEntries(statuses.map(s => [s.key, s]))
+  const statusCfg = statusMap[currentStatus] || statuses[0]
   const prio      = PRIORITIES[currentPriority as string] || PRIORITIES.normal
 
   useState(() => {
@@ -1282,7 +1378,7 @@ function ProjectModal({ project, clients, groups, agencyId, categories, onClose,
                   onChange={e => changeStatus(e.target.value)}
                   style={{ ...sidebarSelectStyle, color: statusCfg.color }}
                 >
-                  {STATUSES.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
+                  {statuses.map(s => <option key={s.key} value={s.key}>{s.label}</option>)}
                 </select>
               </div>
 

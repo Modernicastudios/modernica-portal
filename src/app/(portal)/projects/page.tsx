@@ -41,12 +41,24 @@ export default async function ProjectsPage() {
 
   const { data: agency } = await supabase
     .from('agencies')
-    .select('project_categories')
+    .select('project_categories, project_statuses')
     .eq('id', agencyId)
     .single()
 
   const defaultCategories = ['Paid Ads', 'Social', 'Content', 'SEO', 'Design', 'Strategy', 'Development']
   const categories: string[] = agency?.project_categories || defaultCategories
+
+  const defaultStatuses = [
+    { key: 'backlog',          label: 'Backlog',             color: '#6b7280', strip: '#d1d5db' },
+    { key: 'in_progress',      label: 'In uitvoering',       color: '#1a3fe4', strip: '#1a3fe4' },
+    { key: 'waiting_feedback', label: 'Wachten op reactie',  color: '#ff7a30', strip: '#ff7a30' },
+    { key: 'needs_response',   label: 'Antwoord geven',      color: '#0ea5e9', strip: '#0ea5e9' },
+    { key: 'blocked',          label: 'Geblokkeerd',         color: '#e53935', strip: '#e53935' },
+    { key: 'review',           label: 'Review',              color: '#9c27b0', strip: '#9c27b0' },
+    { key: 'approved',         label: 'Goedgekeurd',         color: '#00b89c', strip: '#00b89c' },
+    { key: 'archived',         label: 'Archief',             color: '#9ca3af', strip: '#9ca3af' },
+  ]
+  const statuses = agency?.project_statuses || defaultStatuses
 
   return (
     <ProjectsClient
@@ -58,6 +70,7 @@ export default async function ProjectsPage() {
       currentClientId={clientId || ''}
       isAdmin={profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'}
       categories={categories}
+      statuses={statuses}
     />
   )
 }
