@@ -28,7 +28,7 @@ const PRIORITY_STRIP: Record<string, string> = {
   urgent: '#e53935',
 }
 
-const CATEGORIES = ['Paid Ads', 'Social', 'Content', 'SEO', 'Design', 'Strategy', 'Development']
+const DEFAULT_CATEGORIES = ['Paid Ads', 'Social', 'Content', 'SEO', 'Design', 'Strategy', 'Development']
 
 const CAMPAIGN_COLORS = [
   '#1a3fe4', '#9c27b0', '#ff7a30', '#00b89c', '#e53935',
@@ -43,13 +43,14 @@ interface Props {
   groups: any[]
   agencyId: string
   currentUserId: string
-  currentClientId: string   // client_id van de ingelogde gebruiker (leeg als admin)
+  currentClientId: string
   isAdmin: boolean
+  categories: string[]
 }
 
 type ViewMode = 'board' | 'list'
 
-export default function ProjectsClient({ projects: initialProjects, clients, groups: initialGroups, agencyId, currentUserId, currentClientId, isAdmin }: Props) {
+export default function ProjectsClient({ projects: initialProjects, clients, groups: initialGroups, agencyId, currentUserId, currentClientId, isAdmin, categories: initialCategories }: Props) {
   const [projects, setProjects]           = useState(initialProjects)
   const [groups, setGroups]               = useState(initialGroups)
   const [selectedProject, setSelectedProject] = useState<any>(null)
@@ -62,6 +63,9 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
   const [dragOver, setDragOver]           = useState<string | null>(null)
   const [viewMode, setViewMode]           = useState<ViewMode>('board')
   const [selectedGroupId, setSelectedGroupId] = useState<string>('')
+  const [categories, setCategories] = useState<string[]>(initialCategories)
+  const [showCatManager, setShowCatManager] = useState(false)
+  const [newCatName, setNewCatName] = useState('')
   const [filterPriority, setFilterPriority] = useState<string>('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [filterClient, setFilterClient] = useState<string>('')
@@ -71,6 +75,22 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
   const { selectedClientId, filterClients } = useClientFilter()
 
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 3000) }
+
+  async function saveCategories(updated: string[]) {
+    setCategories(updated)
+    await supabase.from('agencies').update({ project_categories: updated }).eq('id', agencyId)
+  }
+
+  async function addCategory() {
+    const name = newCatName.trim()
+    if (!name || categories.includes(name)) return
+    setNewCatName('')
+    await saveCategories([...categories, name])
+  }
+
+  async function removeCategory(cat: string) {
+    await saveCategories(categories.filter(c => c !== cat))
+  }
 
   // Groups filtered by selected client (if one is active)
   const relevantGroups = selectedClientId
@@ -302,19 +322,71 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
           {Object.entries(PRIORITIES).map(([k, v]) => <option key={k} value={k}>{v.label}</option>)}
         </select>
 
-        {/* Categorie filter */}
-        <select
-          value={filterCategory}
-          onChange={e => setFilterCategory(e.target.value)}
-          style={{
-            padding: '4px 10px', borderRadius: '6px', border: `1px solid ${filterCategory ? 'var(--accent1)' : 'var(--border)'}`,
-            background: filterCategory ? 'rgba(26,63,228,.07)' : 'var(--card)', color: filterCategory ? 'var(--accent1)' : 'var(--muted)',
-            fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none',
-          }}
-        >
-          <option value="">Alle categorieën</option>
-          {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
-        </select>
+        {/* Categorie filter + beheer */}
+        <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: '4px' }}>
+          <select
+            value={filterCategory}
+            onChange={e => setFilterCategory(e.target.value)}
+            style={{
+              padding: '4px 10px', borderRadius: '6px', border: `1px solid ${filterCategory ? 'var(--accent1)' : 'var(--border)'}`,
+              background: filterCategory ? 'rgba(26,63,228,.07)' : 'var(--card)', color: filterCategory ? 'var(--accent1)' : 'var(--muted)',
+              fontSize: '.75rem', fontWeight: 600, cursor: 'pointer', outline: 'none',
+            }}
+          >
+            <option value="">Alle categorieën</option>
+            {categories.map(c => <option key={c} value={c}>{c}</option>)}
+          </select>
+          {isAdmin && (
+            <button
+              onClick={() => setShowCatManager(v => !v)}
+              title="Categorieën beheren"
+              style={{ padding: '4px 8px', borderRadius: '6px', border: '1px solid var(--border)', background: showCatManager ? 'var(--accent1)' : 'var(--card)', color: showCatManager ? '#fff' : 'var(--muted)', fontSize: '.75rem', cursor: 'pointer' }}
+            >
+              ⚙
+            </button>
+          )}
+          {/* Categorie manager popover */}
+          {showCatManager && (
+            <div style={{
+              position: 'absolute', top: '34px', left: 0, zIndex: 100,
+              background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+              boxShadow: '0 8px 24px rgba(0,0,0,.12)', padding: '16px', minWidth: '240px',
+            }}>
+              <div style={{ fontSize: '.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '10px' }}>Categorieën beheren</div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                {categories.map(cat => (
+                  <div key={cat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
+                    <span style={{ fontSize: '.82rem', fontWeight: 500 }}>{cat}</span>
+                    <button
+                      onClick={() => removeCategory(cat)}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '.85rem', lineHeight: 1, padding: '0 2px' }}
+                      onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#e53935' }}
+                      onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted)' }}
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+              </div>
+              <div style={{ display: 'flex', gap: '6px' }}>
+                <input
+                  value={newCatName}
+                  onChange={e => setNewCatName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && addCategory()}
+                  placeholder="Nieuwe categorie..."
+                  style={{ flex: 1, padding: '6px 10px', border: '1px solid var(--border)', borderRadius: '6px', fontSize: '.8rem', background: 'var(--bg)', outline: 'none', color: 'var(--text)' }}
+                />
+                <button
+                  onClick={addCategory}
+                  disabled={!newCatName.trim()}
+                  style={{ padding: '6px 12px', background: 'var(--accent1)', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: 700, fontSize: '.8rem', opacity: newCatName.trim() ? 1 : 0.45 }}
+                >
+                  +
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
 
         {/* Sortering */}
         <select
@@ -481,6 +553,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
           clients={clients}
           groups={groups}
           agencyId={agencyId}
+          categories={categories}
           onClose={() => setSelectedProject(null)}
           onMove={moveProject}
           onUpdate={updated => {
@@ -537,7 +610,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
                   <label style={labelStyle}>Categorie</label>
                   <select value={newProject.category} onChange={e => setNewProject(p => ({ ...p, category: e.target.value }))} style={inputStyle}>
                     <option value="">Geen</option>
-                    {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                    {categories.map(c => <option key={c} value={c}>{c}</option>)}
                   </select>
                 </div>
               </div>
@@ -756,11 +829,12 @@ function ProjectCard({ project, onClick, onDragStart, isDragging }: {
 }
 
 // ── ProjectModal ───────────────────────────────────────────────────────────────
-function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onUpdate, onDelete, onGroupCreate, isAdmin }: {
+function ProjectModal({ project, clients, groups, agencyId, categories, onClose, onMove, onUpdate, onDelete, onGroupCreate, isAdmin }: {
   project: any
   clients: any[]
   groups: any[]
   agencyId: string
+  categories: string[]
   onClose: () => void
   onMove: (id: string, status: string) => void
   onUpdate: (updated: any) => void
@@ -1246,7 +1320,7 @@ function ProjectModal({ project, clients, groups, agencyId, onClose, onMove, onU
                   style={sidebarSelectStyle}
                 >
                   <option value="">Geen</option>
-                  {CATEGORIES.map(c => <option key={c} value={c}>{c}</option>)}
+                  {categories.map(c => <option key={c} value={c}>{c}</option>)}
                 </select>
               </div>
 

@@ -39,6 +39,15 @@ export default async function ProjectsPage() {
     .eq('agency_id', agencyId)
     .order('name')
 
+  const { data: agency } = await supabase
+    .from('agencies')
+    .select('project_categories')
+    .eq('id', agencyId)
+    .single()
+
+  const defaultCategories = ['Paid Ads', 'Social', 'Content', 'SEO', 'Design', 'Strategy', 'Development']
+  const categories: string[] = agency?.project_categories || defaultCategories
+
   return (
     <ProjectsClient
       projects={projects || []}
@@ -48,6 +57,7 @@ export default async function ProjectsPage() {
       currentUserId={user.id}
       currentClientId={clientId || ''}
       isAdmin={profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'}
+      categories={categories}
     />
   )
 }
