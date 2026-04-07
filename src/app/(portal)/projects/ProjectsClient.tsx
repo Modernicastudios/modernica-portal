@@ -76,10 +76,14 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
   const [categories, setCategories] = useState<string[]>(initialCategories)
   const [showCatManager, setShowCatManager] = useState(false)
   const [newCatName, setNewCatName] = useState('')
+  const [dragCat, setDragCat] = useState<string | null>(null)
+  const [dragOverCat, setDragOverCat] = useState<string | null>(null)
   const [statuses, setStatuses] = useState(initialStatuses.map(buildStatus))
   const [showStatusManager, setShowStatusManager] = useState(false)
   const [newStatusLabel, setNewStatusLabel] = useState('')
   const [newStatusColor, setNewStatusColor] = useState('#1a3fe4')
+  const [dragStatus, setDragStatus] = useState<string | null>(null)
+  const [dragOverStatus, setDragOverStatus] = useState<string | null>(null)
   const [filterPriority, setFilterPriority] = useState<string>('')
   const [filterCategory, setFilterCategory] = useState<string>('')
   const [filterClient, setFilterClient] = useState<string>('')
@@ -110,14 +114,28 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
     await saveStatuses(statuses.filter(s => s.key !== key))
   }
 
-  async function moveStatus(key: string, dir: -1 | 1) {
-    const idx = statuses.findIndex(s => s.key === key)
-    if (idx === -1) return
-    const newIdx = idx + dir
-    if (newIdx < 0 || newIdx >= statuses.length) return
+  function handleStatusDrop(overKey: string) {
+    if (!dragStatus || dragStatus === overKey) { setDragStatus(null); setDragOverStatus(null); return }
+    const from = statuses.findIndex(s => s.key === dragStatus)
+    const to   = statuses.findIndex(s => s.key === overKey)
+    if (from === -1 || to === -1) return
     const updated = [...statuses]
-    ;[updated[idx], updated[newIdx]] = [updated[newIdx], updated[idx]]
-    await saveStatuses(updated)
+    const [moved] = updated.splice(from, 1)
+    updated.splice(to, 0, moved)
+    setDragStatus(null); setDragOverStatus(null)
+    saveStatuses(updated)
+  }
+
+  function handleCatDrop(overCat: string) {
+    if (!dragCat || dragCat === overCat) { setDragCat(null); setDragOverCat(null); return }
+    const from = categories.indexOf(dragCat)
+    const to   = categories.indexOf(overCat)
+    if (from === -1 || to === -1) return
+    const updated = [...categories]
+    const [moved] = updated.splice(from, 1)
+    updated.splice(to, 0, moved)
+    setDragCat(null); setDragOverCat(null)
+    saveCategories(updated)
   }
 
   async function saveCategories(updated: string[]) {
@@ -280,25 +298,24 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
                 }}>
                   <div style={{ fontSize: '.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '12px' }}>Statussen beheren</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '14px' }}>
-                    {statuses.map((s, i) => (
-                      <div key={s.key} style={{ display: 'flex', alignItems: 'center', gap: '6px', padding: '7px 10px', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                        {/* Volgorde pijltjes */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', flexShrink: 0 }}>
-                          <button
-                            onClick={() => moveStatus(s.key, -1)}
-                            disabled={i === 0}
-                            style={{ background: 'none', border: 'none', cursor: i === 0 ? 'default' : 'pointer', color: i === 0 ? 'var(--border)' : 'var(--muted)', fontSize: '.6rem', lineHeight: 1, padding: '1px 3px' }}
-                            onMouseEnter={e => { if (i !== 0) (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = i === 0 ? 'var(--border)' : 'var(--muted)' }}
-                          >▲</button>
-                          <button
-                            onClick={() => moveStatus(s.key, 1)}
-                            disabled={i === statuses.length - 1}
-                            style={{ background: 'none', border: 'none', cursor: i === statuses.length - 1 ? 'default' : 'pointer', color: i === statuses.length - 1 ? 'var(--border)' : 'var(--muted)', fontSize: '.6rem', lineHeight: 1, padding: '1px 3px' }}
-                            onMouseEnter={e => { if (i !== statuses.length - 1) (e.currentTarget as HTMLElement).style.color = 'var(--text)' }}
-                            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = i === statuses.length - 1 ? 'var(--border)' : 'var(--muted)' }}
-                          >▼</button>
-                        </div>
+                    {statuses.map(s => (
+                      <div
+                        key={s.key}
+                        draggable
+                        onDragStart={() => setDragStatus(s.key)}
+                        onDragOver={e => { e.preventDefault(); setDragOverStatus(s.key) }}
+                        onDragLeave={() => setDragOverStatus(null)}
+                        onDrop={() => handleStatusDrop(s.key)}
+                        style={{
+                          display: 'flex', alignItems: 'center', gap: '8px',
+                          padding: '7px 10px', borderRadius: '6px',
+                          background: dragOverStatus === s.key ? `${s.color}18` : 'var(--bg)',
+                          border: `1px solid ${dragOverStatus === s.key ? s.color : 'var(--border)'}`,
+                          cursor: 'grab', opacity: dragStatus === s.key ? 0.4 : 1,
+                          transition: 'all .1s',
+                        }}
+                      >
+                        <span style={{ color: 'var(--muted)', fontSize: '.8rem', cursor: 'grab' }}>⠿</span>
                         <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: s.color, flexShrink: 0 }} />
                         <span style={{ flex: 1, fontSize: '.83rem', fontWeight: 500 }}>{s.label}</span>
                         <button
@@ -475,16 +492,30 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
               <div style={{ fontSize: '.72rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.07em', marginBottom: '10px' }}>Categorieën beheren</div>
               <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
                 {categories.map(cat => (
-                  <div key={cat} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '6px 10px', borderRadius: '6px', background: 'var(--bg)', border: '1px solid var(--border)' }}>
-                    <span style={{ fontSize: '.82rem', fontWeight: 500 }}>{cat}</span>
+                  <div
+                    key={cat}
+                    draggable
+                    onDragStart={() => setDragCat(cat)}
+                    onDragOver={e => { e.preventDefault(); setDragOverCat(cat) }}
+                    onDragLeave={() => setDragOverCat(null)}
+                    onDrop={() => handleCatDrop(cat)}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '8px',
+                      padding: '6px 10px', borderRadius: '6px',
+                      background: dragOverCat === cat ? 'rgba(26,63,228,.07)' : 'var(--bg)',
+                      border: `1px solid ${dragOverCat === cat ? 'var(--accent1)' : 'var(--border)'}`,
+                      cursor: 'grab', opacity: dragCat === cat ? 0.4 : 1,
+                      transition: 'all .1s',
+                    }}
+                  >
+                    <span style={{ color: 'var(--muted)', fontSize: '.8rem' }}>⠿</span>
+                    <span style={{ flex: 1, fontSize: '.82rem', fontWeight: 500 }}>{cat}</span>
                     <button
                       onClick={() => removeCategory(cat)}
                       style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', fontSize: '.85rem', lineHeight: 1, padding: '0 2px' }}
                       onMouseEnter={e => { (e.currentTarget as HTMLElement).style.color = '#e53935' }}
                       onMouseLeave={e => { (e.currentTarget as HTMLElement).style.color = 'var(--muted)' }}
-                    >
-                      ×
-                    </button>
+                    >×</button>
                   </div>
                 ))}
               </div>
