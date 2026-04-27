@@ -2,29 +2,25 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { createClient } from '@/lib/supabase/client'
+import { loginAction } from './actions'
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('')
-  const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  async function handleLogin(e: React.FormEvent) {
+  async function handleLogin(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
     setLoading(true)
     setError(null)
 
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const formData = new FormData(e.currentTarget)
+    const result = await loginAction(formData)
 
-    if (error) {
-      setError('Onjuist e-mailadres of wachtwoord.')
+    if (result?.error) {
+      setError(result.error)
       setLoading(false)
-      return
     }
-
-    window.location.href = '/dashboard'
+    // Bij succes doet de server action zelf redirect('/dashboard')
   }
 
   return (
@@ -73,8 +69,7 @@ export default function LoginPage() {
           </label>
           <input
             type="email"
-            value={email}
-            onChange={e => setEmail(e.target.value)}
+            name="email"
             placeholder="jij@bedrijf.nl"
             required
             style={{
@@ -96,8 +91,7 @@ export default function LoginPage() {
           </label>
           <input
             type="password"
-            value={password}
-            onChange={e => setPassword(e.target.value)}
+            name="password"
             placeholder="••••••••"
             required
             style={{
