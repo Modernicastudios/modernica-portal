@@ -1,6 +1,7 @@
 import React from 'react'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import PortalShell from '@/components/layout/PortalShell'
 
 export default async function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -9,8 +10,9 @@ export default async function PortalLayout({ children }: { children: React.React
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  // Simpele query — geen geneste joins die kunnen crashen
-  const { data: profile } = await supabase
+  // Admin client bypasses RLS — profiel moet altijd leesbaar zijn
+  const admin = createAdminClient()
+  const { data: profile } = await admin
     .from('user_profiles')
     .select('*')
     .eq('id', user.id)
@@ -19,8 +21,8 @@ export default async function PortalLayout({ children }: { children: React.React
   // Alleen redirect als profiel echt ontbreekt
   if (!profile) redirect('/login')
 
-  // Agency apart ophalen zodat een fout hier de login niet blokkeert
-  const { data: agency } = await supabase
+  // Agency via admin — bypasses RLS
+  const { data: agency } = await admin
     .from('agencies')
     .select('*, brand_kits(*)')
     .eq('id', profile.agency_id)
