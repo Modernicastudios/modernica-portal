@@ -9,13 +9,15 @@ export default async function PortalLayout({ children }: { children: React.React
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile } = await supabase
+  const { data: profile, error: profileError } = await supabase
     .from('user_profiles')
     .select('*, agencies(*, brand_kits(*))')
     .eq('id', user.id)
     .single()
 
-  if (!profile) redirect('/login')
+  // Alleen redirecten als er echt geen profiel is én geen DB-fout
+  // Bij een DB-fout (timeout, RLS) liever doorgaan met lege waarden dan loopen
+  if (!profile && !profileError) redirect('/login')
 
   const brandKit = profile.agencies?.brand_kits?.[0] || null
   const agency = profile.agencies || null

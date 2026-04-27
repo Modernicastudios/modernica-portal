@@ -19,8 +19,10 @@ export default function LoginPage() {
     if (result?.error) {
       setError(result.error)
       setLoading(false)
+    } else if (result?.success) {
+      // Cookie is gezet door server action, nu harde navigatie
+      window.location.href = '/dashboard'
     }
-    // Bij succes doet de server action zelf redirect('/dashboard')
   }
 
   return (

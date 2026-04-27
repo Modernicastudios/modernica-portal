@@ -1,7 +1,6 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
-import { redirect } from 'next/navigation'
 
 export async function loginAction(formData: FormData) {
   const email = formData.get('email') as string
@@ -14,5 +13,6 @@ export async function loginAction(formData: FormData) {
     return { error: 'Onjuist e-mailadres of wachtwoord.' }
   }
 
-  redirect('/dashboard')
+  // Cookie is nu server-side gezet — client navigeert daarna
+  return { success: true }
 }
