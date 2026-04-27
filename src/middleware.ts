@@ -23,27 +23,9 @@ export async function middleware(request: NextRequest) {
     }
   )
 
-  // Refresh session — dit zorgt dat de auth cookie altijd up-to-date is
-  const { data: { user } } = await supabase.auth.getUser()
-
-  const { pathname } = request.nextUrl
-
-  // Niet ingelogd en probeert een beschermde pagina te bezoeken → stuur naar login
-  const isAuthPage = pathname.startsWith('/login') || pathname.startsWith('/signup') || pathname.startsWith('/forgot-password')
-  const isPublicPage = pathname.startsWith('/review') || pathname.startsWith('/accept-invitation') || pathname.startsWith('/api')
-
-  if (!user && !isAuthPage && !isPublicPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/login'
-    return NextResponse.redirect(url)
-  }
-
-  // Ingelogd maar op loginpagina → stuur naar dashboard
-  if (user && isAuthPage) {
-    const url = request.nextUrl.clone()
-    url.pathname = '/dashboard'
-    return NextResponse.redirect(url)
-  }
+  // Alleen sessie verversen — geen redirects hier
+  // De individuele pagina's regelen zelf of je ingelogd moet zijn
+  await supabase.auth.getUser()
 
   return supabaseResponse
 }
