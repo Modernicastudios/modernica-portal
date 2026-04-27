@@ -9,29 +9,32 @@ export default async function PortalLayout({ children }: { children: React.React
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
 
-  const { data: profile, error: profileError } = await supabase
+  // Simpele query — geen geneste joins die kunnen crashen
+  const { data: profile } = await supabase
     .from('user_profiles')
-    .select('*, agencies(*, brand_kits(*))')
+    .select('*')
     .eq('id', user.id)
     .single()
 
-  // Alleen redirecten als er echt geen profiel is én geen DB-fout
-  // Bij een DB-fout (timeout, RLS) liever doorgaan met lege waarden dan loopen
-  if (!profile && !profileError) redirect('/login')
+  // Alleen redirect als profiel echt ontbreekt
+  if (!profile) redirect('/login')
 
-  const brandKit = profile.agencies?.brand_kits?.[0] || null
-  const agency = profile.agencies || null
+  // Agency apart ophalen zodat een fout hier de login niet blokkeert
+  const { data: agency } = await supabase
+    .from('agencies')
+    .select('*, brand_kits(*)')
+    .eq('id', profile.agency_id)
+    .single()
 
-  // Fetch clients for the agency (for client filter)
-  // Use RLS + explicit agency_id filter; if agency_id is missing, skip filter so RLS still returns correct rows
-  const clientsQuery = supabase
+  const brandKit = (agency as any)?.brand_kits?.[0] || null
+
+  // Clients voor global filter
+  const { data: clients } = await supabase
     .from('clients')
     .select('id, agency_id, company_name, industry, city, contact_email, created_at')
+    .eq('agency_id', profile.agency_id)
     .order('company_name')
-  if (profile.agency_id) clientsQuery.eq('agency_id', profile.agency_id)
-  const { data: clients } = await clientsQuery
 
-  // Build CSS custom properties for white-label theming
   const themeVars = brandKit ? {
     '--accent1': brandKit.primary_color || '#1a3fe4',
     '--accent2': brandKit.secondary_color || '#4f7bff',
@@ -40,8 +43,8 @@ export default async function PortalLayout({ children }: { children: React.React
   return (
     <div style={themeVars as React.CSSProperties}>
       <PortalShell
-        profile={profile}
-        agency={agency}
+        profile={{ ...profile, agencies: agency }}
+        agency={agency || null}
         brandKit={brandKit}
         userId={user.id}
         clients={clients || []}
