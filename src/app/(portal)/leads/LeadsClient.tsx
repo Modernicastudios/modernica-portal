@@ -26,8 +26,42 @@ interface Props {
   outreach: OutreachRow[]
 }
 
+const STAGES: { key: string; label: string; statuses: string[] }[] = [
+  { key: 'draft', label: 'Nieuw', statuses: ['draft', 'queued'] },
+  { key: 'pushed', label: 'Benaderd', statuses: ['pushed'] },
+  { key: 'replied', label: 'Reactie', statuses: ['replied'] },
+  { key: 'won', label: 'Gewonnen', statuses: ['won'] },
+  { key: 'lost', label: 'Verloren', statuses: ['lost', 'skipped'] },
+]
+
+function stageKey(status: string): string {
+  if (status === 'queued') return 'draft'
+  if (status === 'skipped') return 'lost'
+  return status
+}
+
 export default function LeadsClient({ isManager, clients, campaigns, outreach }: Props) {
   const [camps, setCamps] = useState<LeadCampaign[]>(campaigns)
+  const [rows, setRows] = useState<OutreachRow[]>(outreach)
+
+  async function changeStatus(id: string, status: string) {
+    setRows(prev => prev.map(r => r.id === id ? { ...r, status: status as OutreachRow['status'] } : r))
+    await fetch('/api/leads/outreach', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outreachId: id, action: 'status', status }),
+    })
+  }
+
+  async function convert(id: string) {
+    const res = await fetch('/api/leads/outreach', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ outreachId: id, action: 'convert' }),
+    })
+    const data = await res.json()
+    if (!res.ok) { alert('Mislukt: ' + (data.error || '')); return }
+    setRows(prev => prev.map(r => r.id === id ? { ...r, status: 'won' } : r))
+    alert('Klant aangemaakt! Je vindt dit bedrijf nu terug onder Klanten.')
+  }
 
   return (
     <div className="animate-fade-up">
@@ -73,41 +107,26 @@ export default function LeadsClient({ isManager, clients, campaigns, outreach }:
         <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem', marginBottom: '12px' }}>
           {isManager ? 'Gevonden leads' : 'Mijn leads'}
         </h2>
-        {outreach.length === 0 ? (
+        {rows.length === 0 ? (
           <div style={{ padding: '40px 24px', background: 'var(--card)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', color: 'var(--muted)', fontSize: '.9rem' }}>
             Nog geen leads. Zet hierboven een klant op actief en klik op <strong>Zoek leads</strong> —
-            de gevonden bedrijven verschijnen hier met contactpersoon en een kant-en-klaar bericht.
+            de gevonden bedrijven verschijnen hier in de pijplijn.
           </div>
         ) : (
-          <div style={{ display: 'grid', gap: '10px' }}>
-            {outreach.map(row => {
-              const co = row.lead_companies
-              const ct = row.lead_contacts
-              const verifyTone = ct?.email_verified === 'valid' ? 'success' : ct?.email_verified === 'invalid' ? 'danger' : 'muted'
+          <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '8px' }}>
+            {STAGES.map(stage => {
+              const items = rows.filter(r => stage.statuses.includes(r.status))
               return (
-                <div key={row.id} style={{ padding: '14px 16px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)' }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                    <div style={{ fontWeight: 600, fontSize: '.92rem' }}>{co?.name || 'Bedrijf'}</div>
-                    {co?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--muted)', fontSize: '.78rem' }}><MapPin size={12} /> {co.city}</span>}
-                    {co?.domain && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--muted)', fontSize: '.78rem' }}><Globe size={12} /> {co.domain}</span>}
+                <div key={stage.key} style={{ minWidth: '250px', flex: '1 0 250px', background: 'var(--bg)', borderRadius: 'var(--radius)', padding: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px', padding: '0 4px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '.8rem' }}>{stage.label}</span>
+                    <span style={{ fontSize: '.72rem', color: 'var(--muted)', background: 'var(--card)', borderRadius: 'var(--radius-pill)', padding: '1px 8px' }}>{items.length}</span>
                   </div>
-                  {ct && (
-                    <div style={{ marginTop: '6px', fontSize: '.82rem' }}>
-                      <span style={{ fontWeight: 600 }}>{ct.full_name || 'Contact'}</span>
-                      {ct.role && <span style={{ color: 'var(--muted)' }}> — {ct.role}</span>}
-                      {ct.email && (
-                        <span style={{ marginLeft: '8px', color: 'var(--muted)' }}>
-                          {ct.email}
-                          {ct.email_verified && <Badge tone={verifyTone}>{ct.email_verified}</Badge>}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                  {row.opening_line && (
-                    <div style={{ marginTop: '8px', fontSize: '.85rem', fontStyle: 'italic', color: 'var(--text)', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
-                      “{row.opening_line}”
-                    </div>
-                  )}
+                  <div style={{ display: 'grid', gap: '8px' }}>
+                    {items.map(row => (
+                      <LeadCard key={row.id} row={row} onStatus={changeStatus} onConvert={convert} />
+                    ))}
+                  </div>
                 </div>
               )
             })}
@@ -237,6 +256,57 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           {runMsg}
         </div>
       )}
+    </div>
+  )
+}
+
+function LeadCard({ row, onStatus, onConvert }: {
+  row: OutreachRow
+  onStatus: (id: string, status: string) => void
+  onConvert: (id: string) => void
+}) {
+  const co = row.lead_companies
+  const ct = row.lead_contacts
+  const verifyTone = ct?.email_verified === 'valid' ? 'success' : ct?.email_verified === 'invalid' ? 'danger' : 'muted'
+  return (
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', padding: '10px', boxShadow: 'var(--shadow)' }}>
+      <div style={{ fontWeight: 600, fontSize: '.85rem' }}>{co?.name || 'Bedrijf'}</div>
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '2px' }}>
+        {co?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--muted)', fontSize: '.7rem' }}><MapPin size={11} /> {co.city}</span>}
+        {co?.domain && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--muted)', fontSize: '.7rem' }}><Globe size={11} /> {co.domain}</span>}
+      </div>
+      {ct && (ct.full_name || ct.email) && (
+        <div style={{ marginTop: '6px', fontSize: '.74rem' }}>
+          {ct.full_name && <div style={{ fontWeight: 600 }}>{ct.full_name}{ct.role && <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · {ct.role}</span>}</div>}
+          {ct.email && (
+            <div style={{ color: 'var(--muted)', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
+              {ct.email} {ct.email_verified && <Badge tone={verifyTone}>{ct.email_verified}</Badge>}
+            </div>
+          )}
+        </div>
+      )}
+      {row.opening_line && (
+        <div style={{ marginTop: '6px', fontSize: '.74rem', fontStyle: 'italic', color: 'var(--muted)' }}>“{row.opening_line}”</div>
+      )}
+      <div style={{ display: 'flex', gap: '6px', marginTop: '8px', alignItems: 'center' }}>
+        <select
+          value={stageKey(row.status)}
+          onChange={e => onStatus(row.id, e.target.value)}
+          style={{ flex: 1, fontSize: '.72rem', padding: '4px 6px', border: '1px solid var(--border)', borderRadius: '6px', background: 'var(--bg)', color: 'var(--text)' }}
+        >
+          <option value="draft">Nieuw</option>
+          <option value="pushed">Benaderd</option>
+          <option value="replied">Reactie</option>
+          <option value="won">Gewonnen</option>
+          <option value="lost">Verloren</option>
+        </select>
+        {row.status !== 'won' && (
+          <button onClick={() => onConvert(row.id)} title="Maak hier een klant van"
+            style={{ fontSize: '.72rem', padding: '4px 8px', border: 'none', borderRadius: '6px', background: 'var(--accent3)', color: '#fff', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+            → Klant
+          </button>
+        )}
+      </div>
     </div>
   )
 }
