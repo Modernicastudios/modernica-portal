@@ -33,12 +33,16 @@ export async function POST(req: NextRequest) {
       const agencyId = session.metadata?.agency_id
       const plan = session.metadata?.plan || 'starter'
       if (agencyId) {
+        const limits = (PLAN_LIMITS[plan] || PLAN_LIMITS.starter) as any
+        const { data: existing } = await supabase.from('agencies').select('features').eq('id', agencyId).single()
         await supabase.from('agencies').update({
           stripe_customer_id: session.customer,
           stripe_subscription_id: session.subscription,
           subscription_plan: plan,
           subscription_status: 'active',
-          ...(PLAN_LIMITS[plan] || PLAN_LIMITS.starter),
+          ...limits,
+          // Merge: behoud à-la-carte feature-flags (bv. lead_machine) bij plan-wijziging.
+          features: { ...(existing?.features || {}), ...(limits.features || {}) },
         }).eq('id', agencyId)
       }
       break
@@ -55,7 +59,14 @@ export async function POST(req: NextRequest) {
     }
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription
-      await supabase.from('agencies').update({ subscription_status: 'canceled', subscription_plan: 'free', ...(PLAN_LIMITS.starter) }).eq('stripe_subscription_id', sub.id)
+      const starter = PLAN_LIMITS.starter as any
+      const { data: existing } = await supabase.from('agencies').select('features').eq('stripe_subscription_id', sub.id).single()
+      await supabase.from('agencies').update({
+        subscription_status: 'canceled',
+        subscription_plan: 'free',
+        ...starter,
+        features: { ...(existing?.features || {}), ...(starter.features || {}) },
+      }).eq('stripe_subscription_id', sub.id)
       break
     }
   }

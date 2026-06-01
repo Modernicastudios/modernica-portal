@@ -12,6 +12,7 @@ interface Agency {
   created_at: string
   custom_domain: string | null
   stripe_customer_id: string | null
+  features: Record<string, boolean> | null
 }
 
 interface User {
@@ -47,6 +48,28 @@ const STATUS_COLORS: Record<string, string> = {
 export default function AdminClient({ agencies, agencyCount, recentUsers, recentSignups }: Props) {
   const [tab, setTab] = useState<'agencies' | 'users'>('agencies')
   const [search, setSearch] = useState('')
+  const [features, setFeatures] = useState<Record<string, Record<string, boolean>>>(
+    () => Object.fromEntries(agencies.map(a => [a.id, a.features || {}]))
+  )
+  const [savingId, setSavingId] = useState<string | null>(null)
+
+  async function toggleLeadMachine(agencyId: string, enabled: boolean) {
+    setSavingId(agencyId)
+    setFeatures(prev => ({ ...prev, [agencyId]: { ...prev[agencyId], lead_machine: enabled } }))
+    try {
+      const res = await fetch('/api/admin/agency-feature', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agencyId, feature: 'lead_machine', enabled }),
+      })
+      if (!res.ok) throw new Error()
+    } catch {
+      setFeatures(prev => ({ ...prev, [agencyId]: { ...prev[agencyId], lead_machine: !enabled } }))
+      alert('Opslaan mislukt — probeer opnieuw')
+    } finally {
+      setSavingId(null)
+    }
+  }
 
   const filteredAgencies = agencies.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
@@ -131,7 +154,7 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg)' }}>
-                {['Agency', 'Slug', 'Plan', 'Status', 'Max Klanten', 'Stripe', 'Aangemeld'].map(h => (
+                {['Agency', 'Slug', 'Plan', 'Status', 'Max Klanten', 'Stripe', 'Leadmachine', 'Aangemeld'].map(h => (
                   <th key={h} style={{ padding: '10px 16px', textAlign: 'left', fontSize: '.75rem', fontWeight: 700, color: 'var(--muted)', letterSpacing: '.06em', textTransform: 'uppercase' }}>{h}</th>
                 ))}
               </tr>
@@ -162,6 +185,30 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
                     ) : (
                       <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>— Geen</span>
                     )}
+                  </td>
+                  <td style={{ padding: '12px 16px' }}>
+                    {(() => {
+                      const on = Boolean(features[agency.id]?.lead_machine)
+                      return (
+                        <button
+                          onClick={() => toggleLeadMachine(agency.id, !on)}
+                          disabled={savingId === agency.id}
+                          title={on ? 'Leadmachine staat aan — klik om uit te zetten' : 'Leadmachine staat uit — klik om aan te zetten'}
+                          style={{
+                            position: 'relative', width: '44px', height: '24px', borderRadius: '50px',
+                            border: 'none', padding: 0, cursor: savingId === agency.id ? 'wait' : 'pointer',
+                            background: on ? 'var(--accent3)' : 'var(--border)', transition: 'background .2s',
+                            opacity: savingId === agency.id ? 0.6 : 1,
+                          }}
+                        >
+                          <span style={{
+                            position: 'absolute', top: '2px', left: on ? '22px' : '2px',
+                            width: '20px', height: '20px', borderRadius: '50%', background: '#fff',
+                            transition: 'left .2s', boxShadow: '0 1px 3px rgba(0,0,0,.2)',
+                          }} />
+                        </button>
+                      )
+                    })()}
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '.8rem', color: 'var(--muted)' }}>
                     {new Date(agency.created_at).toLocaleDateString('nl-NL')}

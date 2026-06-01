@@ -11,7 +11,7 @@ import {
   LayoutDashboard, BarChart2, TrendingUp, Kanban, CalendarDays, CheckSquare,
   ThumbsUp, Calendar, Video, MessageSquare, Lightbulb, Image, PieChart,
   FileText, Users, Link2, Settings, CreditCard, Shield, User, LogOut, X,
-  BarChart3, Clock, ChevronDown,
+  BarChart3, Clock, ChevronDown, Target,
 } from 'lucide-react'
 
 interface Props {
@@ -65,6 +65,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
   const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
   const isClient = !!profile.client_id
+  const leadMachineOn = Boolean((agency as { features?: Record<string, boolean> } | null)?.features?.lead_machine)
 
   const { selectedClientId, setSelectedClientId, filterClients, filterLoaded } = useClientFilter()
   const [clientDropOpen, setClientDropOpen] = useState(false)
@@ -273,6 +274,16 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
         <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
         {(isAdmin || isSuperAdmin) && (
           <NavLink href="/tijd" label="Tijdregistratie" icon={<Clock size={16} />} active={pathname.startsWith('/tijd')} />
+        )}
+
+        {/* LEADMACHINE — eigen blok, alleen zichtbaar als de feature aanstaat */}
+        {leadMachineOn && (
+          <>
+            <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '12px 12px 6px' }}>
+              Leadmachine
+            </div>
+            <NavLink href="/leads" label="Leads & E-mail" icon={<Target size={16} />} active={pathname.startsWith('/leads')} />
+          </>
         )}
 
         {/* ADMIN ONLY */}
