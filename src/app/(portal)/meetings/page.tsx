@@ -13,6 +13,9 @@ export default async function MeetingsPage() {
     .eq('id', user.id)
     .single()
 
+  // Vergaderingen zijn een intern agency-onderdeel — klanten hebben hier niets te zoeken.
+  if (profile?.client_id) redirect('/dashboard')
+
   const agencyId = profile?.agency_id
   const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
 

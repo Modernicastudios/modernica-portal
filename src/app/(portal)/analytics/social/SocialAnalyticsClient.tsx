@@ -112,7 +112,7 @@ export default function SocialAnalyticsClient({ posts }: Props) {
     border: '1px solid var(--border)',
     borderRadius: 'var(--radius)',
     padding: '20px',
-    boxShadow: '0 2px 12px rgba(26,63,228,.06)',
+    boxShadow: 'var(--shadow)',
   }
 
   const labelStyle: CSSProperties = {

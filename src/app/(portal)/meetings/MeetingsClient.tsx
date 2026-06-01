@@ -183,7 +183,7 @@ export default function MeetingsClient({ meetings: initial, clients, projects, a
     <div className="animate-fade-up" style={{ display: 'flex', gap: '0', height: 'calc(100vh - 80px)', overflow: 'hidden' }}>
       {/* Toast */}
       {toast && (
-        <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 2000, background: '#1a3fe4', color: '#fff', padding: '12px 20px', borderRadius: '8px', fontSize: '.85rem', fontWeight: 600, boxShadow: '0 4px 20px rgba(26,63,228,.3)' }}>
+        <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 2000, background: '#1a3fe4', color: '#fff', padding: '12px 20px', borderRadius: '8px', fontSize: '.85rem', fontWeight: 600, boxShadow: 'var(--shadow-lg)' }}>
           {toast}
         </div>
       )}

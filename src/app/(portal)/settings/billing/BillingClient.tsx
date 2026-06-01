@@ -104,7 +104,7 @@ export default function BillingClient({ agency }: Props) {
   return (
     <div className="animate-fade-up">
       {/* Current plan */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', marginBottom: '28px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', marginBottom: '28px', boxShadow: 'var(--shadow)' }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem', marginBottom: '6px' }}>Huidig abonnement</h3>
@@ -160,7 +160,7 @@ export default function BillingClient({ agency }: Props) {
             <div key={plan.key} style={{
               background: 'var(--card)', border: `2px solid ${isCurrentPlan ? plan.color : plan.popular ? 'rgba(26,63,228,.2)' : 'var(--border)'}`,
               borderRadius: 'var(--radius)', padding: '28px', position: 'relative',
-              boxShadow: plan.popular ? '0 8px 32px rgba(26,63,228,.12)' : '0 2px 12px rgba(26,63,228,.06)',
+              boxShadow: plan.popular ? '0 8px 32px rgba(26,63,228,.12)' : 'var(--shadow)',
               transform: plan.popular ? 'scale(1.02)' : 'none',
             }}>
               {plan.popular && (

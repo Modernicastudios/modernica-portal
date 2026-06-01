@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import TicketsClient from './TicketsClient'
 
@@ -10,7 +11,9 @@ export default async function TicketsPage() {
   if (!user) redirect('/login')
   if (user.email !== SUPER_ADMIN_EMAIL) redirect('/dashboard')
 
-  const { data: tickets } = await supabase
+  // Service-role: tickets van álle agencies tonen (RLS beperkt anders op eigen agency).
+  const admin = createAdminClient()
+  const { data: tickets } = await admin
     .from('support_tickets')
     .select('*, agencies(name), user_profiles(full_name, email)')
     .order('created_at', { ascending: false })

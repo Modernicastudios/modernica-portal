@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { redirect } from 'next/navigation'
 import AdminClient from './AdminClient'
 
@@ -10,14 +11,16 @@ export default async function AdminPage() {
   if (!user) redirect('/login')
   if (user.email !== SUPER_ADMIN_EMAIL) redirect('/dashboard')
 
+  // Service-role client: super admin moet álle agencies/gebruikers zien (RLS zou dit op de eigen agency beperken).
+  const admin = createAdminClient()
   const [
     { data: agencies, count: agencyCount },
     { data: recentUsers },
     { data: recentSignups },
   ] = await Promise.all([
-    supabase.from('agencies').select('*', { count: 'exact' }).order('created_at', { ascending: false }),
-    supabase.from('user_profiles').select('*, agencies(name)').order('created_at', { ascending: false }).limit(20),
-    supabase.from('agencies').select('*').order('created_at', { ascending: false }).limit(10),
+    admin.from('agencies').select('*', { count: 'exact' }).order('created_at', { ascending: false }),
+    admin.from('user_profiles').select('*, agencies(name)').order('created_at', { ascending: false }).limit(20),
+    admin.from('agencies').select('*').order('created_at', { ascending: false }).limit(10),
   ])
 
   return (

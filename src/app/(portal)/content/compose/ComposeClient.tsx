@@ -143,7 +143,7 @@ export default function ComposeClient({ socialAccounts, clients, mediaAssets, ag
   return (
     <div className="animate-fade-up">
       {toast && (
-        <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 1000, background: 'var(--accent1)', color: '#fff', padding: '12px 20px', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', fontWeight: 600, boxShadow: '0 4px 20px rgba(26,63,228,.3)' }}>
+        <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 1000, background: 'var(--accent1)', color: '#fff', padding: '12px 20px', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', fontWeight: 600, boxShadow: 'var(--shadow-lg)' }}>
           {toast}
         </div>
       )}
@@ -153,7 +153,7 @@ export default function ComposeClient({ socialAccounts, clients, mediaAssets, ag
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
 
           {/* Account selector */}
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '14px' }}>
               Publiceren naar
             </div>
@@ -192,7 +192,7 @@ export default function ComposeClient({ socialAccounts, clients, mediaAssets, ag
           </div>
 
           {/* Caption */}
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '12px' }}>Caption</div>
             <textarea
               value={caption}
@@ -216,7 +216,7 @@ Tip: gebruik #hashtags en @mentions"
           </div>
 
           {/* Media */}
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '12px' }}>Media</div>
 
             {uploadedMedia.length > 0 && (
@@ -261,7 +261,7 @@ Tip: gebruik #hashtags en @mentions"
           </div>
 
           {/* Scheduling */}
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '14px' }}>Planning</div>
             <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
               {[
@@ -318,7 +318,7 @@ Tip: gebruik #hashtags en @mentions"
 
         {/* Right: Preview */}
         <div style={{ position: 'sticky', top: '80px' }}>
-          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+          <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '14px' }}>Preview</div>
 
             {/* Platform tabs */}

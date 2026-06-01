@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
       const plan = session.metadata?.plan || 'starter'
       if (agencyId) {
         const limits = (PLAN_LIMITS[plan] || PLAN_LIMITS.starter) as any
-        const { data: existing } = await supabase.from('agencies').select('features').eq('id', agencyId).single()
+        const { data: existing } = await supabase.from('agencies').select('features').eq('id', agencyId).maybeSingle()
         await supabase.from('agencies').update({
           stripe_customer_id: session.customer,
           stripe_subscription_id: session.subscription,
@@ -60,7 +60,7 @@ export async function POST(req: NextRequest) {
     case 'customer.subscription.deleted': {
       const sub = event.data.object as Stripe.Subscription
       const starter = PLAN_LIMITS.starter as any
-      const { data: existing } = await supabase.from('agencies').select('features').eq('stripe_subscription_id', sub.id).single()
+      const { data: existing } = await supabase.from('agencies').select('features').eq('stripe_subscription_id', sub.id).maybeSingle()
       await supabase.from('agencies').update({
         subscription_status: 'canceled',
         subscription_plan: 'free',

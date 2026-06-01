@@ -70,13 +70,13 @@ export default function IntegrationsClient({ socialAccounts, adAccounts, agencyI
   return (
     <div className="animate-fade-up">
       {toast && (
-        <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 1000, background: 'var(--accent1)', color: '#fff', padding: '12px 20px', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', fontWeight: 600, boxShadow: '0 4px 20px rgba(26,63,228,.3)' }}>
+        <div style={{ position: 'fixed', top: '80px', right: '24px', zIndex: 1000, background: 'var(--accent1)', color: '#fff', padding: '12px 20px', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', fontWeight: 600, boxShadow: 'var(--shadow-lg)' }}>
           {toast}
         </div>
       )}
 
       {/* Social media */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', marginBottom: '24px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', marginBottom: '24px', boxShadow: 'var(--shadow)' }}>
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>📱 Social Media</h3>
           <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>Koppel accounts om te posten en analytics te bekijken</p>
@@ -157,7 +157,7 @@ export default function IntegrationsClient({ socialAccounts, adAccounts, agencyI
       </div>
 
       {/* Ad platforms */}
-      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
+      <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', boxShadow: 'var(--shadow)' }}>
         <div style={{ marginBottom: '20px' }}>
           <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>📊 Advertentieplatformen</h3>
           <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>Koppel je ad accounts voor automatische data synchronisatie</p>

@@ -166,35 +166,45 @@ ALTER TABLE lead_service_fits  ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lead_outreach      ENABLE ROW LEVEL SECURITY;
 ALTER TABLE lead_jobs          ENABLE ROW LEVEL SECURITY;
 
+-- Agency-leden: volledige toegang (lezen + schrijven) tot hun eigen agency-rijen.
+-- Klanten: alléén lezen van rijen die aan hun client_id hangen (leads zijn een
+-- agency-tool; klanten mogen niet schrijven).
 CREATE POLICY "lead_campaigns_agency_access" ON lead_campaigns
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
-CREATE POLICY "lead_campaigns_client_access" ON lead_campaigns
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+CREATE POLICY "lead_campaigns_client_read" ON lead_campaigns FOR SELECT
   USING (client_id IN (SELECT client_id FROM user_profiles WHERE id = auth.uid() AND client_id IS NOT NULL));
 
 CREATE POLICY "lead_companies_agency_access" ON lead_companies
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
-CREATE POLICY "lead_companies_client_access" ON lead_companies
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+CREATE POLICY "lead_companies_client_read" ON lead_companies FOR SELECT
   USING (client_id IN (SELECT client_id FROM user_profiles WHERE id = auth.uid() AND client_id IS NOT NULL));
 
 CREATE POLICY "lead_contacts_agency_access" ON lead_contacts
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
-CREATE POLICY "lead_contacts_client_access" ON lead_contacts
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+CREATE POLICY "lead_contacts_client_read" ON lead_contacts FOR SELECT
   USING (client_id IN (SELECT client_id FROM user_profiles WHERE id = auth.uid() AND client_id IS NOT NULL));
 
 CREATE POLICY "lead_signals_agency_access" ON lead_signals
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
-CREATE POLICY "lead_signals_client_access" ON lead_signals
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+CREATE POLICY "lead_signals_client_read" ON lead_signals FOR SELECT
   USING (client_id IN (SELECT client_id FROM user_profiles WHERE id = auth.uid() AND client_id IS NOT NULL));
 
 CREATE POLICY "lead_service_fits_agency_access" ON lead_service_fits
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
-CREATE POLICY "lead_service_fits_client_access" ON lead_service_fits
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+CREATE POLICY "lead_service_fits_client_read" ON lead_service_fits FOR SELECT
   USING (client_id IN (SELECT client_id FROM user_profiles WHERE id = auth.uid() AND client_id IS NOT NULL));
 
 CREATE POLICY "lead_outreach_agency_access" ON lead_outreach
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
-CREATE POLICY "lead_outreach_client_access" ON lead_outreach
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+CREATE POLICY "lead_outreach_client_read" ON lead_outreach FOR SELECT
   USING (client_id IN (SELECT client_id FROM user_profiles WHERE id = auth.uid() AND client_id IS NOT NULL));
 
 CREATE POLICY "lead_jobs_agency_access" ON lead_jobs
-  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));
+  USING (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()))
+  WITH CHECK (agency_id = (SELECT agency_id FROM user_profiles WHERE id = auth.uid()));

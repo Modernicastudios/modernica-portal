@@ -33,7 +33,7 @@ export default function LoginPage() {
       padding: '40px',
       width: '100%',
       maxWidth: '420px',
-      boxShadow: '0 8px 40px rgba(26,63,228,.12)',
+      boxShadow: 'var(--shadow-lg)',
     }}>
       {/* Logo */}
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>

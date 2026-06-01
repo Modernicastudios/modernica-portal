@@ -260,7 +260,7 @@ export default function ProjectsClient({ projects: initialProjects, clients, gro
           position: 'fixed', top: '80px', right: '24px', zIndex: 2000,
           background: 'var(--accent1)', color: '#fff', padding: '12px 20px',
           borderRadius: 'var(--radius-sm)', fontSize: '.85rem', fontWeight: 600,
-          boxShadow: '0 4px 20px rgba(26,63,228,.3)',
+          boxShadow: 'var(--shadow-lg)',
         }}>
           {toast}
         </div>

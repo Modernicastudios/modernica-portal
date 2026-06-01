@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { ShieldCheck, Building2, CheckCircle2, Clock, Wallet, User } from 'lucide-react'
 
 interface Agency {
   id: string
@@ -89,22 +90,22 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
   return (
     <div className="animate-fade-up">
       <div style={{ marginBottom: '28px' }}>
-        <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.5rem', marginBottom: '6px' }}>
-          🛡️ Platform Beheer
+        <h1 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.5rem', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <ShieldCheck size={22} style={{ color: 'var(--accent1)' }} /> Platformbeheer
         </h1>
-        <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>Super Admin Dashboard — Modernica Studios</p>
+        <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>Super admin — Modernica Studios</p>
       </div>
 
       {/* Stats */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '28px' }}>
         {[
-          { label: 'Totaal agencies', value: agencyCount, icon: '🏢', color: 'var(--accent1)' },
-          { label: 'Actieve abonnementen', value: agencies.filter(a => a.subscription_status === 'active').length, icon: '✅', color: 'var(--accent3)' },
-          { label: 'In proefperiode', value: agencies.filter(a => a.subscription_status === 'trialing').length, icon: '⏳', color: 'var(--accent4)' },
-          { label: 'MRR (schatting)', value: `€${totalRevenue}`, icon: '💰', color: 'var(--accent3)' },
+          { label: 'Totaal agencies', value: agencyCount, icon: <Building2 size={20} />, color: 'var(--accent1)' },
+          { label: 'Actieve abonnementen', value: agencies.filter(a => a.subscription_status === 'active').length, icon: <CheckCircle2 size={20} />, color: 'var(--accent3)' },
+          { label: 'In proefperiode', value: agencies.filter(a => a.subscription_status === 'trialing').length, icon: <Clock size={20} />, color: 'var(--accent4)' },
+          { label: 'MRR (schatting)', value: `€${totalRevenue}`, icon: <Wallet size={20} />, color: 'var(--accent3)' },
         ].map(stat => (
-          <div key={stat.label} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: '0 2px 12px rgba(26,63,228,.06)' }}>
-            <div style={{ fontSize: '1.4rem', marginBottom: '8px' }}>{stat.icon}</div>
+          <div key={stat.label} style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
+            <div style={{ marginBottom: '8px', color: stat.color }}>{stat.icon}</div>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.4rem', color: stat.color }}>{stat.value}</div>
             <div style={{ fontSize: '.8rem', color: 'var(--muted)', marginTop: '2px' }}>{stat.label}</div>
           </div>
@@ -132,11 +133,14 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
         <div style={{ display: 'flex', gap: '4px' }}>
           {(['agencies', 'users'] as const).map(t => (
             <button key={t} onClick={() => setTab(t)} style={{
-              padding: '8px 18px', borderRadius: 'var(--radius-sm)', border: 'none', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem',
+              display: 'inline-flex', alignItems: 'center', gap: '6px',
+              padding: '8px 18px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', cursor: 'pointer', fontWeight: 600, fontSize: '.85rem',
               background: tab === t ? 'var(--accent1)' : 'var(--card)', color: tab === t ? '#fff' : 'var(--muted)',
-              boxShadow: tab === t ? '0 2px 8px rgba(26,63,228,.2)' : 'none',
+              borderColor: tab === t ? 'var(--accent1)' : 'var(--border)',
             }}>
-              {t === 'agencies' ? `🏢 Agencies (${agencies.length})` : `👤 Gebruikers (${recentUsers.length})`}
+              {t === 'agencies'
+                ? <><Building2 size={14} /> Agencies ({agencies.length})</>
+                : <><User size={14} /> Gebruikers ({recentUsers.length})</>}
             </button>
           ))}
         </div>

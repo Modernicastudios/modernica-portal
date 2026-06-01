@@ -39,64 +39,29 @@ export default function SignupPage() {
 
     const supabase = createClient()
 
-    // 1. Create auth user
-    const { data: authData, error: authError } = await supabase.auth.signUp({
+    // Provisioning gebeurt server-side (RLS blokkeert een directe agency-insert vanuit de browser).
+    const res = await fetch('/api/signup', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(form),
+    })
+    const data = await res.json()
+    if (!res.ok) {
+      setError(data.error || 'Registratie mislukt.')
+      setLoading(false)
+      return
+    }
+
+    // Inloggen met het zojuist aangemaakte account.
+    const { error: signInError } = await supabase.auth.signInWithPassword({
       email: form.email,
       password: form.password,
     })
-
-    if (authError || !authData.user) {
-      setError(authError?.message || 'Registratie mislukt.')
+    if (signInError) {
+      setError('Account aangemaakt, maar inloggen mislukte. Probeer in te loggen.')
       setLoading(false)
       return
     }
-
-    // 2. Create agency
-    const { data: agency, error: agencyError } = await supabase
-      .from('agencies')
-      .insert({
-        name: form.agencyName,
-        slug: form.agencySlug,
-        subscription_plan: 'free',
-        subscription_status: 'trialing',
-        max_clients: 5,
-        max_social_accounts: 10,
-        features: {},
-      })
-      .select()
-      .single()
-
-    if (agencyError || !agency) {
-      setError('Agency aanmaken mislukt: ' + agencyError?.message)
-      setLoading(false)
-      return
-    }
-
-    // 3. Create user profile
-    const { error: profileError } = await supabase
-      .from('user_profiles')
-      .insert({
-        id: authData.user.id,
-        email: form.email,
-        full_name: form.fullName,
-        role: 'admin',
-        agency_id: agency.id,
-        timezone: 'Europe/Amsterdam',
-      })
-
-    if (profileError) {
-      setError('Profiel aanmaken mislukt: ' + profileError?.message)
-      setLoading(false)
-      return
-    }
-
-    // 4. Create default brand kit
-    await supabase.from('brand_kits').insert({
-      agency_id: agency.id,
-      primary_color: '#1a3fe4',
-      secondary_color: '#4f7bff',
-      powered_by_visible: true,
-    })
 
     router.push('/dashboard')
     router.refresh()
@@ -129,7 +94,7 @@ export default function SignupPage() {
       padding: '40px',
       width: '100%',
       maxWidth: '460px',
-      boxShadow: '0 8px 40px rgba(26,63,228,.12)',
+      boxShadow: 'var(--shadow-lg)',
     }}>
       <div style={{ textAlign: 'center', marginBottom: '28px' }}>
         <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.5rem', color: 'var(--accent1)' }}>
