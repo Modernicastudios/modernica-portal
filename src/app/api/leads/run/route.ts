@@ -40,8 +40,22 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Campagne niet gevonden' }, { status: 404 })
   }
 
+  // Harde maandlimiet per agency (kostenrem). Instelbaar via env LEAD_MONTHLY_CAP.
+  const monthlyCap = Number(process.env.LEAD_MONTHLY_CAP) || 2000
+  const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+  const { count: usedThisMonth } = await admin
+    .from('lead_companies')
+    .select('id', { count: 'exact', head: true })
+    .eq('agency_id', profile.agency_id)
+    .gte('created_at', firstOfMonth)
+  const used = usedThisMonth || 0
+  if (used >= monthlyCap) {
+    return NextResponse.json({ error: `Maandlimiet bereikt (${monthlyCap} leads). Verhoog de limiet of wacht tot volgende maand.` }, { status: 429 })
+  }
+  const effectiveLimit = Math.min(limit, monthlyCap - used)
+
   try {
-    const summary = await runCampaign(campaignId, limit)
+    const summary = await runCampaign(campaignId, effectiveLimit)
     return NextResponse.json({ ok: true, summary })
   } catch (e) {
     return NextResponse.json({ error: e instanceof Error ? e.message : 'Onbekende fout' }, { status: 500 })
