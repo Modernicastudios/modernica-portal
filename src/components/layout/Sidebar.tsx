@@ -40,7 +40,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   }, [])
 
   const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
-  const isSuperAdmin = profile.email === SUPER_ADMIN_EMAIL || profile.role === 'super_admin'
+  const isSuperAdmin = profile.role === 'super_admin' || (profile.email || '').toLowerCase() === SUPER_ADMIN_EMAIL
   const isClient = !!profile.client_id
   const leadMachineOn = Boolean((agency as { features?: Record<string, boolean> } | null)?.features?.lead_machine)
 

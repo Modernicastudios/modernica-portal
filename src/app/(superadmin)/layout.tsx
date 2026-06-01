@@ -9,9 +9,10 @@ export default async function SuperAdminLayout({ children }: { children: React.R
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  if (user.email !== SUPER_ADMIN_EMAIL) redirect('/dashboard')
 
   const { data: profile } = await supabase.from('user_profiles').select('*').eq('id', user.id).single()
+  const isSuper = profile?.role === 'super_admin' || user.email?.toLowerCase() === SUPER_ADMIN_EMAIL
+  if (!isSuper) redirect('/dashboard')
 
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--bg)' }}>

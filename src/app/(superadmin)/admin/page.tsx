@@ -9,10 +9,12 @@ export default async function AdminPage() {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/login')
-  if (user.email !== SUPER_ADMIN_EMAIL) redirect('/dashboard')
 
   // Service-role client: super admin moet álle agencies/gebruikers zien (RLS zou dit op de eigen agency beperken).
   const admin = createAdminClient()
+  const { data: me } = await admin.from('user_profiles').select('role').eq('id', user.id).single()
+  const isSuper = me?.role === 'super_admin' || user.email?.toLowerCase() === SUPER_ADMIN_EMAIL
+  if (!isSuper) redirect('/dashboard')
   const [
     { data: agencies, count: agencyCount },
     { data: recentUsers },

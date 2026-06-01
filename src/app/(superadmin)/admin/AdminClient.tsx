@@ -72,6 +72,27 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
     }
   }
 
+  const [userRoles, setUserRoles] = useState<Record<string, string>>(
+    () => Object.fromEntries(recentUsers.map(u => [u.id, u.role]))
+  )
+  const [savingRole, setSavingRole] = useState<string | null>(null)
+
+  async function changeRole(userId: string, role: string) {
+    const prev = userRoles[userId]
+    setSavingRole(userId)
+    setUserRoles(r => ({ ...r, [userId]: role }))
+    try {
+      const res = await fetch('/api/admin/set-role', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId, role }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setUserRoles(r => ({ ...r, [userId]: prev })); alert(data.error || 'Mislukt') }
+    } catch {
+      setUserRoles(r => ({ ...r, [userId]: prev })); alert('Er ging iets mis')
+    } finally { setSavingRole(null) }
+  }
+
   const filteredAgencies = agencies.filter(a =>
     a.name.toLowerCase().includes(search.toLowerCase()) ||
     a.slug.toLowerCase().includes(search.toLowerCase())
@@ -246,9 +267,17 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
                   <td style={{ padding: '12px 16px', fontWeight: 600, fontSize: '.88rem' }}>{user.full_name || '—'}</td>
                   <td style={{ padding: '12px 16px', fontSize: '.85rem', color: 'var(--muted)' }}>{user.email}</td>
                   <td style={{ padding: '12px 16px' }}>
-                    <span style={{ fontSize: '.75rem', padding: '3px 10px', borderRadius: '50px', background: 'var(--bg)', color: 'var(--accent1)', fontWeight: 600, textTransform: 'capitalize' }}>
-                      {user.role}
-                    </span>
+                    <select
+                      value={userRoles[user.id] ?? user.role}
+                      onChange={e => changeRole(user.id, e.target.value)}
+                      disabled={savingRole === user.id}
+                      style={{ fontSize: '.78rem', padding: '5px 8px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', cursor: savingRole === user.id ? 'wait' : 'pointer' }}
+                    >
+                      <option value="super_admin">Super admin</option>
+                      <option value="admin">Admin</option>
+                      <option value="manager">Manager</option>
+                      <option value="client">Klant</option>
+                    </select>
                   </td>
                   <td style={{ padding: '12px 16px', fontSize: '.85rem', color: 'var(--muted)' }}>
                     {(user.agencies as any)?.name || '—'}
