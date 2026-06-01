@@ -145,6 +145,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const router = useRouter()
   const [region, setRegion] = useState(campaign?.region || client.city || '')
   const [sbi, setSbi] = useState(campaign?.sbi_code || '')
+  const [service, setService] = useState<string>(((campaign?.settings as Record<string, unknown>)?.service as string) || 'website')
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<string | null>(null)
@@ -174,7 +175,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, action }),
+        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, service, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
@@ -185,6 +186,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
+        settings: { ...(campaign?.settings || {}), service },
       } as LeadCampaign)
     } catch {
       alert('Er ging iets mis. Probeer opnieuw.')
@@ -214,9 +216,22 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         )}
       </div>
 
+      <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginBottom: '8px', lineHeight: 1.5 }}>
+        Welke bedrijven wil je benaderen <strong>voor {client.company_name}</strong>? Beschrijf de
+        doelgroep — de <em>potentiële klanten</em> van {client.company_name}, niet {client.company_name} zelf.
+      </div>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
-        <label style={{ flex: 1, minWidth: '140px' }}>
-          <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Regio</span>
+        <label style={{ flex: 2, minWidth: '170px' }}>
+          <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Wat voor bedrijven? (doelgroep)</span>
+          <input
+            value={sbi}
+            onChange={e => setSbi(e.target.value)}
+            placeholder="bv. kantoren, horeca, winkels"
+            style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none' }}
+          />
+        </label>
+        <label style={{ flex: 1, minWidth: '120px' }}>
+          <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Waar?</span>
           <input
             value={region}
             onChange={e => setRegion(e.target.value)}
@@ -225,13 +240,19 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           />
         </label>
         <label style={{ flex: 1, minWidth: '140px' }}>
-          <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Branche (optioneel)</span>
-          <input
-            value={sbi}
-            onChange={e => setSbi(e.target.value)}
-            placeholder="bv. horeca"
+          <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Dienst om te pitchen</span>
+          <select
+            value={service}
+            onChange={e => setService(e.target.value)}
             style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none' }}
-          />
+          >
+            <option value="website">Website</option>
+            <option value="social">Social media</option>
+            <option value="ads">Advertenties</option>
+            <option value="video">Video</option>
+            <option value="recruitment">Recruitment</option>
+            <option value="local">Lokale marketing</option>
+          </select>
         </label>
         {active ? (
           <>

@@ -94,12 +94,22 @@ async function enrichContact(company: RawCompany): Promise<Contact | null> {
 }
 
 // ── 3. Personalisatie: AI schrijft een openingszin ───────────────────────────
-async function writeOpeningLine(company: RawCompany, contact: Contact): Promise<string | null> {
+const SERVICE_NL: Record<string, string> = {
+  website: 'een nieuwe of betere website',
+  social: 'het beheren van hun social media',
+  ads: 'online advertenties (Meta/Google)',
+  video: 'videoproductie',
+  recruitment: 'recruitmentmarketing (personeel werven)',
+  local: 'lokale online marketing',
+}
+
+async function writeOpeningLine(company: RawCompany, contact: Contact, service: string): Promise<string | null> {
   if (!ANTHROPIC_API_KEY) return null
-  const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau (websites, social media, advertenties, video).
+  const pitch = SERVICE_NL[service] || SERVICE_NL.website
+  const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau. Wij willen dit bedrijf helpen met: ${pitch}.
 Bedrijf: ${company.name}${company.city ? `, ${company.city}` : ''}${company.website_url ? `, site: ${company.website_url}` : ''}.
 Contactpersoon: ${contact.full_name || 'onbekend'}.
-Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.`
+Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -136,6 +146,7 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
 
   const keyword = campaign.sbi_code || 'bedrijf'
   const region = campaign.region || ''
+  const service = (campaign.settings as { service?: string })?.service || 'website'
   const raws = await ingestCompanies(keyword, region, limit)
   summary.found = raws.length
 
@@ -166,12 +177,12 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
           found_via: contact.found_via, confidence: contact.confidence, email_verified: verified,
         }).select('id').single()
 
-        const opening = await writeOpeningLine(raw, contact)
+        const opening = await writeOpeningLine(raw, contact, service)
         if (opening) summary.withOpeningLine++
         await admin.from('lead_outreach').insert({
           agency_id: campaign.agency_id, client_id: campaign.client_id, company_id: company.id,
           contact_id: savedContact?.id || null, is_primary: true,
-          opening_line: opening, status: 'queued',
+          service, opening_line: opening, status: 'queued',
         })
       }
     } catch (e) {

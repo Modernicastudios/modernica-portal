@@ -31,6 +31,8 @@ export async function POST(req: NextRequest) {
   const clientId: string | null = body.clientId ?? null
   const region: string = (body.region ?? '').trim()
   const sbiCode: string | null = body.sbiCode ? String(body.sbiCode).trim() : null
+  const VALID_SERVICES = new Set(['website', 'social', 'ads', 'video', 'recruitment', 'local'])
+  const service: string = VALID_SERVICES.has(body.service) ? body.service : 'website'
   const action: 'activate' | 'pause' = body.action === 'pause' ? 'pause' : 'activate'
 
   if (action === 'activate' && !region) {
@@ -64,11 +66,12 @@ export async function POST(req: NextRequest) {
     status,
     region: region || null,
     sbi_code: sbiCode,
+    settings: { service },
   }
 
   if (existing) {
     const { error } = await admin.from('lead_campaigns')
-      .update({ status, region: region || null, sbi_code: sbiCode, updated_at: new Date().toISOString() })
+      .update({ status, region: region || null, sbi_code: sbiCode, settings: { service }, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, campaignId: existing.id, status })
