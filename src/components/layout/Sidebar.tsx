@@ -11,7 +11,7 @@ import {
   LayoutDashboard, BarChart2, TrendingUp, Kanban, CalendarDays, CheckSquare,
   ThumbsUp, Calendar, Video, MessageSquare, Lightbulb, Image, PieChart,
   FileText, Users, Link2, Settings, CreditCard, Shield, User, LogOut, X,
-  BarChart3, Clock, ChevronDown, Target,
+  BarChart3, Clock, ChevronDown, Target, Search,
 } from 'lucide-react'
 
 interface Props {
@@ -48,6 +48,24 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   const [clientDropOpen, setClientDropOpen] = useState(false)
   const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
+  // Zoeken + inklapbare groepen in de navigatie.
+  const [navQuery, setNavQuery] = useState('')
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('nav_collapsed')
+      if (raw) setCollapsed(new Set(JSON.parse(raw)))
+    } catch { /* localStorage niet beschikbaar */ }
+  }, [])
+  function toggleSection(label: string) {
+    setCollapsed(prev => {
+      const next = new Set(prev)
+      if (next.has(label)) next.delete(label); else next.add(label)
+      try { localStorage.setItem('nav_collapsed', JSON.stringify([...next])) } catch { /* noop */ }
+      return next
+    })
+  }
+
   const logoUrl = brandKit?.logo_url || null
   const agencyName = agency?.name || 'Modernica'
 
@@ -66,6 +84,78 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
     .slice(0, 2) || '?'
 
   const sidebarOpen = isOpen ?? true
+
+  type NavEntry = { href: string; label: string; icon: React.ReactNode; exact?: boolean }
+  type NavGroup = { label: string; items: NavEntry[] }
+
+  const adminGroups: NavGroup[] = [
+    { label: 'Overzicht', items: [{ href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true }] },
+    { label: 'Klanten & Projecten', items: [
+      { href: '/clients', label: 'Klanten', icon: <Users size={16} /> },
+      { href: '/projects', label: 'Projecten', icon: <Kanban size={16} /> },
+      { href: '/taken', label: 'Taken', icon: <CheckSquare size={16} /> },
+      { href: '/planning', label: 'Planning', icon: <Calendar size={16} /> },
+      { href: '/meetings', label: 'Vergaderingen', icon: <Video size={16} /> },
+    ] },
+    { label: 'Content & Social', items: [
+      { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
+      { href: '/ideas', label: 'Ideeënbord', icon: <Lightbulb size={16} /> },
+      { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
+      { href: '/media', label: 'Mediabibliotheek', icon: <Image size={16} /> },
+    ] },
+    { label: 'Advertenties & Analyse', items: [
+      { href: '/analytics/ads', label: 'Advertenties', icon: <BarChart2 size={16} /> },
+      { href: '/analytics/social', label: 'Social', icon: <TrendingUp size={16} /> },
+      { href: '/roi', label: 'ROI', icon: <BarChart3 size={16} /> },
+      { href: '/reports', label: 'Rapportage', icon: <FileText size={16} /> },
+    ] },
+    ...(leadMachineOn ? [{ label: 'Leadmachine', items: [{ href: '/leads', label: 'Leads & E-mail', icon: <Target size={16} /> }] }] : []),
+    { label: 'Communicatie', items: [
+      { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
+      { href: '/tijd', label: 'Tijdregistratie', icon: <Clock size={16} /> },
+    ] },
+    { label: 'Beheer', items: [
+      { href: '/settings/integrations', label: 'Koppelingen', icon: <Link2 size={16} /> },
+      { href: '/settings/agency', label: 'Agency-instellingen', icon: <Settings size={16} /> },
+      { href: '/settings/billing', label: 'Abonnement', icon: <CreditCard size={16} /> },
+      { href: '/settings/profile', label: 'Mijn profiel', icon: <User size={16} /> },
+    ] },
+    ...(isSuperAdmin ? [{ label: 'Super Admin', items: [
+      { href: '/admin', label: 'Platformbeheer', icon: <Shield size={16} />, exact: true },
+      { href: '/admin/tickets', label: 'Supporttickets', icon: <MessageSquare size={16} /> },
+    ] }] : []),
+  ]
+
+  const clientGroups: NavGroup[] = [
+    { label: 'Overzicht', items: [{ href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true }] },
+    { label: 'Mijn projecten', items: [
+      { href: '/projects', label: 'Projecten', icon: <Kanban size={16} /> },
+      { href: '/taken', label: 'Taken', icon: <CheckSquare size={16} /> },
+      { href: '/planning', label: 'Planning', icon: <Calendar size={16} /> },
+    ] },
+    { label: 'Content', items: [
+      { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
+      { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
+    ] },
+    { label: 'Resultaten', items: [
+      { href: '/analytics/ads', label: 'Advertenties', icon: <BarChart2 size={16} /> },
+      { href: '/analytics/social', label: 'Social', icon: <TrendingUp size={16} /> },
+    ] },
+    ...(leadMachineOn ? [{ label: 'Leadmachine', items: [{ href: '/leads', label: 'Mijn leads', icon: <Target size={16} /> }] }] : []),
+    { label: 'Contact', items: [{ href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> }] },
+    { label: 'Account', items: [{ href: '/settings/profile', label: 'Mijn profiel', icon: <User size={16} /> }] },
+  ]
+
+  const groups: NavGroup[] = (isAdmin || isSuperAdmin) ? adminGroups : clientGroups
+
+  function isActive(item: NavEntry): boolean {
+    if (item.exact) return pathname === item.href
+    if (item.href === '/content') return pathname.startsWith('/content') && !pathname.includes('compose')
+    return pathname.startsWith(item.href)
+  }
+
+  const q = navQuery.trim().toLowerCase()
+  const searchResults = q ? groups.flatMap(g => g.items).filter(it => it.label.toLowerCase().includes(q)) : null
 
   return (
     <>
@@ -217,87 +307,49 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       )}
 
       {/* Navigation */}
-      <nav style={{ padding: '16px 12px', flex: 1, overflowY: 'auto' }}>
-        {(isAdmin || isSuperAdmin) ? (
-          <>
-            <SectionLabel>Overzicht</SectionLabel>
-            <NavLink href="/dashboard" label="Dashboard" icon={<LayoutDashboard size={16} />} active={pathname === '/dashboard'} />
+      <nav style={{ padding: '12px', flex: 1, overflowY: 'auto' }}>
+        {/* Zoeken — typ en klik, geen twijfel waar iets staat */}
+        <div style={{ position: 'relative', marginBottom: '6px' }}>
+          <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,.5)' }} />
+          <input
+            value={navQuery}
+            onChange={e => setNavQuery(e.target.value)}
+            placeholder="Zoeken..."
+            style={{ width: '100%', padding: '8px 26px 8px 30px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '8px', color: '#fff', fontSize: '.82rem', outline: 'none' }}
+          />
+          {navQuery && (
+            <button onClick={() => setNavQuery('')} aria-label="Wissen" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', display: 'flex' }}>
+              <X size={13} />
+            </button>
+          )}
+        </div>
 
-            <SectionLabel>Klanten & Projecten</SectionLabel>
-            <NavLink href="/clients" label="Klanten" icon={<Users size={16} />} active={pathname.startsWith('/clients')} />
-            <NavLink href="/projects" label="Projecten" icon={<Kanban size={16} />} active={pathname.startsWith('/projects')} />
-            <NavLink href="/taken" label="Taken" icon={<CheckSquare size={16} />} active={pathname.startsWith('/taken')} />
-            <NavLink href="/planning" label="Planning" icon={<Calendar size={16} />} active={pathname.startsWith('/planning')} />
-            <NavLink href="/meetings" label="Vergaderingen" icon={<Video size={16} />} active={pathname.startsWith('/meetings')} />
-
-            <SectionLabel>Content & Social</SectionLabel>
-            <NavLink href="/content" label="Contentkalender" icon={<CalendarDays size={16} />} active={pathname.startsWith('/content') && !pathname.includes('compose')} />
-            <NavLink href="/ideas" label="Ideeënbord" icon={<Lightbulb size={16} />} active={pathname.startsWith('/ideas')} />
-            <NavLink href="/approve" label="Goedkeuringen" icon={<ThumbsUp size={16} />} active={pathname.startsWith('/approve')} />
-            <NavLink href="/media" label="Mediabibliotheek" icon={<Image size={16} />} active={pathname.startsWith('/media')} />
-
-            <SectionLabel>Advertenties & Analyse</SectionLabel>
-            <NavLink href="/analytics/ads" label="Advertenties" icon={<BarChart2 size={16} />} active={pathname.startsWith('/analytics/ads')} />
-            <NavLink href="/analytics/social" label="Social" icon={<TrendingUp size={16} />} active={pathname.startsWith('/analytics/social')} />
-            <NavLink href="/roi" label="ROI" icon={<BarChart3 size={16} />} active={pathname.startsWith('/roi')} />
-            <NavLink href="/reports" label="Rapportage" icon={<FileText size={16} />} active={pathname.startsWith('/reports')} />
-
-            {leadMachineOn && (
-              <>
-                <SectionLabel>Leadmachine</SectionLabel>
-                <NavLink href="/leads" label="Leads & E-mail" icon={<Target size={16} />} active={pathname.startsWith('/leads')} />
-              </>
-            )}
-
-            <SectionLabel>Communicatie</SectionLabel>
-            <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
-            <NavLink href="/tijd" label="Tijdregistratie" icon={<Clock size={16} />} active={pathname.startsWith('/tijd')} />
-
-            <SectionLabel>Beheer</SectionLabel>
-            <NavLink href="/settings/integrations" label="Koppelingen" icon={<Link2 size={16} />} active={pathname.startsWith('/settings/integrations')} />
-            <NavLink href="/settings/agency" label="Agency-instellingen" icon={<Settings size={16} />} active={pathname.startsWith('/settings/agency')} />
-            <NavLink href="/settings/billing" label="Abonnement" icon={<CreditCard size={16} />} active={pathname.startsWith('/settings/billing')} />
-            <NavLink href="/settings/profile" label="Mijn profiel" icon={<User size={16} />} active={pathname.startsWith('/settings/profile')} />
-
-            {isSuperAdmin && (
-              <>
-                <SectionLabel>Super Admin</SectionLabel>
-                <NavLink href="/admin" label="Platformbeheer" icon={<Shield size={16} />} active={pathname === '/admin'} />
-                <NavLink href="/admin/tickets" label="Supporttickets" icon={<MessageSquare size={16} />} active={pathname.startsWith('/admin/tickets')} />
-              </>
-            )}
-          </>
+        {searchResults ? (
+          searchResults.length === 0 ? (
+            <div style={{ padding: '14px 12px', fontSize: '.8rem', color: 'rgba(255,255,255,.5)', textAlign: 'center' }}>Niets gevonden</div>
+          ) : (
+            searchResults.map(item => (
+              <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
+            ))
+          )
         ) : (
-          <>
-            <SectionLabel>Overzicht</SectionLabel>
-            <NavLink href="/dashboard" label="Dashboard" icon={<LayoutDashboard size={16} />} active={pathname === '/dashboard'} />
-
-            <SectionLabel>Mijn projecten</SectionLabel>
-            <NavLink href="/projects" label="Projecten" icon={<Kanban size={16} />} active={pathname.startsWith('/projects')} />
-            <NavLink href="/taken" label="Taken" icon={<CheckSquare size={16} />} active={pathname.startsWith('/taken')} />
-            <NavLink href="/planning" label="Planning" icon={<Calendar size={16} />} active={pathname.startsWith('/planning')} />
-
-            <SectionLabel>Content</SectionLabel>
-            <NavLink href="/content" label="Contentkalender" icon={<CalendarDays size={16} />} active={pathname.startsWith('/content')} />
-            <NavLink href="/approve" label="Goedkeuringen" icon={<ThumbsUp size={16} />} active={pathname.startsWith('/approve')} />
-
-            <SectionLabel>Resultaten</SectionLabel>
-            <NavLink href="/analytics/ads" label="Advertenties" icon={<BarChart2 size={16} />} active={pathname.startsWith('/analytics/ads')} />
-            <NavLink href="/analytics/social" label="Social" icon={<TrendingUp size={16} />} active={pathname.startsWith('/analytics/social')} />
-
-            {leadMachineOn && (
-              <>
-                <SectionLabel>Leadmachine</SectionLabel>
-                <NavLink href="/leads" label="Mijn leads" icon={<Target size={16} />} active={pathname.startsWith('/leads')} />
-              </>
-            )}
-
-            <SectionLabel>Contact</SectionLabel>
-            <NavLink href="/chat" label="Berichten" icon={<MessageSquare size={16} />} active={pathname.startsWith('/chat')} />
-
-            <SectionLabel>Account</SectionLabel>
-            <NavLink href="/settings/profile" label="Mijn profiel" icon={<User size={16} />} active={pathname.startsWith('/settings/profile')} />
-          </>
+          groups.map(group => {
+            const isCollapsed = collapsed.has(group.label)
+            return (
+              <div key={group.label}>
+                <button
+                  onClick={() => toggleSection(group.label)}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '12px 12px 6px', color: 'rgba(255,255,255,.45)' }}
+                >
+                  <span style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 700 }}>{group.label}</span>
+                  <ChevronDown size={13} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
+                </button>
+                {!isCollapsed && group.items.map(item => (
+                  <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
+                ))}
+              </div>
+            )
+          })
         )}
       </nav>
 
@@ -341,14 +393,6 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       </div>
     </aside>
     </>
-  )
-}
-
-function SectionLabel({ children }: { children: React.ReactNode }) {
-  return (
-    <div style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', padding: '14px 12px 6px' }}>
-      {children}
-    </div>
   )
 }
 
