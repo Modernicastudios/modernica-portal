@@ -1,0 +1,49 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
+import { runCampaign } from '@/lib/leadmachine/pipeline'
+
+export const maxDuration = 60
+
+const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
+const MANAGER_ROLES = new Set(['admin', 'manager', 'super_admin'])
+
+export async function POST(req: NextRequest) {
+  const supabase = await createClient()
+  const { data: { user } } = await supabase.auth.getUser()
+  if (!user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
+
+  const admin = createAdminClient()
+  const { data: profile } = await admin
+    .from('user_profiles').select('agency_id, role').eq('id', user.id).single()
+  if (!profile?.agency_id) return NextResponse.json({ error: 'Geen agency' }, { status: 403 })
+  if (!MANAGER_ROLES.has(profile.role) && user.email !== SUPER_ADMIN_EMAIL) {
+    return NextResponse.json({ error: 'Geen rechten' }, { status: 403 })
+  }
+
+  const { data: agency } = await admin.from('agencies').select('features').eq('id', profile.agency_id).single()
+  if (!agency?.features?.lead_machine) {
+    return NextResponse.json({ error: 'Leadmachine staat uit voor deze agency' }, { status: 403 })
+  }
+
+  const body = await req.json()
+  const campaignId: string = body.campaignId
+  const limit = Math.min(Math.max(Number(body.limit) || 5, 1), 20)
+  if (typeof campaignId !== 'string') {
+    return NextResponse.json({ error: 'campaignId ontbreekt' }, { status: 400 })
+  }
+
+  // Campagne moet bij deze agency horen.
+  const { data: campaign } = await admin
+    .from('lead_campaigns').select('id, agency_id').eq('id', campaignId).single()
+  if (!campaign || campaign.agency_id !== profile.agency_id) {
+    return NextResponse.json({ error: 'Campagne niet gevonden' }, { status: 404 })
+  }
+
+  try {
+    const summary = await runCampaign(campaignId, limit)
+    return NextResponse.json({ ok: true, summary })
+  } catch (e) {
+    return NextResponse.json({ error: e instanceof Error ? e.message : 'Onbekende fout' }, { status: 500 })
+  }
+}

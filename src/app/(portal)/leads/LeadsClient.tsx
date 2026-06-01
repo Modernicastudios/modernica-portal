@@ -1,8 +1,10 @@
 'use client'
 
 import { useState } from 'react'
-import { Target, MapPin, Globe, CheckCircle2, PauseCircle } from 'lucide-react'
-import type { LeadCampaign, LeadCompany } from '@/types/leadmachine'
+import { useRouter } from 'next/navigation'
+import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search } from 'lucide-react'
+import { Badge } from '@/components/ui'
+import type { LeadCampaign, LeadCompany, LeadContact, LeadOutreach } from '@/types/leadmachine'
 
 interface ClientLite {
   id: string
@@ -11,15 +13,20 @@ interface ClientLite {
   city: string | null
 }
 
+type OutreachRow = LeadOutreach & {
+  lead_companies: LeadCompany | null
+  lead_contacts: LeadContact | null
+}
+
 interface Props {
   isManager: boolean
   isClient: boolean
   clients: ClientLite[]
   campaigns: LeadCampaign[]
-  companies: LeadCompany[]
+  outreach: OutreachRow[]
 }
 
-export default function LeadsClient({ isManager, clients, campaigns, companies }: Props) {
+export default function LeadsClient({ isManager, clients, campaigns, outreach }: Props) {
   const [camps, setCamps] = useState<LeadCampaign[]>(campaigns)
 
   return (
@@ -66,24 +73,44 @@ export default function LeadsClient({ isManager, clients, campaigns, companies }
         <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem', marginBottom: '12px' }}>
           {isManager ? 'Gevonden leads' : 'Mijn leads'}
         </h2>
-        {companies.length === 0 ? (
+        {outreach.length === 0 ? (
           <div style={{ padding: '40px 24px', background: 'var(--card)', border: '1px dashed var(--border)', borderRadius: 'var(--radius)', textAlign: 'center', color: 'var(--muted)', fontSize: '.9rem' }}>
-            Nog geen leads. Zodra een campagne draait, verschijnen de gevonden bedrijven hier —
-            met contactpersoon, reden waarom het past en een kant-en-klaar bericht.
+            Nog geen leads. Zet hierboven een klant op actief en klik op <strong>Zoek leads</strong> —
+            de gevonden bedrijven verschijnen hier met contactpersoon en een kant-en-klaar bericht.
           </div>
         ) : (
           <div style={{ display: 'grid', gap: '10px' }}>
-            {companies.map(co => (
-              <div key={co.id} style={{ display: 'flex', alignItems: 'center', gap: '14px', padding: '14px 16px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)' }}>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 600, fontSize: '.92rem' }}>{co.name}</div>
-                  <div style={{ display: 'flex', gap: '14px', marginTop: '3px', color: 'var(--muted)', fontSize: '.8rem' }}>
-                    {co.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><MapPin size={12} /> {co.city}</span>}
-                    {co.domain && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><Globe size={12} /> {co.domain}</span>}
+            {outreach.map(row => {
+              const co = row.lead_companies
+              const ct = row.lead_contacts
+              const verifyTone = ct?.email_verified === 'valid' ? 'success' : ct?.email_verified === 'invalid' ? 'danger' : 'muted'
+              return (
+                <div key={row.id} style={{ padding: '14px 16px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', boxShadow: 'var(--shadow)' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                    <div style={{ fontWeight: 600, fontSize: '.92rem' }}>{co?.name || 'Bedrijf'}</div>
+                    {co?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--muted)', fontSize: '.78rem' }}><MapPin size={12} /> {co.city}</span>}
+                    {co?.domain && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', color: 'var(--muted)', fontSize: '.78rem' }}><Globe size={12} /> {co.domain}</span>}
                   </div>
+                  {ct && (
+                    <div style={{ marginTop: '6px', fontSize: '.82rem' }}>
+                      <span style={{ fontWeight: 600 }}>{ct.full_name || 'Contact'}</span>
+                      {ct.role && <span style={{ color: 'var(--muted)' }}> — {ct.role}</span>}
+                      {ct.email && (
+                        <span style={{ marginLeft: '8px', color: 'var(--muted)' }}>
+                          {ct.email}
+                          {ct.email_verified && <Badge tone={verifyTone}>{ct.email_verified}</Badge>}
+                        </span>
+                      )}
+                    </div>
+                  )}
+                  {row.opening_line && (
+                    <div style={{ marginTop: '8px', fontSize: '.85rem', fontStyle: 'italic', color: 'var(--text)', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
+                      “{row.opening_line}”
+                    </div>
+                  )}
                 </div>
-              </div>
-            ))}
+              )
+            })}
           </div>
         )}
       </section>
@@ -96,10 +123,31 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   campaign: LeadCampaign | null
   onSaved: (camp: LeadCampaign) => void
 }) {
+  const router = useRouter()
   const [region, setRegion] = useState(campaign?.region || client.city || '')
   const [sbi, setSbi] = useState(campaign?.sbi_code || '')
   const [saving, setSaving] = useState(false)
+  const [running, setRunning] = useState(false)
+  const [runMsg, setRunMsg] = useState<string | null>(null)
   const active = campaign?.status === 'active'
+
+  async function runNow() {
+    if (!campaign) return
+    setRunning(true); setRunMsg(null)
+    try {
+      const res = await fetch('/api/leads/run', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId: campaign.id, limit: 5 }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setRunMsg('Fout: ' + (data.error || 'mislukt')); return }
+      const s = data.summary
+      setRunMsg(`${s.found} bedrijven gevonden · ${s.withEmail} met e-mail · ${s.withOpeningLine} met openingszin.`)
+      router.refresh()
+    } catch {
+      setRunMsg('Er ging iets mis. Probeer opnieuw.')
+    } finally { setRunning(false) }
+  }
 
   async function submit(action: 'activate' | 'pause') {
     setSaving(true)
@@ -167,17 +215,28 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           />
         </label>
         {active ? (
-          <button onClick={() => submit('pause')} disabled={saving}
-            style={{ padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontWeight: 600, fontSize: '.82rem', cursor: saving ? 'wait' : 'pointer' }}>
-            Pauzeren
-          </button>
+          <>
+            <button onClick={runNow} disabled={running}
+              style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--accent1)', color: '#fff', fontWeight: 600, fontSize: '.82rem', cursor: running ? 'wait' : 'pointer', boxShadow: 'var(--shadow)' }}>
+              <Search size={14} /> {running ? 'Zoeken…' : 'Zoek leads'}
+            </button>
+            <button onClick={() => submit('pause')} disabled={saving}
+              style={{ padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontWeight: 600, fontSize: '.82rem', cursor: saving ? 'wait' : 'pointer' }}>
+              Pauzeren
+            </button>
+          </>
         ) : (
           <button onClick={() => submit('activate')} disabled={saving}
-            style={{ padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--accent1)', color: '#fff', fontWeight: 600, fontSize: '.82rem', cursor: saving ? 'wait' : 'pointer', boxShadow: '0 2px 8px rgba(26,63,228,.2)' }}>
+            style={{ padding: '9px 16px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--accent1)', color: '#fff', fontWeight: 600, fontSize: '.82rem', cursor: saving ? 'wait' : 'pointer', boxShadow: 'var(--shadow)' }}>
             {saving ? 'Bezig…' : 'Activeren'}
           </button>
         )}
       </div>
+      {runMsg && (
+        <div style={{ marginTop: '10px', fontSize: '.8rem', color: 'var(--muted)', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
+          {runMsg}
+        </div>
+      )}
     </div>
   )
 }

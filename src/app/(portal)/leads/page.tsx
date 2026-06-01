@@ -27,17 +27,17 @@ export default async function LeadsPage() {
   const isManager = MANAGER_ROLES.has(profile.role)
   const isClient = !!profile.client_id
 
-  // Data ophalen, gescoped op agency (en op client voor de klant-rol).
-  const companiesQuery = admin
-    .from('lead_companies')
-    .select('*')
+  // Outreach met bedrijf + contact erbij — dit is het resultaat dat je wilt zien.
+  const outreachQuery = admin
+    .from('lead_outreach')
+    .select('*, lead_companies(*), lead_contacts(*)')
     .eq('agency_id', profile.agency_id)
     .order('created_at', { ascending: false })
     .limit(200)
 
-  const { data: companies } = isClient
-    ? await companiesQuery.eq('client_id', profile.client_id)
-    : await companiesQuery
+  const { data: outreach } = isClient
+    ? await outreachQuery.eq('client_id', profile.client_id)
+    : await outreachQuery
 
   const { data: campaigns } = await admin
     .from('lead_campaigns')
@@ -59,7 +59,7 @@ export default async function LeadsPage() {
       isClient={isClient}
       clients={clients || []}
       campaigns={campaigns || []}
-      companies={companies || []}
+      outreach={outreach || []}
     />
   )
 }
