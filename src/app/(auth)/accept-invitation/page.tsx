@@ -16,6 +16,7 @@ function AcceptInvitationForm() {
   const [error, setError] = useState<string | null>(null)
   const [fullName, setFullName] = useState('')
   const [password, setPassword] = useState('')
+  const [email, setEmail] = useState('')
 
   useEffect(() => {
     async function fetchInvitation() {
@@ -33,6 +34,7 @@ function AcceptInvitationForm() {
         setError('Deze uitnodiging is ongeldig of verlopen.')
       } else {
         setInvitation(data)
+        setEmail(data.email || '')
       }
       setLoading(false)
     }
@@ -42,13 +44,20 @@ function AcceptInvitationForm() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!invitation) return
+
+    const cleanEmail = email.trim().toLowerCase()
+    if (!cleanEmail || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(cleanEmail)) {
+      setError('Vul een geldig e-mailadres in om je account aan te maken.')
+      return
+    }
+
     setSubmitting(true)
     setError(null)
 
     try {
       // Create auth user
       const { data: authData, error: signUpError } = await supabase.auth.signUp({
-        email: invitation.email,
+        email: cleanEmail,
         password,
         options: {
           data: { full_name: fullName }
@@ -64,7 +73,7 @@ function AcceptInvitationForm() {
       await supabase.from('user_profiles').upsert({
         id: userId,
         full_name: fullName,
-        email: invitation.email,
+        email: cleanEmail,
         role: 'client',
         agency_id: invitation.agency_id,
         client_id: invitation.client_id,
@@ -119,9 +128,12 @@ function AcceptInvitationForm() {
           <label style={{ fontSize: '.82rem', fontWeight: 600, display: 'block', marginBottom: '5px' }}>E-mailadres</label>
           <input
             type="email"
-            value={invitation?.email || ''}
-            disabled
-            style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.9rem', background: 'var(--bg)', color: 'var(--muted)', cursor: 'not-allowed', boxSizing: 'border-box' }}
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            disabled={!!invitation?.email}
+            required
+            placeholder="jij@bedrijf.nl"
+            style={{ width: '100%', padding: '12px 14px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.9rem', background: invitation?.email ? 'var(--bg)' : 'var(--card)', color: invitation?.email ? 'var(--muted)' : 'var(--text)', cursor: invitation?.email ? 'not-allowed' : 'text', boxSizing: 'border-box', outline: 'none' }}
           />
         </div>
 
