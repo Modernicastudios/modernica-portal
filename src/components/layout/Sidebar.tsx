@@ -235,7 +235,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       {/* Client switcher — admin only */}
       {(isAdmin || isSuperAdmin) && (
         <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
-          <div style={{ fontSize: '.6rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.4)', marginBottom: '6px' }}>
+          <div style={{ fontSize: '.66rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.7)', fontWeight: 700, marginBottom: '6px' }}>
             Filter op klant
           </div>
           <button
@@ -315,7 +315,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
             value={navQuery}
             onChange={e => setNavQuery(e.target.value)}
             placeholder="Zoeken..."
-            style={{ width: '100%', padding: '8px 26px 8px 30px', background: 'rgba(255,255,255,.1)', border: '1px solid rgba(255,255,255,.15)', borderRadius: '8px', color: '#fff', fontSize: '.82rem', outline: 'none' }}
+            style={{ width: '100%', padding: '9px 26px 9px 30px', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.28)', borderRadius: '8px', color: '#fff', fontSize: '.85rem', fontWeight: 500, outline: 'none' }}
           />
           {navQuery && (
             <button onClick={() => setNavQuery('')} aria-label="Wissen" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', display: 'flex' }}>
@@ -339,10 +339,10 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
               <div key={group.label}>
                 <button
                   onClick={() => toggleSection(group.label)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '12px 12px 6px', color: 'rgba(255,255,255,.45)' }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '14px 10px 6px', color: 'rgba(255,255,255,.7)' }}
                 >
-                  <span style={{ fontSize: '.65rem', letterSpacing: '.12em', textTransform: 'uppercase', fontWeight: 700 }}>{group.label}</span>
-                  <ChevronDown size={13} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s' }} />
+                  <span style={{ fontSize: '.7rem', letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 800 }}>{group.label}</span>
+                  <ChevronDown size={14} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s', opacity: .8 }} />
                 </button>
                 {!isCollapsed && group.items.map(item => (
                   <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
@@ -403,16 +403,17 @@ function NavLink({ href, label, icon, active }: { href: string; label: string; i
       style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '10px',
+        gap: '11px',
         padding: '10px 12px',
         borderRadius: 'var(--radius-sm)',
-        fontSize: '.88rem',
-        color: active ? '#fff' : 'rgba(255,255,255,.6)',
-        background: active ? 'rgba(255,255,255,.18)' : 'transparent',
+        fontSize: '.9rem',
+        color: active ? 'var(--accent1)' : 'rgba(255,255,255,.85)',
+        background: active ? '#fff' : 'transparent',
         textDecoration: 'none',
-        transition: 'all .18s',
-        marginBottom: '2px',
-        fontWeight: active ? 600 : 400,
+        transition: 'all .15s',
+        marginBottom: '3px',
+        fontWeight: active ? 700 : 500,
+        boxShadow: active ? '0 2px 8px rgba(0,0,0,.14)' : 'none',
       }}
     >
       <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
