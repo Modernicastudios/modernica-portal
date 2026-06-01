@@ -1,6 +1,7 @@
 'use client'
 
 import { CSSProperties } from 'react'
+import { Calendar, CheckCircle2, Clock, Hourglass } from 'lucide-react'
 import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 interface Props {
@@ -162,17 +163,17 @@ export default function SocialAnalyticsClient({ posts }: Props) {
       {/* Stats row */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {[
-          { label: 'Posts deze maand', value: totalThisMonth, color: 'var(--accent1)', icon: '📅' },
-          { label: 'Gepubliceerd', value: publishedThisMonth, color: '#00a67d', icon: '✅' },
-          { label: 'Gepland', value: scheduledThisMonth, color: '#1877f2', icon: '🕐' },
-          { label: 'Ter goedkeuring', value: pendingThisMonth, color: '#cc8800', icon: '⏳' },
+          { label: 'Posts deze maand', value: totalThisMonth, color: 'var(--accent1)', icon: <Calendar size={26} /> },
+          { label: 'Gepubliceerd', value: publishedThisMonth, color: '#00a67d', icon: <CheckCircle2 size={26} /> },
+          { label: 'Gepland', value: scheduledThisMonth, color: '#1877f2', icon: <Clock size={26} /> },
+          { label: 'Ter goedkeuring', value: pendingThisMonth, color: '#cc8800', icon: <Hourglass size={26} /> },
         ].map(({ label, value, color, icon }) => (
           <div key={label} style={{ ...cardStyle, position: 'relative', overflow: 'hidden' }}>
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '3px',
               background: color,
             }} />
-            <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '1.3rem', opacity: .2 }}>{icon}</div>
+            <div style={{ position: 'absolute', top: '16px', right: '16px', opacity: .25, color }}>{icon}</div>
             <div style={labelStyle}>{label}</div>
             <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.8rem' }}>{value}</div>
           </div>

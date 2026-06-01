@@ -2,6 +2,7 @@
 
 import { useState, CSSProperties } from 'react'
 import Link from 'next/link'
+import { Wallet, Euro, TrendingUp, Target, BarChart3 } from 'lucide-react'
 
 interface Props {
   entries: any[]
@@ -193,7 +194,7 @@ export default function AdsClient({ entries, clients, isAdmin, clientId }: Props
           textAlign: 'center',
           padding: '56px 40px',
         }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '16px' }}>📊</div>
+          <div style={{ marginBottom: '16px', color: 'var(--muted)', display: 'flex', justifyContent: 'center' }}><BarChart3 size={40} /></div>
           <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '8px' }}>
             Nog geen advertentiedata
           </div>
@@ -262,16 +263,16 @@ export default function AdsClient({ entries, clients, isAdmin, clientId }: Props
       {/* 4 KPI cards */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
         {[
-          { label: 'Totaal uitgegeven', value: fmtEur(totalSpend), prev: prevSpend, current: totalSpend, color: '#1877f2', icon: '💸' },
-          { label: 'Totaal omzet', value: fmtEur(totalRevenue), prev: prevRevenue, current: totalRevenue, color: '#00a67d', icon: '💰' },
-          { label: 'Gemiddelde ROAS', value: `${avgRoas.toFixed(2)}×`, prev: prevRoas, current: avgRoas, color: roasColor(avgRoas), icon: '📈' },
-          { label: 'Totaal leads', value: fmtNum(totalLeads), prev: prevLeads, current: totalLeads, color: 'var(--accent4)', icon: '🎯' },
+          { label: 'Totaal uitgegeven', value: fmtEur(totalSpend), prev: prevSpend, current: totalSpend, color: '#1877f2', icon: <Wallet size={26} /> },
+          { label: 'Totaal omzet', value: fmtEur(totalRevenue), prev: prevRevenue, current: totalRevenue, color: '#00a67d', icon: <Euro size={26} /> },
+          { label: 'Gemiddelde ROAS', value: `${avgRoas.toFixed(2)}×`, prev: prevRoas, current: avgRoas, color: roasColor(avgRoas), icon: <TrendingUp size={26} /> },
+          { label: 'Totaal leads', value: fmtNum(totalLeads), prev: prevLeads, current: totalLeads, color: 'var(--accent4)', icon: <Target size={26} /> },
         ].map(({ label, value, prev, current, color, icon }) => (
           <div key={label} style={{ ...cardStyle, position: 'relative', overflow: 'hidden' }}>
             <div style={{
               position: 'absolute', top: 0, left: 0, right: 0, height: '3px', background: color,
             }} />
-            <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '1.3rem', opacity: .2 }}>{icon}</div>
+            <div style={{ position: 'absolute', top: '16px', right: '16px', opacity: .25, color }}>{icon}</div>
             <div style={{ fontSize: '.72rem', color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.08em', marginBottom: '6px' }}>
               {label}
             </div>
