@@ -33,8 +33,8 @@ const PLANS = [
       '10 advertentieplatformen',
       '10 teamleden',
       'Alles van Starter',
-      '✅ White-label branding',
-      '✅ Eigen logo & kleuren',
+      'White-label branding',
+      'Eigen logo & kleuren',
     ],
     notIncluded: ['Custom domein', '"Powered by" verbergen'],
   },
@@ -49,9 +49,9 @@ const PLANS = [
       'Onbeperkt accounts',
       'Onbeperkt teamleden',
       'Alles van Growth',
-      '✅ Custom domein',
-      '✅ "Powered by" verbergen',
-      '✅ Prioriteit support',
+      'Custom domein',
+      '"Powered by" verbergen',
+      'Prioriteit support',
     ],
     notIncluded: [],
   },
@@ -121,7 +121,7 @@ export default function BillingClient({ agency }: Props) {
               disabled={loading === 'portal'}
               style={{ padding: '9px 20px', background: 'var(--card2)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontWeight: 600, fontSize: '.88rem' }}
             >
-              {loading === 'portal' ? 'Laden...' : '💳 Abonnement beheren'}
+              {loading === 'portal' ? 'Laden...' : 'Abonnement beheren'}
             </button>
           )}
         </div>
@@ -206,7 +206,7 @@ export default function BillingClient({ agency }: Props) {
                   boxShadow: isCurrentPlan ? 'none' : `0 4px 12px ${plan.color}40`,
                 }}
               >
-                {isPending ? 'Laden...' : isCurrentPlan ? '✓ Huidig plan' : `Kies ${plan.name}`}
+                {isPending ? 'Laden...' : isCurrentPlan ? 'Huidig plan' : `Kies ${plan.name}`}
               </button>
             </div>
           )

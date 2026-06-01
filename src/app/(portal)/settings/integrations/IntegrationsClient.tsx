@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { Smartphone, BarChart3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
 const SOCIAL_PLATFORMS = [
@@ -78,7 +79,7 @@ export default function IntegrationsClient({ socialAccounts, adAccounts, agencyI
       {/* Social media */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', marginBottom: '24px', boxShadow: 'var(--shadow)' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>📱 Social Media</h3>
+          <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><Smartphone size={18} style={{ color: 'var(--accent1)' }} /> Social media</h3>
           <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>Koppel accounts om te posten en analytics te bekijken</p>
         </div>
 
@@ -159,7 +160,7 @@ export default function IntegrationsClient({ socialAccounts, adAccounts, agencyI
       {/* Ad platforms */}
       <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '28px', boxShadow: 'var(--shadow)' }}>
         <div style={{ marginBottom: '20px' }}>
-          <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px' }}>📊 Advertentieplatformen</h3>
+          <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', marginBottom: '4px', display: 'flex', alignItems: 'center', gap: '8px' }}><BarChart3 size={18} style={{ color: 'var(--accent1)' }} /> Advertentieplatformen</h3>
           <p style={{ color: 'var(--muted)', fontSize: '.85rem' }}>Koppel je ad accounts voor automatische data synchronisatie</p>
         </div>
 
