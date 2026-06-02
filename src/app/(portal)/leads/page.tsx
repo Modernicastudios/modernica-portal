@@ -17,7 +17,7 @@ export default async function LeadsPage() {
   if (!profile?.agency_id) redirect('/dashboard')
 
   const { data: agency } = await admin
-    .from('agencies').select('id, features').eq('id', profile.agency_id).single()
+    .from('agencies').select('id, name, features').eq('id', profile.agency_id).single()
 
   // Feature-gate: staat de leadmachine uit, dan een net uitleg-scherm.
   if (!agency?.features?.lead_machine) {
@@ -57,6 +57,7 @@ export default async function LeadsPage() {
     <LeadsClient
       isManager={isManager}
       isClient={isClient}
+      agencyName={agency?.name || 'Mijn agency'}
       clients={clients || []}
       campaigns={campaigns || []}
       outreach={outreach || []}

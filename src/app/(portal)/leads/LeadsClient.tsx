@@ -24,6 +24,7 @@ interface Props {
   clients: ClientLite[]
   campaigns: LeadCampaign[]
   outreach: OutreachRow[]
+  agencyName: string
 }
 
 const STAGES: { key: string; label: string; statuses: string[] }[] = [
@@ -40,7 +41,7 @@ function stageKey(status: string): string {
   return status
 }
 
-export default function LeadsClient({ isManager, clients, campaigns, outreach }: Props) {
+export default function LeadsClient({ isManager, clients, campaigns, outreach, agencyName }: Props) {
   const [camps, setCamps] = useState<LeadCampaign[]>(campaigns)
   const [rows, setRows] = useState<OutreachRow[]>(outreach)
 
@@ -83,25 +84,28 @@ export default function LeadsClient({ isManager, clients, campaigns, outreach }:
       {isManager && (
         <section style={{ marginBottom: '32px' }}>
           <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1rem', marginBottom: '12px' }}>
-            Per klant activeren
+            Leadmachine activeren
           </h2>
-          {clients.length === 0 ? (
-            <div style={{ padding: '24px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', color: 'var(--muted)', fontSize: '.9rem' }}>
-              Je hebt nog geen klanten. Voeg eerst een klant toe via Klantbeheer.
-            </div>
-          ) : (
-            <div style={{ display: 'grid', gap: '12px' }}>
-              {clients.map(client => (
-                <ClientActivationCard
-                  key={client.id}
-                  client={client}
-                  campaign={camps.find(c => c.client_id === client.id) || null}
-                  onSaved={(camp) => setCamps(prev => {
-                    const rest = prev.filter(c => c.client_id !== client.id)
-                    return [...rest, camp]
-                  })}
-                />
-              ))}
+          <div style={{ display: 'grid', gap: '12px' }}>
+            {/* Voor de agency zelf — nieuwe klanten voor jullie (client_id = null) */}
+            <ClientActivationCard
+              key="__self__"
+              client={{ id: '__self__', company_name: `${agencyName} — eigen lead-gen`, industry: 'Nieuwe klanten vinden voor jullie agency', city: null }}
+              campaign={camps.find(c => c.client_id === null) || null}
+              onSaved={(camp) => setCamps(prev => [...prev.filter(c => c.client_id !== null), camp])}
+            />
+            {clients.map(client => (
+              <ClientActivationCard
+                key={client.id}
+                client={client}
+                campaign={camps.find(c => c.client_id === client.id) || null}
+                onSaved={(camp) => setCamps(prev => [...prev.filter(c => c.client_id !== client.id), camp])}
+              />
+            ))}
+          </div>
+          {clients.length === 0 && (
+            <div style={{ marginTop: '10px', fontSize: '.82rem', color: 'var(--muted)' }}>
+              Nog geen klanten toegevoegd. Via Klantbeheer kun je klanten toevoegen om óók voor hen leads te zoeken.
             </div>
           )}
         </section>
@@ -147,6 +151,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   onSaved: (camp: LeadCampaign) => void
 }) {
   const router = useRouter()
+  const realClientId: string | null = client.id === '__self__' ? null : client.id
   const [region, setRegion] = useState(campaign?.region || client.city || '')
   const [sbi, setSbi] = useState(campaign?.sbi_code || '')
   const [service, setService] = useState<string>(((campaign?.settings as Record<string, unknown>)?.service as string) || 'website')
@@ -181,14 +186,14 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, service, autoApprove, inspiration, action }),
+        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
       onSaved({
         ...(campaign || {} as LeadCampaign),
         id: data.campaignId,
-        client_id: client.id,
+        client_id: realClientId,
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
