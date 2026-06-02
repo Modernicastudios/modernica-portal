@@ -33,15 +33,11 @@ export async function POST(req: NextRequest) {
     if (f in brand) brandUpdate[f] = typeof brand[f] === 'string' ? (brand[f] as string).slice(0, 4000) : brand[f]
   }
 
-  try {
-    if (name) {
-      const { error } = await admin.from('agencies').update({ name }).eq('id', profile.agency_id)
-      if (error) throw error
-    }
-    const { error: bkErr } = await admin.from('brand_kits').upsert(brandUpdate, { onConflict: 'agency_id' })
-    if (bkErr) throw bkErr
-    return NextResponse.json({ ok: true })
-  } catch {
-    return NextResponse.json({ error: 'Opslaan mislukt' }, { status: 500 })
+  if (name) {
+    const { error } = await admin.from('agencies').update({ name }).eq('id', profile.agency_id)
+    if (error) return NextResponse.json({ error: `agencies: ${error.message}` }, { status: 500 })
   }
+  const { error: bkErr } = await admin.from('brand_kits').upsert(brandUpdate, { onConflict: 'agency_id' })
+  if (bkErr) return NextResponse.json({ error: `brand_kits: ${bkErr.message}` }, { status: 500 })
+  return NextResponse.json({ ok: true })
 }
