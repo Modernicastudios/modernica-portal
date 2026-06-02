@@ -112,7 +112,17 @@ export default function AgencySettingsClient({ agency, brandKit: initialBrandKit
     try {
       const res = await fetch('/api/settings/agency', {
         method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: agencyForm.name, brand: brandForm }),
+        body: JSON.stringify({
+          agency: {
+            name: agencyForm.name,
+            website: agencyForm.website,
+            email: agencyForm.email,
+            phone: agencyForm.phone,
+            address: agencyForm.address,
+            vat_number: agencyForm.vat_number,
+          },
+          brand: brandForm,
+        }),
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) showToast('Instellingen opgeslagen')

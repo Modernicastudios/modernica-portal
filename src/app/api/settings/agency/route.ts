@@ -3,15 +3,33 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 const ADMIN_ROLES = new Set(['admin', 'manager', 'super_admin'])
-// Alleen deze velden van de brand kit mogen via dit endpoint worden geschreven.
+
+// Agency-velden die via dit endpoint mogen worden geschreven (slug = niet wijzigbaar).
+const AGENCY_FIELDS = ['name', 'website', 'email', 'phone', 'address', 'vat_number'] as const
+// Brand-kit velden.
 const BRAND_FIELDS = [
   'primary_color', 'secondary_color', 'logo_url', 'contact_email', 'email_signature',
   'welcome_message', 'welcome_subtitle',
   'instagram_handle', 'tiktok_handle', 'linkedin_handle', 'youtube_handle', 'facebook_handle',
 ] as const
 
-// Slaat agency-naam + brand kit op via de service-role (na rolcheck), zodat
-// RLS de browser niet blokkeert maar de toegang wél server-side is afgeschermd.
+// Bouwt een schrijf-object met alléén velden die echt als kolom bestaan
+// (voorkomt "could not find column"-fouten).
+function pickExisting(
+  source: Record<string, unknown>,
+  allowed: readonly string[],
+  existingCols: Set<string> | null,
+): Record<string, unknown> {
+  const out: Record<string, unknown> = {}
+  for (const f of allowed) {
+    if (!(f in source)) continue
+    if (existingCols && !existingCols.has(f)) continue
+    out[f] = typeof source[f] === 'string' ? (source[f] as string).slice(0, 4000) : source[f]
+  }
+  return out
+}
+
+// Slaat agency-gegevens + brand kit op via de service-role (na rolcheck).
 export async function POST(req: NextRequest) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -25,33 +43,36 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json().catch(() => ({}))
-  const name = typeof body.name === 'string' ? body.name.trim().slice(0, 200) : null
-  const brand = (body.brand && typeof body.brand === 'object') ? body.brand as Record<string, unknown> : {}
+  // Backwards-compat: oude payload stuurde alleen { name }.
+  const agencyIn: Record<string, unknown> = (body.agency && typeof body.agency === 'object')
+    ? body.agency
+    : (typeof body.name === 'string' ? { name: body.name } : {})
+  const brandIn = (body.brand && typeof body.brand === 'object') ? body.brand as Record<string, unknown> : {}
 
-  // Ontdek welke kolommen brand_kits écht heeft (voorkomt "column not found").
-  const { data: existing } = await admin
-    .from('brand_kits').select('*').eq('agency_id', profile.agency_id).maybeSingle()
-  const existingCols = existing ? new Set(Object.keys(existing)) : null
-
-  const fields: Record<string, unknown> = {}
-  for (const f of BRAND_FIELDS) {
-    if (!(f in brand)) continue
-    if (existingCols && !existingCols.has(f)) continue // kolom bestaat niet -> overslaan
-    fields[f] = typeof brand[f] === 'string' ? (brand[f] as string).slice(0, 4000) : brand[f]
-  }
-
-  if (name) {
-    const { error } = await admin.from('agencies').update({ name }).eq('id', profile.agency_id)
+  // ── Agency: alleen bestaande kolommen wegschrijven ──
+  const { data: agencyRow } = await admin
+    .from('agencies').select('*').eq('id', profile.agency_id).maybeSingle()
+  const agencyCols = agencyRow ? new Set(Object.keys(agencyRow)) : null
+  const agencyUpdate = pickExisting(agencyIn, AGENCY_FIELDS, agencyCols)
+  if (Object.keys(agencyUpdate).length > 0) {
+    const { error } = await admin.from('agencies').update(agencyUpdate).eq('id', profile.agency_id)
     if (error) return NextResponse.json({ error: `agencies: ${error.message}` }, { status: 500 })
   }
 
-  // Bijwerken als er al een brand kit is, anders aanmaken (geen ON CONFLICT nodig).
-  if (existing) {
-    const { error } = await admin.from('brand_kits').update(fields).eq('agency_id', profile.agency_id)
-    if (error) return NextResponse.json({ error: `brand_kits: ${error.message}` }, { status: 500 })
+  // ── Brand kit: bijwerken of aanmaken, alleen bestaande kolommen ──
+  const { data: brandRow } = await admin
+    .from('brand_kits').select('*').eq('agency_id', profile.agency_id).maybeSingle()
+  const brandCols = brandRow ? new Set(Object.keys(brandRow)) : null
+  const brandUpdate = pickExisting(brandIn, BRAND_FIELDS, brandCols)
+  if (brandRow) {
+    if (Object.keys(brandUpdate).length > 0) {
+      const { error } = await admin.from('brand_kits').update(brandUpdate).eq('agency_id', profile.agency_id)
+      if (error) return NextResponse.json({ error: `brand_kits: ${error.message}` }, { status: 500 })
+    }
   } else {
-    const { error } = await admin.from('brand_kits').insert({ agency_id: profile.agency_id, ...fields })
+    const { error } = await admin.from('brand_kits').insert({ agency_id: profile.agency_id, ...brandUpdate })
     if (error) return NextResponse.json({ error: `brand_kits: ${error.message}` }, { status: 500 })
   }
+
   return NextResponse.json({ ok: true })
 }
