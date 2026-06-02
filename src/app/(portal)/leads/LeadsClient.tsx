@@ -178,7 +178,26 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [autoApprove, setAutoApprove] = useState<boolean>(((campaign?.settings as Record<string, unknown>)?.auto_approve) !== false)
   const [inspiration, setInspiration] = useState<string>(((campaign?.settings as Record<string, unknown>)?.inspiration as string) || '')
   const [rules, setRules] = useState<string>(((campaign?.settings as Record<string, unknown>)?.rules as string) || '')
+  const [smartleadId, setSmartleadId] = useState<string>(((campaign?.settings as Record<string, unknown>)?.smartlead_campaign_id as string) || '')
+  const [sending, setSending] = useState(false)
+  const [sendMsg, setSendMsg] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
+
+  async function sendToSmartlead() {
+    if (!campaign) return
+    setSending(true); setSendMsg(null)
+    try {
+      const res = await fetch('/api/leads/send', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaignId: campaign.id }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setSendMsg('⚠️ ' + (data.error || 'Mislukt')); return }
+      setSendMsg(data.sent ? `${data.sent} leads naar Smartlead gestuurd.` : (data.message || 'Niets te versturen.'))
+    } catch {
+      setSendMsg('⚠️ Er ging iets mis')
+    } finally { setSending(false) }
+  }
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<string | null>(null)
   const [previewing, setPreviewing] = useState(false)
@@ -225,7 +244,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, rules, action }),
+        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, rules, smartleadCampaignId: smartleadId, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
@@ -236,7 +255,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
-        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null, rules: rules.trim() || null },
+        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null, rules: rules.trim() || null, smartlead_campaign_id: smartleadId.trim() || null },
       } as LeadCampaign)
     } catch {
       alert('Er ging iets mis. Probeer opnieuw.')
@@ -302,6 +321,17 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', resize: 'vertical' }}
         />
       </label>
+      <label style={{ display: 'block', marginBottom: '10px' }}>
+        <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
+          Smartlead-campagne-ID (pas nodig bij versturen — later)
+        </span>
+        <input
+          value={smartleadId}
+          onChange={e => setSmartleadId(e.target.value)}
+          placeholder="bv. 123456 — staat in Smartlead bij je campagne"
+          style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.85rem', background: 'var(--bg)', outline: 'none' }}
+        />
+      </label>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <label style={{ flex: 2, minWidth: '170px' }}>
           <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Wat voor bedrijven? (doelgroep)</span>
@@ -357,7 +387,18 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontWeight: 600, fontSize: '.82rem', cursor: previewing ? 'wait' : 'pointer' }}>
           <Eye size={14} /> {previewing ? 'Even…' : 'Voorbeeld'}
         </button>
+        {active && (
+          <button onClick={sendToSmartlead} disabled={sending} title="Stuur goedgekeurde leads naar Smartlead. Let op: verstuurt pas echt als de Smartlead-campagne actief is (na warmup)."
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 'var(--radius-sm)', border: 'none', background: 'var(--accent3)', color: '#fff', fontWeight: 600, fontSize: '.82rem', cursor: sending ? 'wait' : 'pointer' }}>
+            {sending ? 'Versturen…' : '→ Smartlead'}
+          </button>
+        )}
       </div>
+      {sendMsg && (
+        <div style={{ marginTop: '10px', fontSize: '.8rem', color: 'var(--muted)', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
+          {sendMsg}
+        </div>
+      )}
       {previewLine && (
         <div style={{ marginTop: '10px', fontSize: '.82rem', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', borderLeft: '3px solid var(--accent1)' }}>
           <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.06em' }}>Voorbeeld-openingszin</div>
