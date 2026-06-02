@@ -5,6 +5,7 @@ import Sidebar from './Sidebar'
 import Header from './Header'
 import MobileHeader from './MobileHeader'
 import SupportButton from './SupportButton'
+import AiAssistant from '@/components/ai/AiAssistant'
 import { ClientFilterProvider, useClientFilter } from './ClientFilter'
 import type { UserProfile, Agency, BrandKit, Client } from '@/types'
 import { X } from 'lucide-react'
@@ -118,6 +119,7 @@ function ShellInner({ profile, agency, brandKit, userId, clients, children }: Pr
       </div>
 
       <SupportButton agencyId={profile.agency_id || ''} userId={userId} />
+      <AiAssistant />
     </div>
   )
 }
