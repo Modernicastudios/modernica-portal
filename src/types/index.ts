@@ -37,6 +37,7 @@ export interface BrandKit {
   favicon_url: string | null
   login_bg_url: string | null
   contact_email: string | null
+  email_signature: string | null
   welcome_message: string | null
   welcome_subtitle: string | null
   powered_by_visible: boolean

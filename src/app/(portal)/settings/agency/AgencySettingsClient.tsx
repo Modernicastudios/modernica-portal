@@ -85,6 +85,7 @@ export default function AgencySettingsClient({ agency, brandKit: initialBrandKit
     secondary_color: initialBrandKit?.secondary_color || '#4f7bff',
     logo_url: initialBrandKit?.logo_url || '',
     contact_email: initialBrandKit?.contact_email || '',
+    email_signature: initialBrandKit?.email_signature || '',
     welcome_message: initialBrandKit?.welcome_message || '',
     welcome_subtitle: initialBrandKit?.welcome_subtitle || '',
     instagram_handle: initialBrandKit?.instagram_handle || '',
@@ -510,6 +511,19 @@ export default function AgencySettingsClient({ agency, brandKit: initialBrandKit
                 placeholder="info@jouwagency.nl"
                 style={inputStyle()}
               />
+            </div>
+            <div style={{ gridColumn: '1 / -1' }}>
+              <label style={labelStyle}>E-mailhandtekening (onder elke uitgaande leadmail)</label>
+              <textarea
+                value={brandForm.email_signature}
+                onChange={e => setBrandForm(p => ({ ...p, email_signature: e.target.value }))}
+                rows={5}
+                placeholder={'Sjoerd Bom — Modernica Studios\nwww.modernicastudios.com\n06-12345678\ninfo@modernicastudios.com'}
+                style={{ ...inputStyle(), resize: 'vertical', fontFamily: 'inherit', lineHeight: 1.5 }}
+              />
+              <div style={{ fontSize: '.76rem', color: 'var(--muted)', marginTop: '6px' }}>
+                Eén keer instellen — komt overal hetzelfde onderaan. Websites, e-mailadressen en telefoonnummers worden in de verstuurde mail automatisch <strong>klikbaar</strong>.
+              </div>
             </div>
           </div>
         </div>

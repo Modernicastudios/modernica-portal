@@ -3,13 +3,32 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createCampaignWithSequence, smartleadConfigured, listEmailAccounts, attachEmailAccounts } from '@/lib/leadmachine/smartlead'
 
+function escapeHtml(s: string): string {
+  return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+}
+
+// Zet een platte-tekst handtekening om naar veilige HTML met KLIKBARE links:
+// telefoonnummers (tel:), e-mailadressen (mailto:) en websites (http/www).
+function signatureToHtml(raw: string): string {
+  let s = escapeHtml(raw.trim())
+  // Telefoon: + of 0 gevolgd door 8+ cijfers (spaties/streepjes toegestaan).
+  s = s.replace(/(\+?\d[\d\s-]{7,}\d)/g, (m) => `<a href="tel:${m.replace(/[\s-]/g, '')}">${m}</a>`)
+  // E-mail.
+  s = s.replace(/([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})/g, '<a href="mailto:$1">$1</a>')
+  // Website: http(s)://… of www.…
+  s = s.replace(/\b(https?:\/\/[^\s<]+|www\.[^\s<]+)/g, (m) => {
+    const href = m.startsWith('http') ? m : `https://${m}`
+    return `<a href="${href}">${m}</a>`
+  })
+  return s.replace(/\n/g, '<br>')
+}
+
 // Bouwt onderwerp + e-mailtekst per dienst. Toon: altijd positief, nooit
 // afbranden, met gratis advies/offerte als haakje en een zachte open afsluiter.
-function buildTemplate(service: string, agencyName: string, signature?: string | null): { subject: string; htmlBody: string } {
-  // Handtekening: gebruik de ingevulde handtekening (naam, website, telefoon,
-  // links), anders alleen de agency-naam. Regelovergangen worden <br>.
-  const sign = signature && signature.trim()
-    ? `<p>${signature.trim().replace(/\n/g, '<br>')}</p>`
+// `signatureHtml` is al veilige HTML (incl. klikbare links) of null.
+function buildTemplate(service: string, agencyName: string, signatureHtml?: string | null): { subject: string; htmlBody: string } {
+  const sign = signatureHtml
+    ? `<p>${signatureHtml}</p>`
     : `<p>Groet,<br>${agencyName}</p>`
   if (service === 'website') {
     return {
@@ -84,8 +103,16 @@ export async function POST(req: NextRequest) {
   }
   const name = `${agencyName} – ${label} (leadmachine)`
   const service = String(settings.service || 'website')
-  const signature = typeof settings.signature === 'string' ? settings.signature : null
-  const { subject, htmlBody } = buildTemplate(service, agencyName, signature)
+
+  // Handtekening: eerst de agency-brede (één keer ingesteld), anders een
+  // eventuele per-campagne handtekening. Links worden klikbaar gemaakt.
+  const { data: brandKit } = await admin
+    .from('brand_kits').select('email_signature').eq('agency_id', profile.agency_id).single()
+  const rawSignature = (typeof brandKit?.email_signature === 'string' && brandKit.email_signature.trim())
+    ? brandKit.email_signature
+    : (typeof settings.signature === 'string' ? settings.signature : null)
+  const signatureHtml = rawSignature ? signatureToHtml(rawSignature) : null
+  const { subject, htmlBody } = buildTemplate(service, agencyName, signatureHtml)
 
   const result = await createCampaignWithSequence({ name, subject, htmlBody })
   if (!result.ok || !result.campaignId) {
