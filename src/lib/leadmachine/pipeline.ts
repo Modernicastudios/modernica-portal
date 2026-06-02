@@ -92,10 +92,12 @@ async function scrapeWebsiteForEmail(company: RawCompany): Promise<Contact | nul
         .filter(e => !JUNK_EMAIL.test(e))
       if (found.length === 0) continue
       const dom = company.domain
-      const onDomain = dom ? found.filter(e => e.endsWith('@' + dom)) : found
-      const pool = onDomain.length ? onDomain : found
-      const personal = pool.find(e => !GENERIC_PREFIX.test(e))
-      const email = personal || pool[0]
+      // Alleen e-mails van het EIGEN domein — anders pak je de webbouwer/hosting
+      // (bv. info@bedigital.nl in de footer). Geen eigen-domein mail? Val terug.
+      const onDomain = dom ? found.filter(e => e.endsWith('@' + dom)) : []
+      if (onDomain.length === 0) continue
+      const personal = onDomain.find(e => !GENERIC_PREFIX.test(e))
+      const email = personal || onDomain[0]
       if (email) {
         return { full_name: null, role: null, email, found_via: 'site_scrape', confidence: GENERIC_PREFIX.test(email) ? 55 : 75 }
       }
