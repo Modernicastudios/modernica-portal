@@ -59,18 +59,21 @@ export async function POST(req: NextRequest) {
     if (error) return NextResponse.json({ error: `agencies: ${error.message}` }, { status: 500 })
   }
 
-  // ── Brand kit: bijwerken of aanmaken, alleen bestaande kolommen ──
+  // ── Brand kit (agency-niveau = client_id NULL): bijwerken of aanmaken ──
+  // Belangrijk: scope op client_id IS NULL, anders raken we per ongeluk een
+  // klant-brandkit (die heeft wél een client_id).
   const { data: brandRow } = await admin
-    .from('brand_kits').select('*').eq('agency_id', profile.agency_id).maybeSingle()
+    .from('brand_kits').select('*').eq('agency_id', profile.agency_id).is('client_id', null).maybeSingle()
   const brandCols = brandRow ? new Set(Object.keys(brandRow)) : null
   const brandUpdate = pickExisting(brandIn, BRAND_FIELDS, brandCols)
   if (brandRow) {
     if (Object.keys(brandUpdate).length > 0) {
-      const { error } = await admin.from('brand_kits').update(brandUpdate).eq('agency_id', profile.agency_id)
+      const { error } = await admin.from('brand_kits').update(brandUpdate)
+        .eq('agency_id', profile.agency_id).is('client_id', null)
       if (error) return NextResponse.json({ error: `brand_kits: ${error.message}` }, { status: 500 })
     }
   } else {
-    const { error } = await admin.from('brand_kits').insert({ agency_id: profile.agency_id, ...brandUpdate })
+    const { error } = await admin.from('brand_kits').insert({ agency_id: profile.agency_id, client_id: null, ...brandUpdate })
     if (error) return NextResponse.json({ error: `brand_kits: ${error.message}` }, { status: 500 })
   }
 
