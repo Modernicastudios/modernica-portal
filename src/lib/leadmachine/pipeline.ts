@@ -159,7 +159,7 @@ export async function aiOpeningLine(opts: {
 Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
 Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}
 Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.
-BELANGRIJK: heb je te weinig concrete houvast over dit specifieke bedrijf om iets persoonlijks en gepasts te schrijven, antwoord dan met ALLEEN het woord ONZEKER. Liever niets dan iets generieks dat het merk kan schaden.`
+BELANGRIJK: heb je weinig concrete info over dit specifieke bedrijf, schrijf dan juist een VOORZICHTIGE, vrijblijvende zin (bv. of ${pitch} misschien interessant zou zijn) — zónder valse claims, aannames of stellige beweringen. Doe nooit alsof je iets zeker weet als dat niet zo is, maar lever altijd één bruikbare zin.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
@@ -169,9 +169,7 @@ BELANGRIJK: heb je te weinig concrete houvast over dit specifieke bedrijf om iet
     if (!res.ok) return { line: null, uncertain: false }
     const data = await res.json()
     const text = (data.content?.[0]?.text || '').trim()
-    if (!text) return { line: null, uncertain: true }
-    if (/^onzeker\b/i.test(text)) return { line: null, uncertain: true }
-    return { line: text, uncertain: false }
+    return { line: text || null, uncertain: false }
   } catch { return { line: null, uncertain: false } }
 }
 
@@ -245,12 +243,12 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
           contactName: contact.full_name, service, brandVoice, inspiration,
         })
         if (ai.line) summary.withOpeningLine++
-        // Twijfelt de AI? Dan altijd langs een mens (Te beoordelen), ook in auto-stand.
-        const needsReview = !autoApprove || ai.uncertain
+        // Volautomatisch: alleen 'eerst zelf goedkeuren' zet 'm op te beoordelen.
+        // Bij weinig info schrijft de AI zelf een voorzichtiger mailtje.
         await admin.from('lead_outreach').insert({
           agency_id: campaign.agency_id, client_id: campaign.client_id, company_id: company.id,
           contact_id: savedContact?.id || null, is_primary: true,
-          service, opening_line: ai.line, status: needsReview ? 'draft' : 'queued',
+          service, opening_line: ai.line, status: autoApprove ? 'queued' : 'draft',
         })
       }
     } catch (e) {
