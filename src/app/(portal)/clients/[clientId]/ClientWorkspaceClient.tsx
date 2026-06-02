@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
   ArrowLeft, Building2, Mail, Phone, Globe, MapPin,
   Kanban, CheckSquare, Plus, X, ChevronRight, Calendar,
-  Edit2, Save, Trash2,
+  Edit2, Save, Trash2, Target, TrendingUp, BarChart2, MessageSquare, CalendarDays,
 } from 'lucide-react'
 
 const STATUS_MAP: Record<string, { label: string; color: string; bg: string; strip: string }> = {
@@ -181,6 +181,36 @@ export default function ClientWorkspaceClient({
                 <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: '2px' }}>{s.label}</div>
               </div>
             ))}
+          </div>
+
+          {/* Klant-portaal: wat kun je doen voor deze klant */}
+          <div style={{ marginBottom: '24px' }}>
+            <div style={{ fontSize: '.68rem', fontWeight: 800, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '.1em', marginBottom: '12px' }}>
+              Wat kun je doen voor {client.company_name}?
+            </div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+              {[
+                { href: '/leads', icon: <Target size={20} />, label: 'Leads & E-mail', desc: 'Nieuwe klanten werven' },
+                { href: '/analytics/social', icon: <TrendingUp size={20} />, label: 'Social', desc: 'Organisch overzicht' },
+                { href: '/content', icon: <CalendarDays size={20} />, label: 'Content', desc: 'Posts & kalender' },
+                { href: '/analytics/ads', icon: <BarChart2 size={20} />, label: 'Advertenties', desc: 'Betaalde campagnes' },
+                { href: '/chat', icon: <MessageSquare size={20} />, label: 'Berichten', desc: 'Communicatie' },
+                { href: '/projects', icon: <Kanban size={20} />, label: 'Projecten', desc: 'Werk & taken' },
+              ].map(t => (
+                <Link key={t.label} href={t.href} style={{
+                  background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+                  padding: '16px', textDecoration: 'none', boxShadow: 'var(--shadow)', transition: 'transform .12s, box-shadow .12s',
+                  display: 'block',
+                }}
+                  onMouseEnter={e => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = 'var(--shadow-lg)' }}
+                  onMouseLeave={e => { e.currentTarget.style.transform = 'none'; e.currentTarget.style.boxShadow = 'var(--shadow)' }}
+                >
+                  <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'rgba(26,63,228,.1)', color: 'var(--accent1)', display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: '10px' }}>{t.icon}</div>
+                  <div style={{ fontWeight: 700, fontSize: '.9rem', color: 'var(--text)' }}>{t.label}</div>
+                  <div style={{ fontSize: '.74rem', color: 'var(--muted)', marginTop: '1px' }}>{t.desc}</div>
+                </Link>
+              ))}
+            </div>
           </div>
 
           {/* Projects */}
