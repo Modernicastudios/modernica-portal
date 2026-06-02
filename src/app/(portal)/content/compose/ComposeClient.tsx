@@ -3,6 +3,7 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Sparkles } from 'lucide-react'
 
 const PLATFORM_ICONS: Record<string, { icon: string; label: string; color: string; bg: string; maxChars: number; mediaType: string }> = {
   instagram: { icon: '📸', label: 'Instagram', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', maxChars: 2200, mediaType: 'image/video' },
@@ -40,6 +41,27 @@ export default function ComposeClient({ socialAccounts, clients, mediaAssets, ag
   function showToast(msg: string) { setToast(msg); setTimeout(() => setToast(null), 4000) }
 
   const selectedPlatforms = [...new Set(selectedAccounts.map(id => socialAccounts.find(a => a.id === id)?.platform).filter(Boolean) as string[])]
+
+  // Caption laten schrijven door de AI (binnen je eigen agency afgeschermd).
+  const [aiWriting, setAiWriting] = useState(false)
+  async function aiCaption() {
+    const brief = caption.trim() || (typeof window !== 'undefined' ? (window.prompt('Waar gaat de post over? (paar woorden)') || '') : '').trim()
+    if (!brief) return
+    setAiWriting(true)
+    try {
+      const platforms = selectedPlatforms.length ? selectedPlatforms.join(', ') : 'social media'
+      const clientName = clients.find((c: { id: string; company_name?: string }) => c.id === clientId)?.company_name
+      const ctx = clientName ? ` voor de klant ${clientName}` : ''
+      const prompt = `Schrijf een pakkende social media caption${ctx} voor ${platforms}. Onderwerp: ${brief}. In het Nederlands, vlot en uitnodigend, met een paar passende hashtags. Gebruik emoji alleen als het echt past. Geef ALLEEN de caption-tekst, geen uitleg eromheen.`
+      const res = await fetch('/api/ai/assist', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+      })
+      const data = await res.json()
+      if (res.ok && data.text) setCaption(data.text.trim())
+      else showToast(data.error || 'AI is even niet beschikbaar')
+    } catch { showToast('Er ging iets mis met de AI') } finally { setAiWriting(false) }
+  }
 
   useEffect(() => {
     if (!previewPlatform && selectedPlatforms.length > 0) {
@@ -193,7 +215,18 @@ export default function ComposeClient({ socialAccounts, clients, mediaAssets, ag
 
           {/* Caption */}
           <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '20px', boxShadow: 'var(--shadow)' }}>
-            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem', marginBottom: '12px' }}>Caption</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
+              <span style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>Caption</span>
+              <button
+                type="button"
+                onClick={aiCaption}
+                disabled={aiWriting}
+                title="Laat de AI een caption schrijven. Tip: typ eerst kort waar de post over gaat."
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '5px 12px', border: '1px solid var(--accent1)', background: 'transparent', color: 'var(--accent1)', borderRadius: 'var(--radius-pill)', fontSize: '.76rem', fontWeight: 600, cursor: aiWriting ? 'wait' : 'pointer', opacity: aiWriting ? 0.6 : 1 }}
+              >
+                <Sparkles size={13} /> {aiWriting ? 'Bezig…' : 'Schrijf met AI'}
+              </button>
+            </div>
             <textarea
               value={caption}
               onChange={e => setCaption(e.target.value)}

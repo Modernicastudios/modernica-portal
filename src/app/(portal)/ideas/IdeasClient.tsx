@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
-import { Lightbulb, User, Trash2, Copy, Check, Plus, X, ArrowRight } from 'lucide-react'
+import { Lightbulb, User, Trash2, Copy, Check, Plus, X, ArrowRight, Sparkles } from 'lucide-react'
 import { PlatformIcon, PlatformBadge, PLATFORM_COLORS as IMPORTED_PLATFORM_COLORS } from '@/components/ui/PlatformIcon'
 
 // ─── Types ───────────────────────────────────────────────────────────────────
@@ -264,6 +264,30 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
   function showToast(msg: string, type: 'success' | 'error' = 'success') {
     setToast({ msg, type })
     setTimeout(() => setToast(null), 3000)
+  }
+
+  // ── AI: idee laten bedenken (binnen je eigen agency afgeschermd) ────────────
+  const [aiBusy, setAiBusy] = useState(false)
+  async function aiIdea() {
+    setAiBusy(true)
+    try {
+      const brief = form.title.trim()
+      const prompt = `Bedenk één concreet content-idee voor ${form.platform} (${form.content_type}).${brief ? ` Onderwerp/richting: ${brief}.` : ''} Geef het terug in exact dit formaat, in het Nederlands:\nTitel: <korte pakkende titel>\nOmschrijving: <2-3 zinnen met de uitwerking/insteek>`
+      const res = await fetch('/api/ai/assist', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data.text) { showToast(data.error || 'AI is even niet beschikbaar', 'error'); return }
+      const text: string = data.text
+      const titleM = text.match(/Titel:\s*(.+)/i)
+      const descM = text.match(/Omschrijving:\s*([\s\S]+)/i)
+      setForm(f => ({
+        ...f,
+        title: titleM ? titleM[1].trim() : (f.title || text.split('\n')[0].slice(0, 80)),
+        notes: descM ? descM[1].trim() : text.trim(),
+      }))
+    } catch { showToast('Er ging iets mis met de AI', 'error') } finally { setAiBusy(false) }
   }
 
   // ── CRUD ──────────────────────────────────────────────────────────────────
@@ -923,7 +947,18 @@ export default function IdeasClient({ ideas: initialIdeas, clients, agencyId, is
 
               {/* Notes */}
               <div>
-                <label style={labelStyle}>Omschrijving / Notities</label>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
+                  <label style={labelStyle}>Omschrijving / Notities</label>
+                  <button
+                    type="button"
+                    onClick={aiIdea}
+                    disabled={aiBusy}
+                    title="Laat de AI een idee bedenken op basis van platform en type. Tip: typ eerst een richting in de titel."
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '4px 10px', border: '1px solid var(--accent1)', background: 'transparent', color: 'var(--accent1)', borderRadius: 'var(--radius-pill)', fontSize: '.72rem', fontWeight: 600, cursor: aiBusy ? 'wait' : 'pointer', opacity: aiBusy ? 0.6 : 1, marginBottom: '6px' }}
+                  >
+                    <Sparkles size={12} /> {aiBusy ? 'Bezig…' : 'Bedenk met AI'}
+                  </button>
+                </div>
                 <textarea
                   style={textareaStyle}
                   placeholder="Beschrijf het idee, inspiratie, referenties…"
