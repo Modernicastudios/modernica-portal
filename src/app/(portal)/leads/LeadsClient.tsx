@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check, Eye } from 'lucide-react'
+import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check, Eye, Sparkles } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import type { LeadCampaign, LeadCompany, LeadContact, LeadOutreach } from '@/types/leadmachine'
 
@@ -222,7 +222,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [setupMsg, setSetupMsg] = useState<string | null>(null)
 
   async function createSmartleadCampaign() {
-    if (!campaign) { setSetupMsg('⚠️ Sla eerst de campagne op (Activeer/Opslaan).'); return }
+    if (!campaign) { setSetupMsg('Let op: Sla eerst de campagne op (Activeer/Opslaan).'); return }
     setSetupBusy(true); setSetupMsg(null)
     try {
       const res = await fetch('/api/leads/smartlead-setup', {
@@ -230,17 +230,17 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         body: JSON.stringify({ campaignId: campaign.id }),
       })
       const data = await res.json()
-      if (!res.ok) { setSetupMsg('⚠️ ' + (data.error || 'Mislukt')); return }
+      if (!res.ok) { setSetupMsg('Let op: ' + (data.error || 'Mislukt')); return }
       if (data.smartleadCampaignId) setSmartleadId(String(data.smartleadCampaignId))
       if (data.alreadyLinked) {
         setSetupMsg('Al gekoppeld — campagne-ID staat ingevuld.')
       } else {
         const inbox = data.attached ? `${data.attached} inboxen automatisch gekoppeld. ` : ''
         const warn = data.warning ? `Let op: ${data.warning}. ` : ''
-        setSetupMsg(`Smartlead-campagne + sjabloon aangemaakt ✓ (ID ${data.smartleadCampaignId}). ${inbox}${warn}Zet 'm in Smartlead alleen nog op 'aan' (na de warm-up).`)
+        setSetupMsg(`Smartlead-campagne + sjabloon aangemaakt (ID ${data.smartleadCampaignId}). ${inbox}${warn}Zet 'm in Smartlead alleen nog op 'aan' (na de warm-up).`)
       }
     } catch {
-      setSetupMsg('⚠️ Er ging iets mis')
+      setSetupMsg('Let op: Er ging iets mis')
     } finally { setSetupBusy(false) }
   }
 
@@ -253,10 +253,10 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         body: JSON.stringify({ campaignId: campaign.id }),
       })
       const data = await res.json()
-      if (!res.ok) { setSendMsg('⚠️ ' + (data.error || 'Mislukt')); return }
+      if (!res.ok) { setSendMsg('Let op: ' + (data.error || 'Mislukt')); return }
       setSendMsg(data.sent ? `${data.sent} leads naar Smartlead gestuurd.` : (data.message || 'Niets te versturen.'))
     } catch {
-      setSendMsg('⚠️ Er ging iets mis')
+      setSendMsg('Let op: Er ging iets mis')
     } finally { setSending(false) }
   }
   const [running, setRunning] = useState(false)
@@ -273,10 +273,10 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         body: JSON.stringify({ region, sbi, service, inspiration, rules }),
       })
       const data = await res.json()
-      if (!res.ok) { setPreviewLine('⚠️ ' + (data.error || 'Mislukt')); return }
+      if (!res.ok) { setPreviewLine('Let op: ' + (data.error || 'Mislukt')); return }
       setPreviewLine(data.line)
     } catch {
-      setPreviewLine('⚠️ Er ging iets mis')
+      setPreviewLine('Let op: Er ging iets mis')
     } finally { setPreviewing(false) }
   }
 
@@ -411,10 +411,10 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           style={{ marginTop: '8px', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', border: '1px solid var(--accent1)', background: 'transparent', color: 'var(--accent1)', borderRadius: 'var(--radius-sm)', fontSize: '.78rem', fontWeight: 600, cursor: setupBusy ? 'default' : 'pointer', opacity: setupBusy ? 0.6 : 1 }}
           title="Maakt automatisch een Smartlead-campagne + e-mailsjabloon aan en vult het ID hierboven in. Daarna koppel je in Smartlead alleen nog je inboxen."
         >
-          {setupBusy ? 'Bezig…' : '✨ Maak Smartlead-campagne aan'}
+          {setupBusy ? 'Bezig…' : <><Sparkles size={13} /> Maak Smartlead-campagne aan</>}
         </button>
         {setupMsg && (
-          <div style={{ marginTop: '6px', fontSize: '.76rem', color: setupMsg.startsWith('⚠️') ? 'var(--danger)' : 'var(--accent3)' }}>{setupMsg}</div>
+          <div style={{ marginTop: '6px', fontSize: '.76rem', color: setupMsg.startsWith('Let op:') ? 'var(--danger)' : 'var(--accent3)' }}>{setupMsg}</div>
         )}
       </label>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>

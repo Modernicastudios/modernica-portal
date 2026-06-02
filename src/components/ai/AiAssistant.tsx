@@ -1,9 +1,9 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Sparkles, X, Send, Copy, Check, Loader2 } from 'lucide-react'
+import { Sparkles, X, Send, Copy, Check, Loader2, AlertTriangle } from 'lucide-react'
 
-type Msg = { role: 'user' | 'assistant'; content: string }
+type Msg = { role: 'user' | 'assistant'; content: string; isError?: boolean }
 
 const SUGGESTIONS = [
   'Schrijf een Instagram-post over onze nieuwe dienst',
@@ -37,9 +37,11 @@ export default function AiAssistant() {
         body: JSON.stringify({ messages: next }),
       })
       const data = await res.json()
-      setMessages([...next, { role: 'assistant', content: res.ok ? (data.text || '...') : `⚠️ ${data.error || 'Er ging iets mis'}` }])
+      setMessages(res.ok
+        ? [...next, { role: 'assistant', content: data.text || '...' }]
+        : [...next, { role: 'assistant', content: data.error || 'Er ging iets mis', isError: true }])
     } catch {
-      setMessages([...next, { role: 'assistant', content: '⚠️ Geen verbinding met de AI.' }])
+      setMessages([...next, { role: 'assistant', content: 'Geen verbinding met de AI.', isError: true }])
     } finally {
       setBusy(false)
     }
@@ -109,13 +111,15 @@ export default function AiAssistant() {
               <div key={i} style={{ display: 'flex', flexDirection: 'column', alignItems: m.role === 'user' ? 'flex-end' : 'flex-start' }}>
                 <div style={{
                   maxWidth: '88%', padding: '10px 12px', borderRadius: '12px', fontSize: '.85rem', lineHeight: 1.5, whiteSpace: 'pre-wrap',
-                  background: m.role === 'user' ? 'var(--accent1)' : 'var(--bg)',
-                  color: m.role === 'user' ? '#fff' : 'var(--text)',
-                  border: m.role === 'user' ? 'none' : '1px solid var(--border)',
+                  display: m.isError ? 'flex' : 'block', alignItems: 'center', gap: '8px',
+                  background: m.role === 'user' ? 'var(--accent1)' : m.isError ? 'var(--danger-bg)' : 'var(--bg)',
+                  color: m.role === 'user' ? '#fff' : m.isError ? 'var(--danger)' : 'var(--text)',
+                  border: m.role === 'user' ? 'none' : `1px solid ${m.isError ? 'var(--danger)' : 'var(--border)'}`,
                 }}>
+                  {m.isError && <AlertTriangle size={15} style={{ flexShrink: 0 }} />}
                   {m.content}
                 </div>
-                {m.role === 'assistant' && !m.content.startsWith('⚠️') && (
+                {m.role === 'assistant' && !m.isError && (
                   <button onClick={() => copy(m.content, i)} style={{ marginTop: '4px', display: 'inline-flex', alignItems: 'center', gap: '4px', background: 'none', border: 'none', color: 'var(--muted)', fontSize: '.72rem', cursor: 'pointer' }}>
                     {copied === i ? <><Check size={12} /> Gekopieerd</> : <><Copy size={12} /> Kopiëren</>}
                   </button>

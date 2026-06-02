@@ -78,7 +78,7 @@ export async function POST(req: NextRequest) {
       await admin.from('notifications').insert(managers.map(m => ({
         user_id: m.id,
         agency_id: agencyId,
-        title: 'Nieuwe reactie op een lead 🎉',
+        title: 'Nieuwe reactie op een lead',
         body: `${companyName} heeft gereageerd — check je leads-pijplijn.`,
         type: 'lead_reply',
         link_page: '/leads',

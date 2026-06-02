@@ -2,6 +2,12 @@
 
 import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { HelpCircle, MessageSquare, X, CheckCircle2 } from 'lucide-react'
+
+// Klein, strak statusbolletje (i.p.v. emoji).
+function Dot({ color }: { color: string }) {
+  return <span style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', background: color, flexShrink: 0 }} />
+}
 
 interface Props {
   agencyId: string
@@ -70,8 +76,6 @@ export default function SupportButton({ agencyId, userId }: Props) {
           color: '#fff',
           border: 'none',
           cursor: 'pointer',
-          fontSize: '1.2rem',
-          fontWeight: 700,
           boxShadow: '0 4px 20px rgba(26,63,228,.4)',
           zIndex: 200,
           display: 'flex',
@@ -81,7 +85,7 @@ export default function SupportButton({ agencyId, userId }: Props) {
         }}
         title="Support"
       >
-        ?
+        <HelpCircle size={22} />
       </button>
 
       {/* Modal */}
@@ -98,9 +102,9 @@ export default function SupportButton({ agencyId, userId }: Props) {
           }}>
             {submitted ? (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
-                <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>✅</div>
+                <CheckCircle2 size={44} style={{ color: 'var(--accent3)', marginBottom: '12px' }} />
                 <h3 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, marginBottom: '8px' }}>
-                  Ticket ingediend!
+                  Ticket ingediend
                 </h3>
                 <p style={{ color: 'var(--muted)', fontSize: '.9rem' }}>
                   We reageren zo snel mogelijk, meestal binnen 24 uur.
@@ -109,10 +113,10 @@ export default function SupportButton({ agencyId, userId }: Props) {
             ) : (
               <>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-                  <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem' }}>
-                    💬 Support aanvragen
+                  <h2 style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '1.1rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <MessageSquare size={18} /> Support aanvragen
                   </h2>
-                  <button onClick={() => setOpen(false)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1.2rem', color: 'var(--muted)' }}>✕</button>
+                  <button onClick={() => setOpen(false)} aria-label="Sluiten" style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--muted)', display: 'flex' }}><X size={18} /></button>
                 </div>
 
                 <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -151,9 +155,9 @@ export default function SupportButton({ agencyId, userId }: Props) {
                     <label style={{ fontSize: '.82rem', fontWeight: 600, display: 'block', marginBottom: '8px' }}>Prioriteit</label>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       {([
-                        { value: 'normal', label: '🟢 Normaal' },
-                        { value: 'high', label: '🟡 Hoog' },
-                        { value: 'urgent', label: '🔴 Urgent' },
+                        { value: 'normal', label: 'Normaal', color: '#16a34a' },
+                        { value: 'high', label: 'Hoog', color: '#d97706' },
+                        { value: 'urgent', label: 'Urgent', color: 'var(--danger)' },
                       ] as const).map(p => (
                         <button
                           key={p.value}
@@ -164,9 +168,10 @@ export default function SupportButton({ agencyId, userId }: Props) {
                             borderRadius: 'var(--radius-sm)', cursor: 'pointer', fontSize: '.8rem', fontWeight: 600,
                             background: priority === p.value ? 'rgba(26,63,228,.08)' : 'var(--bg)',
                             color: priority === p.value ? 'var(--accent1)' : 'var(--muted)',
+                            display: 'inline-flex', alignItems: 'center', justifyContent: 'center', gap: '6px',
                           }}
                         >
-                          {p.label}
+                          <Dot color={p.color} /> {p.label}
                         </button>
                       ))}
                     </div>
