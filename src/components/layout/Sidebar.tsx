@@ -49,8 +49,10 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
   // Zoeken + inklapbare groepen in de navigatie.
+  // Secundaire groepen staan standaard dichtgeklapt → rustig, kort menu.
+  const DEFAULT_COLLAPSED = ['Werk', 'Analyse', 'Beheer', 'Super Admin']
   const [navQuery, setNavQuery] = useState('')
-  const [collapsed, setCollapsed] = useState<Set<string>>(new Set())
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set(DEFAULT_COLLAPSED))
   useEffect(() => {
     try {
       const raw = localStorage.getItem('nav_collapsed')
@@ -89,30 +91,29 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   type NavGroup = { label: string; items: NavEntry[] }
 
   const adminGroups: NavGroup[] = [
-    { label: 'Overzicht', items: [{ href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true }] },
-    { label: 'Klanten & Projecten', items: [
+    // Dagelijks gebruik — altijd open, geen kopje. Klant staat centraal.
+    { label: '', items: [
+      { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true },
       { href: '/clients', label: 'Klanten', icon: <Users size={16} /> },
+      { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
+      { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
+      { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
+      ...(leadMachineOn ? [{ href: '/leads', label: 'Leads & E-mail', icon: <Target size={16} /> }] : []),
+    ] },
+    { label: 'Werk', items: [
       { href: '/projects', label: 'Projecten', icon: <Kanban size={16} /> },
       { href: '/taken', label: 'Taken', icon: <CheckSquare size={16} /> },
       { href: '/planning', label: 'Planning', icon: <Calendar size={16} /> },
       { href: '/meetings', label: 'Vergaderingen', icon: <Video size={16} /> },
+      { href: '/ideas', label: 'Ideeën', icon: <Lightbulb size={16} /> },
+      { href: '/media', label: 'Media', icon: <Image size={16} /> },
+      { href: '/tijd', label: 'Tijdregistratie', icon: <Clock size={16} /> },
     ] },
-    { label: 'Content & Social', items: [
-      { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
-      { href: '/ideas', label: 'Ideeënbord', icon: <Lightbulb size={16} /> },
-      { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
-      { href: '/media', label: 'Mediabibliotheek', icon: <Image size={16} /> },
-    ] },
-    { label: 'Advertenties & Analyse', items: [
+    { label: 'Analyse', items: [
       { href: '/analytics/ads', label: 'Advertenties', icon: <BarChart2 size={16} /> },
       { href: '/analytics/social', label: 'Social', icon: <TrendingUp size={16} /> },
       { href: '/roi', label: 'ROI', icon: <BarChart3 size={16} /> },
       { href: '/reports', label: 'Rapportage', icon: <FileText size={16} /> },
-    ] },
-    ...(leadMachineOn ? [{ label: 'Leadmachine', items: [{ href: '/leads', label: 'Leads & E-mail', icon: <Target size={16} /> }] }] : []),
-    { label: 'Communicatie', items: [
-      { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
-      { href: '/tijd', label: 'Tijdregistratie', icon: <Clock size={16} /> },
     ] },
     { label: 'Beheer', items: [
       { href: '/settings/integrations', label: 'Koppelingen', icon: <Link2 size={16} /> },
@@ -127,23 +128,23 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   ]
 
   const clientGroups: NavGroup[] = [
-    { label: 'Overzicht', items: [{ href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true }] },
-    { label: 'Mijn projecten', items: [
+    { label: '', items: [
+      { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true },
+      { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
+      { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
+      { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
+      ...(leadMachineOn ? [{ href: '/leads', label: 'Mijn leads', icon: <Target size={16} /> }] : []),
+    ] },
+    { label: 'Werk', items: [
       { href: '/projects', label: 'Projecten', icon: <Kanban size={16} /> },
       { href: '/taken', label: 'Taken', icon: <CheckSquare size={16} /> },
       { href: '/planning', label: 'Planning', icon: <Calendar size={16} /> },
     ] },
-    { label: 'Content', items: [
-      { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
-      { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
-    ] },
-    { label: 'Resultaten', items: [
+    { label: 'Analyse', items: [
       { href: '/analytics/ads', label: 'Advertenties', icon: <BarChart2 size={16} /> },
       { href: '/analytics/social', label: 'Social', icon: <TrendingUp size={16} /> },
     ] },
-    ...(leadMachineOn ? [{ label: 'Leadmachine', items: [{ href: '/leads', label: 'Mijn leads', icon: <Target size={16} /> }] }] : []),
-    { label: 'Contact', items: [{ href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> }] },
-    { label: 'Account', items: [{ href: '/settings/profile', label: 'Mijn profiel', icon: <User size={16} /> }] },
+    { label: 'Beheer', items: [{ href: '/settings/profile', label: 'Mijn profiel', icon: <User size={16} /> }] },
   ]
 
   const groups: NavGroup[] = (isAdmin || isSuperAdmin) ? adminGroups : clientGroups
@@ -334,6 +335,16 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
           )
         ) : (
           groups.map(group => {
+            // Primaire blok zonder kopje: altijd open, geen toggle.
+            if (!group.label) {
+              return (
+                <div key="__primary" style={{ marginBottom: '4px' }}>
+                  {group.items.map(item => (
+                    <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
+                  ))}
+                </div>
+              )
+            }
             const isCollapsed = collapsed.has(group.label)
             return (
               <div key={group.label}>
