@@ -87,16 +87,21 @@ export async function POST(req: NextRequest) {
       const { data: camp } = await admin.from('lead_campaigns').select('settings').eq('id', co.campaign_id).maybeSingle()
       inspiration = (camp?.settings as { inspiration?: string } | null)?.inspiration || null
     }
-    const newLine = await aiOpeningLine({
+    const result = await aiOpeningLine({
       name: co?.name || 'Bedrijf', city: co?.city, websiteUrl: co?.website_url,
       contactName: ct?.full_name, service: (row as any).service || 'website',
       brandVoice: (brand as { brand_voice?: string } | null)?.brand_voice || null,
       inspiration,
     })
-    if (!newLine) return NextResponse.json({ error: 'AI gaf geen tekst (staat ANTHROPIC_API_KEY en tegoed goed?)' }, { status: 502 })
+    if (!result.line) {
+      const msg = result.uncertain
+        ? 'De AI had te weinig houvast voor een passende tekst — schrijf ’m zelf of pas de inspiratie aan.'
+        : 'AI gaf geen tekst (staat ANTHROPIC_API_KEY en tegoed goed?)'
+      return NextResponse.json({ error: msg }, { status: 502 })
+    }
     await admin.from('lead_outreach')
-      .update({ opening_line: newLine, updated_at: new Date().toISOString() }).eq('id', outreachId)
-    return NextResponse.json({ ok: true, opening_line: newLine })
+      .update({ opening_line: result.line, updated_at: new Date().toISOString() }).eq('id', outreachId)
+    return NextResponse.json({ ok: true, opening_line: result.line })
   }
 
   return NextResponse.json({ error: 'Onbekende actie' }, { status: 400 })

@@ -150,25 +150,29 @@ export async function aiOpeningLine(opts: {
   service: string
   brandVoice?: string | null
   inspiration?: string | null
-}): Promise<string | null> {
-  if (!ANTHROPIC_API_KEY) return null
+}): Promise<{ line: string | null; uncertain: boolean }> {
+  if (!ANTHROPIC_API_KEY) return { line: null, uncertain: false }
   const pitch = SERVICE_NL[opts.service] || SERVICE_NL.website
   const tone = opts.brandVoice ? `\nSchrijf in deze merk-stem/toon: ${opts.brandVoice}.` : ''
   const insp = opts.inspiration ? `\nGebruik deze voorbeelden/aanwijzingen als inspiratie voor toon en inhoud (niet letterlijk overnemen, wel per bedrijf personaliseren): ${opts.inspiration}.` : ''
   const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau. Wij willen dit bedrijf helpen met: ${pitch}.
 Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
 Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}
-Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.`
+Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.
+BELANGRIJK: heb je te weinig concrete houvast over dit specifieke bedrijf om iets persoonlijks en gepasts te schrijven, antwoord dan met ALLEEN het woord ONZEKER. Liever niets dan iets generieks dat het merk kan schaden.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', 'x-api-key': ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 200, messages: [{ role: 'user', content: prompt }] }),
     })
-    if (!res.ok) return null
+    if (!res.ok) return { line: null, uncertain: false }
     const data = await res.json()
-    return (data.content?.[0]?.text || '').trim() || null
-  } catch { return null }
+    const text = (data.content?.[0]?.text || '').trim()
+    if (!text) return { line: null, uncertain: true }
+    if (/^onzeker\b/i.test(text)) return { line: null, uncertain: true }
+    return { line: text, uncertain: false }
+  } catch { return { line: null, uncertain: false } }
 }
 
 // ── 4. Verificatie: e-mail checken via MillionVerifier ───────────────────────
@@ -236,15 +240,17 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
           found_via: contact.found_via, confidence: contact.confidence, email_verified: verified,
         }).select('id').single()
 
-        const opening = await aiOpeningLine({
+        const ai = await aiOpeningLine({
           name: raw.name, city: raw.city, websiteUrl: raw.website_url,
           contactName: contact.full_name, service, brandVoice, inspiration,
         })
-        if (opening) summary.withOpeningLine++
+        if (ai.line) summary.withOpeningLine++
+        // Twijfelt de AI? Dan altijd langs een mens (Te beoordelen), ook in auto-stand.
+        const needsReview = !autoApprove || ai.uncertain
         await admin.from('lead_outreach').insert({
           agency_id: campaign.agency_id, client_id: campaign.client_id, company_id: company.id,
           contact_id: savedContact?.id || null, is_primary: true,
-          service, opening_line: opening, status: autoApprove ? 'queued' : 'draft',
+          service, opening_line: ai.line, status: needsReview ? 'draft' : 'queued',
         })
       }
     } catch (e) {
