@@ -26,7 +26,7 @@ export default function EigenMarketingClient({
       />
 
       {/* Hero / pitch */}
-      <Card style={{ marginBottom: '20px', background: 'linear-gradient(135deg, var(--accent1) 0%, #2d4ff0 100%)', border: 'none', color: '#fff', padding: 28 }}>
+      <Card style={{ marginBottom: '20px', background: 'linear-gradient(135deg, #0f1a30 0%, #1b2c52 100%)', border: 'none', color: '#fff', padding: 28 }}>
         <div style={{ display: 'flex', alignItems: 'flex-start', gap: '16px' }}>
           <div style={{ background: 'rgba(255,255,255,.18)', borderRadius: '14px', padding: '12px', flexShrink: 0 }}>
             <Rocket size={26} />

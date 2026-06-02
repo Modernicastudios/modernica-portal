@@ -63,9 +63,9 @@ export default function AiAssistant() {
           style={{
             position: 'fixed', bottom: '24px', right: '86px', zIndex: 200,
             width: '52px', height: '52px', borderRadius: '50%', border: 'none', cursor: 'pointer',
-            background: 'linear-gradient(135deg, var(--accent1) 0%, #2d4ff0 100%)', color: '#fff',
+            background: 'var(--accent1)', color: '#fff',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            boxShadow: '0 8px 24px rgba(26,63,228,.4)',
+            boxShadow: '0 4px 16px rgba(16,24,40,.18)',
           }}
         >
           <Sparkles size={22} />
@@ -80,7 +80,7 @@ export default function AiAssistant() {
           boxShadow: 'var(--shadow-lg)', display: 'flex', flexDirection: 'column', overflow: 'hidden',
         }}>
           {/* Kop */}
-          <div style={{ padding: '14px 16px', background: 'linear-gradient(135deg, var(--accent1) 0%, #2d4ff0 100%)', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
+          <div style={{ padding: '14px 16px', background: 'var(--sidebar-bg)', color: '#fff', display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Sparkles size={18} />
             <div style={{ flex: 1 }}>
               <div style={{ fontWeight: 700, fontSize: '.92rem' }}>AI-assistent</div>
