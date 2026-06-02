@@ -3,6 +3,7 @@
 import { useState, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { Image as ImageIcon, CheckCircle2 } from 'lucide-react'
 
 interface Props {
   agency: any
@@ -224,7 +225,7 @@ export default function OnboardingClient({ agency, userId, agencyId }: Props) {
               color: 'var(--text)',
               marginBottom: '8px',
             }}>
-              Welkom bij Modernica 👋
+              Welkom bij Modernica
             </h1>
             <p style={{ color: 'var(--muted)', fontSize: '.9rem', marginBottom: '32px' }}>
               Stel je agency in een paar stappen in.
@@ -318,7 +319,7 @@ export default function OnboardingClient({ agency, userId, agencyId }: Props) {
                 />
               ) : (
                 <>
-                  <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🖼️</div>
+                  <ImageIcon size={34} style={{ color: 'var(--muted)', marginBottom: '12px' }} />
                   <div style={{ fontWeight: 600, color: 'var(--text)', fontSize: '.9rem', marginBottom: '4px' }}>
                     Klik of sleep een afbeelding hierheen
                   </div>
@@ -350,7 +351,7 @@ export default function OnboardingClient({ agency, userId, agencyId }: Props) {
                 alignItems: 'center',
                 gap: '8px',
               }}>
-                ✅ Logo succesvol geüpload
+                <CheckCircle2 size={16} /> Logo succesvol geüpload
               </div>
             )}
 
@@ -410,7 +411,7 @@ export default function OnboardingClient({ agency, userId, agencyId }: Props) {
                 marginBottom: '24px',
                 textAlign: 'center',
               }}>
-                <div style={{ fontSize: '1.5rem', marginBottom: '6px' }}>🎉</div>
+                <CheckCircle2 size={24} style={{ color: 'var(--accent3)', marginBottom: '6px' }} />
                 <strong>{clientName}</strong> is aangemaakt!
               </div>
             ) : (

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/client'
+import { ListTodo, CheckCircle2 } from 'lucide-react'
 
 const STATUS_CONFIG = {
   todo: { label: 'Te doen', color: 'var(--muted)', bg: 'rgba(107,120,168,.1)' },
@@ -127,8 +128,8 @@ export default function ClientTasksClient({ client, tasks: initialTasks, teamMem
             Taken — {client.company_name}
           </h2>
           <div style={{ display: 'flex', gap: '16px', marginTop: '6px', fontSize: '.82rem', color: 'var(--muted)' }}>
-            <span>📋 {openCount} open</span>
-            <span>✅ {doneCount} klaar</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><ListTodo size={14} /> {openCount} open</span>
+            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={14} /> {doneCount} klaar</span>
           </div>
         </div>
         <button
@@ -276,7 +277,7 @@ export default function ClientTasksClient({ client, tasks: initialTasks, teamMem
 
         {filtered.length === 0 && (
           <div style={{ textAlign: 'center', padding: '48px', color: 'var(--muted)', background: 'var(--card)', borderRadius: 'var(--radius)', border: '1px solid var(--border)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '12px' }}>✅</div>
+            <CheckCircle2 size={30} style={{ color: 'var(--accent3)', marginBottom: '12px' }} />
             <div style={{ fontWeight: 600 }}>Geen taken{filter !== 'all' ? ' in deze categorie' : ''}</div>
           </div>
         )}

@@ -2,7 +2,11 @@
 
 import { useState, CSSProperties } from 'react'
 import Link from 'next/link'
-import { Wallet, Euro, TrendingUp, Target, BarChart3 } from 'lucide-react'
+import { Wallet, Euro, TrendingUp, Target, BarChart3, Inbox } from 'lucide-react'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
+
+// Normaliseert een advertentie-platformsleutel naar het juiste merk-icoon.
+const adIconKey = (k: string) => String(k || '').replace('_ads', '').replace('meta', 'facebook')
 
 interface Props {
   entries: any[]
@@ -304,7 +308,7 @@ export default function AdsClient({ entries, clients, isAdmin, clientId }: Props
               {platformRows.map(pl => (
                 <tr key={pl.key}>
                   <td style={{ ...tdStyle, fontWeight: 600 }}>
-                    <span style={{ marginRight: '6px' }}>{pl.icon}</span>
+                    <span style={{ marginRight: '6px', display: 'inline-flex', verticalAlign: 'middle' }}><PlatformIcon platform={adIconKey(pl.key)} size={15} /></span>
                     {pl.label}
                   </td>
                   <td style={tdStyle}>{fmtEur(pl.spend)}</td>
@@ -406,7 +410,7 @@ export default function AdsClient({ entries, clients, isAdmin, clientId }: Props
         </div>
         {sortedEntries.length === 0 ? (
           <div style={{ padding: '48px', textAlign: 'center', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📭</div>
+            <Inbox size={30} style={{ color: 'var(--muted)', marginBottom: '10px' }} />
             <div style={{ fontWeight: 600, marginBottom: '8px' }}>Geen data voor deze filters</div>
             <div style={{ fontSize: '.85rem' }}>Pas de filters aan of voeg ROI entries toe</div>
           </div>
@@ -448,7 +452,7 @@ export default function AdsClient({ entries, clients, isAdmin, clientId }: Props
                           fontSize: '.78rem', fontWeight: 600,
                           color: plConfig?.color || 'var(--muted)',
                         }}>
-                          {plConfig?.icon || '📊'} {plConfig?.label || e.platform || '—'}
+                          <PlatformIcon platform={adIconKey(plConfig?.key || e.platform)} size={13} /> {plConfig?.label || e.platform || '—'}
                         </span>
                       </td>
                       {isAdmin && (

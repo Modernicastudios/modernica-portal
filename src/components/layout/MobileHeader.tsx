@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { Menu } from 'lucide-react'
 import NotificationBell from './NotificationBell'
 
 interface Props {
@@ -52,12 +53,11 @@ export default function MobileHeader({ agencyName, userId, onMenuOpen }: Props) 
           alignItems: 'center',
           justifyContent: 'center',
           color: '#fff',
-          fontSize: '1.2rem',
           cursor: 'pointer',
           flexShrink: 0,
         }}
       >
-        ☰
+        <Menu size={20} />
       </button>
 
       {/* Agency name */}

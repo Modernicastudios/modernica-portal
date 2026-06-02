@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, CSSProperties } from 'react'
-import { Download, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus } from 'lucide-react'
+import { Download, ChevronLeft, ChevronRight, TrendingUp, TrendingDown, Minus, Sparkles } from 'lucide-react'
 import { PlatformIcon, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 interface Props {
@@ -77,6 +77,24 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
     setToast(msg)
     if (toastTimeout) clearTimeout(toastTimeout)
     toastTimeout = setTimeout(() => setToast(null), 3000)
+  }
+
+  // AI-samenvatting voor de klant — schrijft op basis van de maandcijfers.
+  const [aiSummary, setAiSummary] = useState('')
+  const [aiSumBusy, setAiSumBusy] = useState(false)
+  async function aiWriteSummary() {
+    setAiSumBusy(true)
+    try {
+      const maand = new Date(viewYear, viewMonth, 1).toLocaleDateString('nl-NL', { month: 'long', year: 'numeric' })
+      const prompt = `Schrijf een korte, positieve maandsamenvatting (3-4 zinnen, in het Nederlands) voor een klantrapportage over ${maand}. Cijfers: ${publishedThis} posts gepubliceerd, ${scheduledThis} gepland, ${projectsDoneThis} projecten afgerond. Schrijf professioneel en klantvriendelijk, benoem de voortgang positief en sluit af met een korte vooruitblik. Geef ALLEEN de samenvatting, zonder kopjes.`
+      const res = await fetch('/api/ai/assist', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+      })
+      const data = await res.json()
+      if (res.ok && data.text) setAiSummary(data.text.trim())
+      else showToast(data.error || 'AI is even niet beschikbaar')
+    } catch { showToast('Er ging iets mis met de AI') } finally { setAiSumBusy(false) }
   }
 
   function prevMonth() {
@@ -384,6 +402,27 @@ export default function ReportsClient({ projects, posts, clients, agency }: Prop
             </div>
           )
         })}
+      </div>
+
+      {/* ── AI-SAMENVATTING ── */}
+      <div style={{ ...cardStyle, marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', marginBottom: '12px' }}>
+          <h3 style={{ ...cardTitleStyle, marginBottom: 0 }}>AI-samenvatting voor de klant</h3>
+          <button
+            onClick={aiWriteSummary}
+            disabled={aiSumBusy}
+            style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 12px', border: '1px solid var(--accent1)', background: 'transparent', color: 'var(--accent1)', borderRadius: 'var(--radius-pill, 999px)', fontSize: '.76rem', fontWeight: 600, cursor: aiSumBusy ? 'wait' : 'pointer', opacity: aiSumBusy ? 0.6 : 1 }}
+          >
+            <Sparkles size={13} /> {aiSumBusy ? 'Bezig…' : 'Schrijf met AI'}
+          </button>
+        </div>
+        <textarea
+          value={aiSummary}
+          onChange={e => setAiSummary(e.target.value)}
+          rows={4}
+          placeholder="Klik op 'Schrijf met AI' voor een korte samenvatting van deze maand op basis van de cijfers — je kunt 'm daarna aanpassen."
+          style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '.88rem', lineHeight: 1.6, background: 'var(--bg)', outline: 'none', resize: 'vertical', fontFamily: 'inherit', boxSizing: 'border-box' }}
+        />
       </div>
 
       {/* ── PLATFORM + STATUS ── */}

@@ -1,7 +1,7 @@
 'use client'
 
 import { CSSProperties } from 'react'
-import { Calendar, CheckCircle2, Clock, Hourglass } from 'lucide-react'
+import { Calendar, CheckCircle2, Clock, Hourglass, Inbox } from 'lucide-react'
 import { PlatformIcon, PlatformBadge, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 
 interface Props {
@@ -274,7 +274,7 @@ export default function SocialAnalyticsClient({ posts }: Props) {
         </div>
         {recentPublished.length === 0 ? (
           <div style={{ padding: '40px', textAlign: 'center', color: 'var(--muted)' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '10px' }}>📭</div>
+            <Inbox size={30} style={{ color: 'var(--muted)', marginBottom: '10px' }} />
             <div style={{ fontWeight: 600 }}>Nog geen gepubliceerde posts</div>
           </div>
         ) : (

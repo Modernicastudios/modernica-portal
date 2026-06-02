@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react'
 import { createClient } from '@/lib/supabase/client'
+import { Wallet, Coins, TrendingUp, Target } from 'lucide-react'
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -416,7 +417,7 @@ export default function RoiClient({ entries, clients, agencyId, isAdmin, clientI
                 delta: delta(totalSpend, prevSpend),
                 gradient: 'linear-gradient(90deg, #e53e3e, #f56565)',
                 color: '#e53e3e',
-                icon: '💸',
+                icon: <Wallet size={24} />,
               },
               {
                 label: 'Revenue',
@@ -424,7 +425,7 @@ export default function RoiClient({ entries, clients, agencyId, isAdmin, clientI
                 delta: delta(totalRevenue, prevRevenue),
                 gradient: 'linear-gradient(90deg, #00b89c, #38d9a9)',
                 color: '#00b89c',
-                icon: '💰',
+                icon: <Coins size={24} />,
               },
               {
                 label: 'ROAS',
@@ -434,7 +435,7 @@ export default function RoiClient({ entries, clients, agencyId, isAdmin, clientI
                 roasColor: getRoasColor(totalSpend, totalRevenue),
                 gradient: `linear-gradient(90deg, ${getRoasColor(totalSpend, totalRevenue)}, ${getRoasColor(totalSpend, totalRevenue)}aa)`,
                 color: getRoasColor(totalSpend, totalRevenue),
-                icon: '📈',
+                icon: <TrendingUp size={24} />,
               },
               {
                 label: 'Leads',
@@ -442,7 +443,7 @@ export default function RoiClient({ entries, clients, agencyId, isAdmin, clientI
                 delta: delta(totalLeads, prevLeads),
                 gradient: 'linear-gradient(90deg, var(--accent1), #7c5ff5)',
                 color: 'var(--accent1)',
-                icon: '🎯',
+                icon: <Target size={24} />,
               },
             ].map((stat) => (
               <div key={stat.label} style={{
