@@ -146,6 +146,21 @@ async function enrichContact(company: RawCompany): Promise<Contact | null> {
 }
 
 // ── 3. Personalisatie: AI schrijft een openingszin ───────────────────────────
+// Schoont AI-output op: haalt markdown-kopjes, uitleg en 'alternatieven' weg en
+// houdt alleen de kale zin over (anders staat er '# Openingszin' in de mail).
+function cleanLine(text: string): string | null {
+  if (!text) return null
+  let t = text.trim()
+  // Knip alles na een scheidingslijn of meta-sectie (alternatief/voorbeeld) weg.
+  t = t.split(/\n\s*-{2,}|\n\s*\*{0,2}(?:alternatief|persoonlijke zin|variant|optie)/i)[0]
+  const lines = t.split('\n').map(l => l.trim()).filter(Boolean)
+    .filter(l => !l.startsWith('#'))
+    .filter(l => !/^[*_>:\s-]*(openingszin|koude?\s?werving|voorbeeld|persoonlijke zin)\b/i.test(l))
+  let line = lines[0] || t.replace(/\n/g, ' ')
+  line = line.replace(/^["'“”*_>\s-]+|["'“”*_]+$/g, '').trim()
+  return line || null
+}
+
 const SERVICE_NL: Record<string, string> = {
   website: 'een nieuwe of betere website',
   social: 'het beheren van hun social media',
@@ -173,7 +188,7 @@ export async function aiOpeningLine(opts: {
   const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau. Wij willen dit bedrijf helpen met: ${pitch}.
 Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
 Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}${rulesTxt}
-Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.
+Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geef ALLEEN die kale zin terug: geen begroeting, geen aanhalingstekens, geen kopjes, geen markdown (#, **), geen uitleg en geen alternatieven.
 BELANGRIJK: heb je weinig concrete info over dit specifieke bedrijf, schrijf dan juist een VOORZICHTIGE, vrijblijvende zin (bv. of ${pitch} misschien interessant zou zijn) — zónder valse claims, aannames of stellige beweringen. Doe nooit alsof je iets zeker weet als dat niet zo is, maar lever altijd één bruikbare zin.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -184,7 +199,7 @@ BELANGRIJK: heb je weinig concrete info over dit specifieke bedrijf, schrijf dan
     if (!res.ok) return { line: null, uncertain: false }
     const data = await res.json()
     const text = (data.content?.[0]?.text || '').trim()
-    return { line: text || null, uncertain: false }
+    return { line: cleanLine(text), uncertain: false }
   } catch { return { line: null, uncertain: false } }
 }
 
