@@ -28,9 +28,16 @@ export async function POST(req: NextRequest) {
   const name = typeof body.name === 'string' ? body.name.trim().slice(0, 200) : null
   const brand = (body.brand && typeof body.brand === 'object') ? body.brand as Record<string, unknown> : {}
 
+  // Ontdek welke kolommen brand_kits écht heeft (voorkomt "column not found").
+  const { data: existing } = await admin
+    .from('brand_kits').select('*').eq('agency_id', profile.agency_id).maybeSingle()
+  const existingCols = existing ? new Set(Object.keys(existing)) : null
+
   const brandUpdate: Record<string, unknown> = { agency_id: profile.agency_id }
   for (const f of BRAND_FIELDS) {
-    if (f in brand) brandUpdate[f] = typeof brand[f] === 'string' ? (brand[f] as string).slice(0, 4000) : brand[f]
+    if (!(f in brand)) continue
+    if (existingCols && !existingCols.has(f)) continue // kolom bestaat niet -> overslaan
+    brandUpdate[f] = typeof brand[f] === 'string' ? (brand[f] as string).slice(0, 4000) : brand[f]
   }
 
   if (name) {
