@@ -9,8 +9,9 @@ interface Notification {
   id: string
   type: string
   title: string
-  message: string | null
-  link: string | null
+  body: string | null
+  link_page: string | null
+  link_id: string | null
   read: boolean
   created_at: string
 }
@@ -22,6 +23,7 @@ const TYPE_ICON_COMPONENTS: Record<string, React.ReactNode> = {
   deadline: <AlertTriangle size={18} color="#e53935" />,
   project_update: <LayoutList size={18} color="var(--accent1)" />,
   new_message: <MessageSquare size={18} color="var(--accent1)" />,
+  lead_reply: <MessageSquare size={18} color="#00b89c" />,
   default: <Bell size={18} color="var(--accent1)" />,
 }
 
@@ -84,7 +86,7 @@ export default function NotificationBell({ userId }: { userId: string }) {
       setNotifications(prev => prev.map(notif => notif.id === n.id ? { ...notif, read: true } : notif))
     }
     setOpen(false)
-    if (n.link) router.push(n.link)
+    if (n.link_page) router.push(n.link_page)
   }
 
   function timeAgo(dateStr: string) {
@@ -173,9 +175,9 @@ export default function NotificationBell({ userId }: { userId: string }) {
                   <div style={{ fontWeight: n.read ? 400 : 700, fontSize: '.85rem', marginBottom: '2px', color: 'var(--text)' }}>
                     {n.title}
                   </div>
-                  {n.message && (
+                  {n.body && (
                     <div style={{ fontSize: '.75rem', color: 'var(--muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                      {n.message}
+                      {n.body}
                     </div>
                   )}
                   <div style={{ fontSize: '.68rem', color: 'var(--muted)', marginTop: '3px' }}>
