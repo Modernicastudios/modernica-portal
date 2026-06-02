@@ -1,7 +1,16 @@
 'use client'
 
-import { Card, PageHeader, Badge } from '@/components/ui'
-import { CheckCircle2, XCircle, AlertTriangle } from 'lucide-react'
+import { useState } from 'react'
+import { Card, PageHeader, Badge, PrimaryButton } from '@/components/ui'
+import { CheckCircle2, XCircle, AlertTriangle, Loader2, Zap } from 'lucide-react'
+
+type LiveResult = { ok: boolean; configured: boolean; message: string }
+const LIVE_LABELS: Record<string, string> = {
+  apify: 'Apify (bedrijven vinden)',
+  anthropic: 'Anthropic (AI-tekst)',
+  smartlead: 'Smartlead (versturen)',
+  millionverifier: 'MillionVerifier (e-mailcheck)',
+}
 
 type Checks = {
   db: boolean
@@ -61,6 +70,24 @@ export default function StatusBoard({ checks }: { checks: Checks }) {
   const requiredOk = requiredRows.every(r => checks[r.key])
   const missingRequired = requiredRows.filter(r => !checks[r.key]).length
 
+  const [testing, setTesting] = useState(false)
+  const [live, setLive] = useState<Record<string, LiveResult> | null>(null)
+  const [liveError, setLiveError] = useState<string | null>(null)
+
+  async function runLiveTest() {
+    setTesting(true); setLiveError(null)
+    try {
+      const res = await fetch('/api/health/test')
+      const data = await res.json()
+      if (!res.ok) { setLiveError(data.error || 'Test mislukt'); return }
+      setLive(data.results)
+    } catch {
+      setLiveError('Kon de test niet uitvoeren')
+    } finally {
+      setTesting(false)
+    }
+  }
+
   return (
     <div style={{ maxWidth: '860px', margin: '0 auto' }}>
       <PageHeader
@@ -85,6 +112,44 @@ export default function StatusBoard({ checks }: { checks: Checks }) {
               : 'Vul de rood gemarkeerde sleutels in bij Vercel → Settings → Environment Variables.'}
           </div>
         </div>
+      </Card>
+
+      {/* Live test */}
+      <Card style={{ marginBottom: '20px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div style={{ background: 'rgba(26,63,228,.1)', color: 'var(--accent1)', borderRadius: '12px', padding: '10px' }}>
+              <Zap size={20} />
+            </div>
+            <div>
+              <div style={{ fontWeight: 700, fontSize: '.95rem' }}>Live verbindingen testen</div>
+              <div style={{ color: 'var(--muted)', fontSize: '.82rem' }}>Checkt of de sleutels écht werken, niet alleen of ze ingevuld zijn.</div>
+            </div>
+          </div>
+          <PrimaryButton onClick={runLiveTest} disabled={testing}>
+            {testing ? <><Loader2 size={16} className="animate-spin" /> Testen…</> : <>Test nu</>}
+          </PrimaryButton>
+        </div>
+
+        {liveError && (
+          <div style={{ marginTop: '12px', color: 'var(--danger)', fontSize: '.85rem' }}>{liveError}</div>
+        )}
+
+        {live && (
+          <div style={{ marginTop: '14px', display: 'flex', flexDirection: 'column', gap: '2px' }}>
+            {Object.entries(live).map(([key, r]) => (
+              <div key={key} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '8px' }}>
+                {!r.configured
+                  ? <XCircle size={18} style={{ color: 'var(--muted)', opacity: .5, flexShrink: 0 }} />
+                  : r.ok
+                    ? <CheckCircle2 size={18} style={{ color: 'var(--accent3)', flexShrink: 0 }} />
+                    : <XCircle size={18} style={{ color: 'var(--danger)', flexShrink: 0 }} />}
+                <div style={{ flex: 1, fontWeight: 600, fontSize: '.86rem' }}>{LIVE_LABELS[key] || key}</div>
+                <div style={{ color: r.ok ? 'var(--accent3)' : 'var(--muted)', fontSize: '.8rem' }}>{r.message}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </Card>
 
       {GROUPS.map(group => (
