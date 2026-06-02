@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Smartphone, BarChart3 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
 
 const SOCIAL_PLATFORMS = [
   { key: 'instagram', label: 'Instagram', icon: '📸', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', description: 'Posts, Stories, Reels, Insights', scope: 'instagram_basic,instagram_content_publish,instagram_manage_insights,pages_show_list' },
@@ -101,7 +102,7 @@ export default function IntegrationsClient({ socialAccounts, adAccounts, agencyI
                   background: pl.bg, display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0,
                 }}>
-                  {pl.icon}
+                  <PlatformIcon platform={pl.key.replace('_ads', '').replace('meta', 'facebook')} size={22} color="#fff" />
                 </div>
 
                 {/* Info */}
@@ -181,7 +182,7 @@ export default function IntegrationsClient({ socialAccounts, adAccounts, agencyI
                   background: pl.color, display: 'flex', alignItems: 'center',
                   justifyContent: 'center', fontSize: '1.3rem', flexShrink: 0,
                 }}>
-                  {pl.icon}
+                  <PlatformIcon platform={pl.key.replace('_ads', '').replace('meta', 'facebook')} size={22} color="#fff" />
                 </div>
 
                 <div style={{ flex: 1 }}>

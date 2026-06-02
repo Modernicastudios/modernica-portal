@@ -3,7 +3,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, Check } from 'lucide-react'
+import { PlatformIcon } from '@/components/ui/PlatformIcon'
 
 const PLATFORM_ICONS: Record<string, { icon: string; label: string; color: string; bg: string; maxChars: number; mediaType: string }> = {
   instagram: { icon: '📸', label: 'Instagram', color: '#e1306c', bg: 'linear-gradient(135deg,#833ab4,#fd1d1d,#fcb045)', maxChars: 2200, mediaType: 'image/video' },
@@ -200,12 +201,12 @@ export default function ComposeClient({ socialAccounts, clients, mediaAssets, ag
                         cursor: 'pointer', transition: 'all .15s',
                       }}
                     >
-                      <span>{cfg?.icon}</span>
+                      <span style={{ display: 'inline-flex' }}><PlatformIcon platform={account.platform} size={16} /></span>
                       <div style={{ textAlign: 'left' }}>
                         <div style={{ fontSize: '.82rem', fontWeight: 600 }}>{cfg?.label}</div>
                         {account.platform_username && <div style={{ fontSize: '.68rem', color: 'var(--muted)' }}>@{account.platform_username}</div>}
                       </div>
-                      {isSelected && <span style={{ fontSize: '.7rem', color: cfg?.color || 'var(--accent1)' }}>✓</span>}
+                      {isSelected && <Check size={14} style={{ color: cfg?.color || 'var(--accent1)' }} />}
                     </button>
                   )
                 })}
@@ -365,7 +366,9 @@ Tip: gebruik #hashtags en @mentions"
                       background: previewPlatform === p ? cfg.color : 'var(--bg)',
                       color: previewPlatform === p ? '#fff' : 'var(--muted)',
                     }}>
-                      {cfg.icon} {cfg.label}
+                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+                        <PlatformIcon platform={p} size={13} color={previewPlatform === p ? '#fff' : undefined} /> {cfg.label}
+                      </span>
                     </button>
                   )
                 })}
@@ -382,9 +385,9 @@ Tip: gebruik #hashtags en @mentions"
                       <div style={{
                         width: '32px', height: '32px', borderRadius: '50%',
                         background: PLATFORM_ICONS[previewPlatform]?.bg || '#ddd',
-                        display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '.9rem',
+                        display: 'flex', alignItems: 'center', justifyContent: 'center',
                       }}>
-                        {PLATFORM_ICONS[previewPlatform]?.icon}
+                        <PlatformIcon platform={previewPlatform} size={16} color="#fff" />
                       </div>
                       <div>
                         <div style={{ fontSize: '.78rem', fontWeight: 700, color: '#000' }}>

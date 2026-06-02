@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, CSSProperties } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import {
   Plus, Search, MoreHorizontal, Send, Paperclip,
-  MessageSquare, ChevronDown,
+  MessageSquare, ChevronDown, Sparkles,
 } from 'lucide-react'
 
 interface Props {
@@ -116,6 +116,23 @@ export default function ChatClient({
       .eq('conversation_id', convId)
       .order('created_at')
     setMessages(data || [])
+  }
+
+  // AI een antwoord laten opstellen (binnen je eigen agency afgeschermd).
+  const [aiDrafting, setAiDrafting] = useState(false)
+  async function aiWriteReply() {
+    setAiDrafting(true)
+    try {
+      const last = [...messages].reverse().map((m: { content?: string }) => m.content).find((c) => typeof c === 'string' && c.trim()) || ''
+      const brief = newMessage.trim()
+      const prompt = `Schrijf een vriendelijk, professioneel antwoord in het Nederlands voor een klantgesprek.${last ? ` Het laatste bericht in het gesprek was: "${String(last).slice(0, 600)}".` : ''}${brief ? ` Richting voor het antwoord: ${brief}.` : ''} Geef ALLEEN de berichttekst.`
+      const res = await fetch('/api/ai/assist', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+      })
+      const data = await res.json()
+      if (res.ok && data.text) setNewMessage(data.text.trim())
+    } catch { /* stil falen */ } finally { setAiDrafting(false) }
   }
 
   async function sendMessage() {
@@ -500,6 +517,18 @@ export default function ChatClient({
                   }}
                 >
                   <Paperclip size={16} />
+                </button>
+                <button
+                  onClick={aiWriteReply}
+                  disabled={aiDrafting}
+                  title="Laat de AI een antwoord opstellen (pas het daarna gerust aan)"
+                  style={{
+                    background: 'transparent', border: 'none', cursor: aiDrafting ? 'wait' : 'pointer',
+                    color: 'var(--accent1)', padding: '4px', display: 'flex',
+                    alignItems: 'center', flexShrink: 0, opacity: aiDrafting ? 0.5 : 1,
+                  }}
+                >
+                  <Sparkles size={16} />
                 </button>
                 <textarea
                   ref={textareaRef}
