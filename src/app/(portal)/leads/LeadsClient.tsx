@@ -157,6 +157,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [service, setService] = useState<string>(((campaign?.settings as Record<string, unknown>)?.service as string) || 'website')
   const [autoApprove, setAutoApprove] = useState<boolean>(((campaign?.settings as Record<string, unknown>)?.auto_approve) !== false)
   const [inspiration, setInspiration] = useState<string>(((campaign?.settings as Record<string, unknown>)?.inspiration as string) || '')
+  const [rules, setRules] = useState<string>(((campaign?.settings as Record<string, unknown>)?.rules as string) || '')
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<string | null>(null)
@@ -186,7 +187,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, action }),
+        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, rules, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
@@ -197,7 +198,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
-        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null },
+        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null, rules: rules.trim() || null },
       } as LeadCampaign)
     } catch {
       alert('Er ging iets mis. Probeer opnieuw.')
@@ -248,6 +249,18 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           onChange={e => setInspiration(e.target.value)}
           rows={2}
           placeholder="Bv. 'noem dat we lokaal werken, kort & informeel' of een voorbeeld-openingszin. De AI gebruikt dit als basis."
+          style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', resize: 'vertical' }}
+        />
+      </label>
+      <label style={{ display: 'block', marginBottom: '10px' }}>
+        <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
+          Regels — wat de AI nooit/altijd doet (optioneel)
+        </span>
+        <textarea
+          value={rules}
+          onChange={e => setRules(e.target.value)}
+          rows={2}
+          placeholder="Bv. 'nooit prijzen noemen, nooit resultaten beloven, nooit het woord gratis, altijd vrijblijvend, altijd in het Nederlands.' De AI houdt zich hier strikt aan."
           style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', resize: 'vertical' }}
         />
       </label>

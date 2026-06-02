@@ -35,6 +35,7 @@ export async function POST(req: NextRequest) {
   const service: string = VALID_SERVICES.has(body.service) ? body.service : 'website'
   const autoApprove: boolean = body.autoApprove !== false // standaard automatisch
   const inspiration: string | null = typeof body.inspiration === 'string' ? body.inspiration.trim().slice(0, 2000) || null : null
+  const rules: string | null = typeof body.rules === 'string' ? body.rules.trim().slice(0, 2000) || null : null
   const action: 'activate' | 'pause' = body.action === 'pause' ? 'pause' : 'activate'
 
   if (action === 'activate' && !region) {
@@ -68,12 +69,12 @@ export async function POST(req: NextRequest) {
     status,
     region: region || null,
     sbi_code: sbiCode,
-    settings: { service, auto_approve: autoApprove, inspiration },
+    settings: { service, auto_approve: autoApprove, inspiration, rules },
   }
 
   if (existing) {
     const { error } = await admin.from('lead_campaigns')
-      .update({ status, region: region || null, sbi_code: sbiCode, settings: { service, auto_approve: autoApprove, inspiration }, updated_at: new Date().toISOString() })
+      .update({ status, region: region || null, sbi_code: sbiCode, settings: { service, auto_approve: autoApprove, inspiration, rules }, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
     return NextResponse.json({ ok: true, campaignId: existing.id, status })

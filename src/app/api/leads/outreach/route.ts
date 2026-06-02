@@ -81,17 +81,19 @@ export async function POST(req: NextRequest) {
     const ct = (row as any).lead_contacts
     const { data: brand } = await admin
       .from('brand_kits').select('brand_voice').eq('agency_id', profile.agency_id).maybeSingle()
-    // Inspiratie van de bijbehorende campagne meenemen.
+    // Inspiratie + regels van de bijbehorende campagne meenemen.
     let inspiration: string | null = null
+    let rules: string | null = null
     if (co?.campaign_id) {
       const { data: camp } = await admin.from('lead_campaigns').select('settings').eq('id', co.campaign_id).maybeSingle()
       inspiration = (camp?.settings as { inspiration?: string } | null)?.inspiration || null
+      rules = (camp?.settings as { rules?: string } | null)?.rules || null
     }
     const result = await aiOpeningLine({
       name: co?.name || 'Bedrijf', city: co?.city, websiteUrl: co?.website_url,
       contactName: ct?.full_name, service: (row as any).service || 'website',
       brandVoice: (brand as { brand_voice?: string } | null)?.brand_voice || null,
-      inspiration,
+      inspiration, rules,
     })
     if (!result.line) {
       const msg = result.uncertain

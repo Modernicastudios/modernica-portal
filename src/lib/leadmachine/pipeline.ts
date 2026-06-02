@@ -150,14 +150,16 @@ export async function aiOpeningLine(opts: {
   service: string
   brandVoice?: string | null
   inspiration?: string | null
+  rules?: string | null
 }): Promise<{ line: string | null; uncertain: boolean }> {
   if (!ANTHROPIC_API_KEY) return { line: null, uncertain: false }
   const pitch = SERVICE_NL[opts.service] || SERVICE_NL.website
   const tone = opts.brandVoice ? `\nSchrijf in deze merk-stem/toon: ${opts.brandVoice}.` : ''
   const insp = opts.inspiration ? `\nGebruik deze voorbeelden/aanwijzingen als inspiratie voor toon en inhoud (niet letterlijk overnemen, wel per bedrijf personaliseren): ${opts.inspiration}.` : ''
+  const rulesTxt = opts.rules ? `\nSTRIKTE REGELS die je ALTIJD naleeft (nooit overtreden): ${opts.rules}.` : ''
   const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau. Wij willen dit bedrijf helpen met: ${pitch}.
 Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
-Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}
+Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}${rulesTxt}
 Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.
 BELANGRIJK: heb je weinig concrete info over dit specifieke bedrijf, schrijf dan juist een VOORZICHTIGE, vrijblijvende zin (bv. of ${pitch} misschien interessant zou zijn) — zónder valse claims, aannames of stellige beweringen. Doe nooit alsof je iets zeker weet als dat niet zo is, maar lever altijd één bruikbare zin.`
   try {
@@ -202,6 +204,7 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
   // Alleen als de agency 'eerst goedkeuren' aanzet, komen ze in 'draft' (te beoordelen).
   const autoApprove = (campaign.settings as { auto_approve?: boolean })?.auto_approve !== false
   const inspiration = (campaign.settings as { inspiration?: string })?.inspiration || null
+  const rules = (campaign.settings as { rules?: string })?.rules || null
 
   // Merk-stem ophalen zodat de AI in de juiste toon schrijft.
   const { data: brand } = await admin
@@ -240,7 +243,7 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
 
         const ai = await aiOpeningLine({
           name: raw.name, city: raw.city, websiteUrl: raw.website_url,
-          contactName: contact.full_name, service, brandVoice, inspiration,
+          contactName: contact.full_name, service, brandVoice, inspiration, rules,
         })
         if (ai.line) summary.withOpeningLine++
         // Volautomatisch: alleen 'eerst zelf goedkeuren' zet 'm op te beoordelen.
