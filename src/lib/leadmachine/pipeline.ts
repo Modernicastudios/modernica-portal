@@ -59,12 +59,50 @@ async function ingestCompanies(keyword: string, region: string, limit: number): 
 }
 
 // ── 2. Enrichment: contactpersoon + e-mail via Apollo, anders patroon-gok ─────
-type Contact = { full_name: string | null; role: string | null; email: string | null; found_via: 'apollo' | 'pattern' | null; confidence: number }
+type Contact = { full_name: string | null; role: string | null; email: string | null; found_via: 'apollo' | 'site_scrape' | 'pattern' | null; confidence: number }
+
+const JUNK_EMAIL = /(example\.|sentry|\.wix|wixpress|godaddy|\.png|\.jpg|\.jpeg|\.gif|\.webp|@2x|yourdomain|jouwdomein|domain\.com|email\.com|sentry\.io)/i
+const GENERIC_PREFIX = /^(info|contact|hello|hallo|sales|mail|office|administratie|receptie|welkom|vragen)@/
+
+// Eigen website afstruinen op een e-mailadres — het betrouwbaarst voor NL-MKB.
+async function scrapeWebsiteForEmail(company: RawCompany): Promise<Contact | null> {
+  if (!company.website_url) return null
+  const base = company.website_url.replace(/\/+$/, '')
+  const urls = [base, base + '/contact', base + '/over-ons']
+  for (const url of urls) {
+    try {
+      const res = await fetch(url, {
+        signal: AbortSignal.timeout(7000),
+        headers: { 'User-Agent': 'Mozilla/5.0 (compatible; ModernicaBot/1.0)' },
+      })
+      if (!res.ok) continue
+      const html = await res.text()
+      const found = [...html.matchAll(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi)]
+        .map(m => m[0].toLowerCase())
+        .filter(e => !JUNK_EMAIL.test(e))
+      if (found.length === 0) continue
+      const dom = company.domain
+      const onDomain = dom ? found.filter(e => e.endsWith('@' + dom)) : found
+      const pool = onDomain.length ? onDomain : found
+      const personal = pool.find(e => !GENERIC_PREFIX.test(e))
+      const email = personal || pool[0]
+      if (email) {
+        return { full_name: null, role: null, email, found_via: 'site_scrape', confidence: GENERIC_PREFIX.test(email) ? 55 : 75 }
+      }
+    } catch { /* volgende pagina */ }
+  }
+  return null
+}
 
 async function enrichContact(company: RawCompany): Promise<Contact | null> {
-  if (!company.domain) return null
-  // Apollo first
-  if (APOLLO_API_KEY) {
+  if (!company.domain && !company.website_url) return null
+
+  // 1. Eigen website scrapen (gratis, beste dekking voor NL-MKB)
+  const scraped = await scrapeWebsiteForEmail(company)
+  if (scraped) return scraped
+
+  // 2. Apollo (vooral voor grotere/B2B-bedrijven; geeft een naam erbij)
+  if (APOLLO_API_KEY && company.domain) {
     try {
       const res = await fetch('https://api.apollo.io/api/v1/mixed_people/search', {
         method: 'POST',
@@ -83,14 +121,15 @@ async function enrichContact(company: RawCompany): Promise<Contact | null> {
           const email: string | null = p.email && !/not_unlocked|email_not/i.test(p.email) ? p.email : null
           const fullName = p.name || [p.first_name, p.last_name].filter(Boolean).join(' ') || null
           if (email) return { full_name: fullName, role: p.title || null, email, found_via: 'apollo', confidence: 90 }
-          // Apollo kende de persoon maar mailde gemaskeerd -> patroon-gok op voornaam
           if (p.first_name) return { full_name: fullName, role: p.title || null, email: `${p.first_name.toLowerCase()}@${company.domain}`, found_via: 'pattern', confidence: 55 }
         }
       }
     } catch { /* val terug op patroon */ }
   }
-  // Patroon-gok (NL-MKB: info@ als laatste redmiddel)
-  return { full_name: null, role: null, email: `info@${company.domain}`, found_via: 'pattern', confidence: 35 }
+
+  // 3. Patroon-gok als laatste redmiddel
+  if (company.domain) return { full_name: null, role: null, email: `info@${company.domain}`, found_via: 'pattern', confidence: 35 }
+  return null
 }
 
 // ── 3. Personalisatie: AI schrijft een openingszin ───────────────────────────
