@@ -7,7 +7,8 @@ const APIFY_TOKEN = process.env.APIFY_TOKEN || ''
 const APIFY_MAPS_ACTOR = process.env.APIFY_MAPS_ACTOR || 'compass~crawler-google-places'
 const APOLLO_API_KEY = process.env.APOLLO_API_KEY || ''
 const ANTHROPIC_API_KEY = process.env.ANTHROPIC_API_KEY || ''
-const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-sonnet-4-20250514'
+// Standaard een werkend, goedkoop model (live getest). Override kan via env ANTHROPIC_MODEL.
+const ANTHROPIC_MODEL = process.env.ANTHROPIC_MODEL || 'claude-haiku-4-5-20251001'
 const MILLIONVERIFIER_API_KEY = process.env.MILLIONVERIFIER_API_KEY || ''
 
 export type RunSummary = {
