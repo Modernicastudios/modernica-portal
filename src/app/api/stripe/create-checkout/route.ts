@@ -16,7 +16,10 @@ const PRICE_IDS: Record<string, string> = {
   enterprise_yearly: process.env.STRIPE_PRICE_ENTERPRISE_YEARLY || '',
 }
 
+const BILLING_ROLES = new Set(['admin', 'super_admin'])
+
 export async function POST(req: NextRequest) {
+  try {
   const stripe = getStripe()
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
@@ -24,8 +27,12 @@ export async function POST(req: NextRequest) {
 
   const { plan, interval } = await req.json()
 
-  const { data: profile } = await supabase.from('user_profiles').select('agency_id').eq('id', user.id).single()
-  const { data: agency } = await supabase.from('agencies').select('*').eq('id', profile?.agency_id).single()
+  const { data: profile } = await supabase.from('user_profiles').select('agency_id, role').eq('id', user.id).single()
+  // Alleen beheerders mogen een abonnement afsluiten.
+  if (!profile?.role || !BILLING_ROLES.has(profile.role)) {
+    return NextResponse.json({ error: 'Geen rechten' }, { status: 403 })
+  }
+  const { data: agency } = await supabase.from('agencies').select('*').eq('id', profile.agency_id).single()
 
   if (!agency) return NextResponse.json({ error: 'Agency not found' }, { status: 404 })
 
@@ -57,4 +64,7 @@ export async function POST(req: NextRequest) {
   })
 
   return NextResponse.json({ url: session.url })
+  } catch {
+    return NextResponse.json({ error: 'Kon de afrekenpagina niet starten.' }, { status: 500 })
+  }
 }

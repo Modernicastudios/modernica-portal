@@ -2,10 +2,12 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 
 // Ontvangt reactie-events van Smartlead. Zet deze URL in Smartlead als webhook
-// voor 'EMAIL_REPLY'. Optioneel: ?secret=... dat overeenkomt met SMARTLEAD_WEBHOOK_SECRET.
+// voor 'EMAIL_REPLY', inclusief ?secret=... dat overeenkomt met SMARTLEAD_WEBHOOK_SECRET.
+// Het geheim is VERPLICHT: zonder geheim weigeren we elk verzoek, anders zou
+// iedereen leads op 'gereageerd' kunnen zetten en valse meldingen kunnen sturen.
 export async function POST(req: NextRequest) {
   const secret = process.env.SMARTLEAD_WEBHOOK_SECRET
-  if (secret && req.nextUrl.searchParams.get('secret') !== secret) {
+  if (!secret || req.nextUrl.searchParams.get('secret') !== secret) {
     return NextResponse.json({ error: 'Ongeldig' }, { status: 401 })
   }
 

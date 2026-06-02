@@ -20,35 +20,50 @@ export async function GET(req: Request, { params }: { params: Promise<{ token: s
 }
 
 export async function POST(req: Request, { params }: { params: Promise<{ token: string }> }) {
-  const { token } = await params
-  const body = await req.json()
-  const { decision, feedback_note, reviewer_name } = body
+  try {
+    const { token } = await params
+    if (!token || token.length > 200) return NextResponse.json({ error: 'Invalid token' }, { status: 400 })
 
-  // Look up the post
-  const { data: post } = await supabaseAdmin
-    .from('content_posts')
-    .select('id, agency_id')
-    .eq('share_token', token)
-    .single()
+    let body: { decision?: unknown; feedback_note?: unknown; reviewer_name?: unknown } = {}
+    try { body = await req.json() } catch { return NextResponse.json({ error: 'Invalid body' }, { status: 400 }) }
 
-  if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    // Beslissing whitelisten — alleen deze twee waarden zijn toegestaan.
+    const decision = String(body.decision || '')
+    if (decision !== 'approved' && decision !== 'changes_requested') {
+      return NextResponse.json({ error: 'Invalid decision' }, { status: 400 })
+    }
+    // Tekstvelden begrenzen tegen spam/misbruik.
+    const feedback_note = body.feedback_note ? String(body.feedback_note).slice(0, 2000) : null
+    const reviewer_name = body.reviewer_name ? String(body.reviewer_name).slice(0, 120) : null
 
-  // Record feedback
-  await supabaseAdmin.from('approval_feedback').insert({
-    post_id: post.id,
-    share_token: token,
-    decision,
-    feedback_note,
-    reviewer_name,
-  })
+    // Look up the post
+    const { data: post } = await supabaseAdmin
+      .from('content_posts')
+      .select('id, agency_id')
+      .eq('share_token', token)
+      .single()
 
-  // Update post status
-  const newStatus = decision === 'approved' ? 'scheduled' : 'concept'
-  const updateData: Record<string, string> = { status: newStatus }
-  if (decision === 'changes_requested' && feedback_note) {
-    updateData.rejection_note = feedback_note
+    if (!post) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+
+    // Record feedback
+    await supabaseAdmin.from('approval_feedback').insert({
+      post_id: post.id,
+      share_token: token,
+      decision,
+      feedback_note,
+      reviewer_name,
+    })
+
+    // Update post status
+    const newStatus = decision === 'approved' ? 'scheduled' : 'concept'
+    const updateData: Record<string, string> = { status: newStatus }
+    if (decision === 'changes_requested' && feedback_note) {
+      updateData.rejection_note = feedback_note
+    }
+    await supabaseAdmin.from('content_posts').update(updateData).eq('id', post.id)
+
+    return NextResponse.json({ success: true })
+  } catch {
+    return NextResponse.json({ error: 'Er ging iets mis' }, { status: 500 })
   }
-  await supabaseAdmin.from('content_posts').update(updateData).eq('id', post.id)
-
-  return NextResponse.json({ success: true })
 }

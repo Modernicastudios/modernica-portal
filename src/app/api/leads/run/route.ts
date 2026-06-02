@@ -58,6 +58,8 @@ export async function POST(req: NextRequest) {
     const summary = await runCampaign(campaignId, effectiveLimit)
     return NextResponse.json({ ok: true, summary })
   } catch (e) {
-    return NextResponse.json({ error: e instanceof Error ? e.message : 'Onbekende fout' }, { status: 500 })
+    // Interne details niet naar de client lekken; wel loggen voor onszelf.
+    console.error('runCampaign-fout:', e)
+    return NextResponse.json({ error: 'Er ging iets mis bij het ophalen van leads. Probeer het later opnieuw.' }, { status: 500 })
   }
 }
