@@ -2,6 +2,7 @@
 // bedrijven vinden -> contactpersoon + e-mail -> AI-openingszin -> verificatie.
 // Externe sleutels komen uit de omgeving (Vercel env vars).
 import { createAdminClient } from '@/lib/supabase/admin'
+import { recordAiUsage, isOverBudget } from '@/lib/ai/usage'
 
 const APIFY_TOKEN = process.env.APIFY_TOKEN || ''
 const APIFY_MAPS_ACTOR = process.env.APIFY_MAPS_ACTOR || 'compass~crawler-google-places'
@@ -179,7 +180,7 @@ export async function aiOpeningLine(opts: {
   brandVoice?: string | null
   inspiration?: string | null
   rules?: string | null
-}): Promise<{ line: string | null; uncertain: boolean }> {
+}): Promise<{ line: string | null; uncertain: boolean; usage?: { input: number; output: number } }> {
   if (!ANTHROPIC_API_KEY) return { line: null, uncertain: false }
   const pitch = SERVICE_NL[opts.service] || SERVICE_NL.website
   const tone = opts.brandVoice ? `\nSchrijf in deze merk-stem/toon: ${opts.brandVoice}.` : ''
@@ -200,7 +201,10 @@ BELANGRIJK: heb je weinig concrete info over dit specifieke bedrijf, schrijf dan
     if (!res.ok) return { line: null, uncertain: false }
     const data = await res.json()
     const text = (data.content?.[0]?.text || '').trim()
-    return { line: cleanLine(text), uncertain: false }
+    return {
+      line: cleanLine(text), uncertain: false,
+      usage: { input: Number(data.usage?.input_tokens) || 0, output: Number(data.usage?.output_tokens) || 0 },
+    }
   } catch { return { line: null, uncertain: false } }
 }
 
@@ -225,6 +229,12 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
   const { data: campaign, error } = await admin
     .from('lead_campaigns').select('*').eq('id', campaignId).single()
   if (error || !campaign) throw new Error('Campagne niet gevonden')
+
+  // AI-kostenrem: zit de agency boven het maandbudget, dan niet draaien.
+  if (await isOverBudget(admin, campaign.agency_id)) {
+    summary.errors.push('AI-maandbudget bereikt — campagne overgeslagen.')
+    return summary
+  }
 
   const keyword = campaign.sbi_code || 'bedrijf'
   const region = campaign.region || ''
@@ -287,6 +297,10 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
           contactName: contact.full_name, service, brandVoice, inspiration, rules,
         })
         if (ai.line) summary.withOpeningLine++
+        if (ai.usage) await recordAiUsage(admin, {
+          agencyId: campaign.agency_id, clientId: campaign.client_id, kind: 'opening_line',
+          inputTokens: ai.usage.input, outputTokens: ai.usage.output,
+        })
         // Volautomatisch: alleen 'eerst zelf goedkeuren' zet 'm op te beoordelen.
         // Bij weinig info schrijft de AI zelf een voorzichtiger mailtje.
         await admin.from('lead_outreach').insert({

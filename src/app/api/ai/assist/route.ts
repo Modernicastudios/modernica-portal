@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { isOverBudget, recordAiUsage } from '@/lib/ai/usage'
 
 export const maxDuration = 30
 
@@ -37,11 +38,16 @@ export async function POST(req: NextRequest) {
   const admin = createAdminClient()
   const { data: profile } = await admin
     .from('user_profiles').select('agency_id, full_name').eq('id', user.id).single()
-  let agencyName = 'het marketingbureau'
-  if (profile?.agency_id) {
-    const { data: agency } = await admin.from('agencies').select('name').eq('id', profile.agency_id).single()
-    if (agency?.name) agencyName = agency.name
+  if (!profile?.agency_id) return NextResponse.json({ error: 'Geen agency' }, { status: 403 })
+
+  // Maandlimiet bewaken: zit de agency boven budget, dan blokkeren.
+  if (await isOverBudget(admin, profile.agency_id)) {
+    return NextResponse.json({ error: 'Het AI-maandbudget is bereikt. Vraag je beheerder om de limiet te verhogen.' }, { status: 429 })
   }
+
+  let agencyName = 'het marketingbureau'
+  const { data: agency } = await admin.from('agencies').select('name').eq('id', profile.agency_id).single()
+  if (agency?.name) agencyName = agency.name
 
   const system = `Je bent de behulpzame AI-assistent binnen het portaal van ${agencyName}, een marketingbureau. Je helpt het team met schrijven (social media posts, e-mails, advertentieteksten, ideeën, samenvattingen) en met vragen over hun werk.
 Schrijf standaard in het Nederlands, helder en to-the-point. Vraag kort om verduidelijking als iets onduidelijk is. Geef bruikbare, concrete output — geen omhaal. Gebruik nette opmaak (korte alinea's, eventueel opsommingen) maar geen overdreven markdown-kopjes.`
@@ -57,6 +63,13 @@ Schrijf standaard in het Nederlands, helder en to-the-point. Vraag kort om verdu
     }
     const data = await res.json()
     const text = (data.content?.[0]?.text || '').trim()
+    // Verbruik vastleggen voor de kostenbewaking.
+    await recordAiUsage(admin, {
+      agencyId: profile.agency_id,
+      kind: 'assist',
+      inputTokens: Number(data.usage?.input_tokens) || 0,
+      outputTokens: Number(data.usage?.output_tokens) || 0,
+    })
     return NextResponse.json({ ok: true, text })
   } catch {
     return NextResponse.json({ error: 'Er ging iets mis met de AI.' }, { status: 500 })

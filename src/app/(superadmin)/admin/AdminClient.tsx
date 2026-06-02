@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ShieldCheck, Building2, CheckCircle2, Clock, Wallet, User } from 'lucide-react'
+import { ShieldCheck, Building2, CheckCircle2, Clock, Wallet, User, Sparkles } from 'lucide-react'
 
 interface Agency {
   id: string
@@ -14,6 +14,7 @@ interface Agency {
   custom_domain: string | null
   stripe_customer_id: string | null
   features: Record<string, boolean> | null
+  ai_monthly_limit_usd?: number | null
 }
 
 interface User {
@@ -30,6 +31,8 @@ interface Props {
   agencyCount: number
   recentUsers: User[]
   recentSignups: Agency[]
+  aiSpend: Record<string, number>
+  aiDefaultLimit: number
 }
 
 const PLAN_COLORS: Record<string, string> = {
@@ -46,9 +49,26 @@ const STATUS_COLORS: Record<string, string> = {
   canceled: 'var(--muted)',
 }
 
-export default function AdminClient({ agencies, agencyCount, recentUsers, recentSignups }: Props) {
+export default function AdminClient({ agencies, agencyCount, recentUsers, recentSignups, aiSpend, aiDefaultLimit }: Props) {
   const [tab, setTab] = useState<'agencies' | 'users'>('agencies')
   const [search, setSearch] = useState('')
+
+  // AI-maandlimieten per agency (leeg = globale standaard).
+  const [limits, setLimits] = useState<Record<string, string>>(
+    () => Object.fromEntries(agencies.map(a => [a.id, a.ai_monthly_limit_usd != null ? String(a.ai_monthly_limit_usd) : '']))
+  )
+  const [savingLimit, setSavingLimit] = useState<string | null>(null)
+  async function saveLimit(agencyId: string) {
+    setSavingLimit(agencyId)
+    try {
+      const raw = limits[agencyId]
+      const res = await fetch('/api/admin/ai-limit', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ agencyId, limitUsd: raw === '' ? null : Number(raw) }),
+      })
+      if (!res.ok) { const d = await res.json(); alert(d.error || 'Opslaan mislukt') }
+    } catch { alert('Opslaan mislukt') } finally { setSavingLimit(null) }
+  }
   const [features, setFeatures] = useState<Record<string, Record<string, boolean>>>(
     () => Object.fromEntries(agencies.map(a => [a.id, a.features || {}]))
   )
@@ -206,9 +226,9 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
                   <td style={{ padding: '12px 16px', fontSize: '.88rem', color: 'var(--muted)' }}>{agency.max_clients || '5'}</td>
                   <td style={{ padding: '12px 16px' }}>
                     {agency.stripe_customer_id ? (
-                      <span style={{ fontSize: '.72rem', color: 'var(--accent3)' }}>✅ Gekoppeld</span>
+                      <span style={{ fontSize: '.72rem', color: 'var(--accent3)', display: 'inline-flex', alignItems: 'center', gap: '4px' }}><CheckCircle2 size={13} /> Gekoppeld</span>
                     ) : (
-                      <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>— Geen</span>
+                      <span style={{ fontSize: '.72rem', color: 'var(--muted)' }}>Geen</span>
                     )}
                   </td>
                   <td style={{ padding: '12px 16px' }}>
@@ -247,6 +267,57 @@ export default function AdminClient({ agencies, agencyCount, recentUsers, recent
               Geen agencies gevonden
             </div>
           )}
+        </div>
+      )}
+
+      {/* AI-verbruik & limieten per agency */}
+      {tab === 'agencies' && (
+        <div style={{ marginTop: '20px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '18px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+            <Sparkles size={18} style={{ color: 'var(--accent1)' }} />
+            <h3 style={{ fontWeight: 700, fontSize: '.95rem', margin: 0 }}>AI-verbruik deze maand</h3>
+          </div>
+          <p style={{ color: 'var(--muted)', fontSize: '.8rem', margin: '0 0 14px' }}>
+            Geschatte kosten per agency. Stel een maandlimiet in (USD) — leeg = standaard ${aiDefaultLimit}. Bij overschrijding stopt de AI automatisch.
+          </p>
+          <div style={{ display: 'flex', flexDirection: 'column' }}>
+            {filteredAgencies.map(a => {
+              const spend = aiSpend[a.id] || 0
+              const limitVal = limits[a.id] === '' ? aiDefaultLimit : Number(limits[a.id]) || aiDefaultLimit
+              const over = spend >= limitVal
+              const pct = limitVal > 0 ? Math.min(100, (spend / limitVal) * 100) : 0
+              return (
+                <div key={a.id} style={{ display: 'flex', alignItems: 'center', gap: '12px', padding: '10px 4px', borderBottom: '1px solid var(--border)', flexWrap: 'wrap' }}>
+                  <div style={{ flex: '1 1 180px', minWidth: 0 }}>
+                    <div style={{ fontWeight: 600, fontSize: '.85rem' }}>{a.name}</div>
+                    <div style={{ height: '6px', background: 'var(--bg)', borderRadius: '50px', overflow: 'hidden', marginTop: '5px' }}>
+                      <div style={{ width: `${pct}%`, height: '100%', background: over ? 'var(--danger)' : 'var(--accent1)', transition: 'width .3s' }} />
+                    </div>
+                  </div>
+                  <div style={{ width: '70px', textAlign: 'right', fontSize: '.82rem', color: over ? 'var(--danger)' : 'var(--text)', fontWeight: 700 }}>
+                    ${spend.toFixed(2)}
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                    <span style={{ color: 'var(--muted)', fontSize: '.8rem' }}>limiet $</span>
+                    <input
+                      value={limits[a.id]}
+                      onChange={e => setLimits(l => ({ ...l, [a.id]: e.target.value }))}
+                      placeholder={String(aiDefaultLimit)}
+                      inputMode="decimal"
+                      style={{ width: '64px', padding: '5px 8px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.8rem', background: 'var(--bg)', outline: 'none' }}
+                    />
+                    <button
+                      onClick={() => saveLimit(a.id)}
+                      disabled={savingLimit === a.id}
+                      style={{ padding: '5px 12px', border: 'none', borderRadius: 'var(--radius-sm)', background: 'var(--accent1)', color: '#fff', fontSize: '.75rem', fontWeight: 600, cursor: savingLimit === a.id ? 'wait' : 'pointer', opacity: savingLimit === a.id ? 0.6 : 1 }}
+                    >
+                      {savingLimit === a.id ? '…' : 'Opslaan'}
+                    </button>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
       )}
 

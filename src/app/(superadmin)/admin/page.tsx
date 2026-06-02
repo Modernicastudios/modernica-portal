@@ -25,12 +25,26 @@ export default async function AdminPage() {
     admin.from('agencies').select('*').order('created_at', { ascending: false }).limit(10),
   ])
 
+  // AI-verbruik deze maand per agency (USD). Faalt stil als de tabel nog niet bestaat.
+  const aiSpend: Record<string, number> = {}
+  try {
+    const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+    const { data: usage } = await admin
+      .from('ai_usage').select('agency_id, cost_usd').gte('created_at', firstOfMonth)
+    for (const u of usage || []) {
+      aiSpend[u.agency_id] = (aiSpend[u.agency_id] || 0) + Number(u.cost_usd)
+    }
+  } catch { /* migratie nog niet toegepast */ }
+  const aiDefaultLimit = Number(process.env.AI_MONTHLY_LIMIT_USD) || 50
+
   return (
     <AdminClient
       agencies={agencies || []}
       agencyCount={agencyCount || 0}
       recentUsers={recentUsers || []}
       recentSignups={recentSignups || []}
+      aiSpend={aiSpend}
+      aiDefaultLimit={aiDefaultLimit}
     />
   )
 }
