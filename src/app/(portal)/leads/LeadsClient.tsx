@@ -280,6 +280,33 @@ function ClientActivationCard({ client, campaign, onSaved }: {
     } finally { setPreviewing(false) }
   }
 
+  // "Schrijf met AI": laat de AI een veld voor je invullen (inspiratie of regels),
+  // op basis van de gekozen dienst, doelgroep en plaats.
+  const [aiBusy, setAiBusy] = useState<string | null>(null)
+  async function aiFill(target: 'inspiration' | 'rules') {
+    setAiBusy(target)
+    try {
+      const ctx = `Dienst die we pitchen: ${service}. Doelgroep (type bedrijven): ${sbi || 'algemeen'}. Plaats/regio: ${region || 'Nederland'}.`
+      const prompt = target === 'inspiration'
+        ? `Schrijf korte, concrete aanwijzingen (max 3 zinnen) voor de toon en inhoud van een koude wervingsmail. ${ctx} Positief en vriendelijk, nooit de huidige situatie afbranden. Geef ALLEEN de aanwijzingen, geen inleiding of uitleg eromheen.`
+        : `Geef een korte set strikte regels (wel/niet) op één regel, komma-gescheiden, voor een AI die koude wervingsmails schrijft. ${ctx} Denk aan: altijd vrijblijvend, altijd in het Nederlands, nooit resultaten beloven, nooit opdringerig. Geef ALLEEN de regels, geen uitleg.`
+      const res = await fetch('/api/ai/assist', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ messages: [{ role: 'user', content: prompt }] }),
+      })
+      const data = await res.json()
+      if (res.ok && data.text) {
+        if (target === 'inspiration') setInspiration(data.text.trim())
+        else setRules(data.text.trim())
+      }
+    } catch { /* stil falen — gebruiker kan opnieuw proberen */ } finally { setAiBusy(null) }
+  }
+  const aiBtnStyle: React.CSSProperties = {
+    display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '2px 8px',
+    border: '1px solid var(--accent1)', background: 'transparent', color: 'var(--accent1)',
+    borderRadius: 'var(--radius-pill)', fontSize: '.7rem', fontWeight: 600, cursor: 'pointer',
+  }
+
   async function runNow() {
     if (!campaign) return
     setRunning(true); setRunMsg(null)
@@ -359,8 +386,11 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         </span>
       </label>
       <label style={{ display: 'block', marginBottom: '10px' }}>
-        <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
           Inspiratie / aanwijzingen voor de mail (optioneel)
+          <button type="button" onClick={() => aiFill('inspiration')} disabled={aiBusy === 'inspiration'} style={aiBtnStyle}>
+            <Sparkles size={11} /> {aiBusy === 'inspiration' ? 'Bezig…' : 'Schrijf met AI'}
+          </button>
         </span>
         <textarea
           value={inspiration}
@@ -371,8 +401,11 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         />
       </label>
       <label style={{ display: 'block', marginBottom: '10px' }}>
-        <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
+        <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
           Regels — wat de AI nooit/altijd doet (optioneel)
+          <button type="button" onClick={() => aiFill('rules')} disabled={aiBusy === 'rules'} style={aiBtnStyle}>
+            <Sparkles size={11} /> {aiBusy === 'rules' ? 'Bezig…' : 'Schrijf met AI'}
+          </button>
         </span>
         <textarea
           value={rules}
