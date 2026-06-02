@@ -1,6 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { aiOpeningLine } from '@/lib/leadmachine/pipeline'
+
+export const maxDuration = 30
 
 const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
 const MANAGER_ROLES = new Set(['admin', 'manager', 'super_admin'])
@@ -21,13 +24,13 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Geen rechten' }, { status: 403 })
   }
 
-  const { outreachId, action, status } = await req.json()
+  const { outreachId, action, status, openingLine } = await req.json()
   if (typeof outreachId !== 'string') return NextResponse.json({ error: 'outreachId ontbreekt' }, { status: 400 })
 
   // Outreach moet bij deze agency horen.
   const { data: row } = await admin
     .from('lead_outreach')
-    .select('id, agency_id, company_id, contact_id, lead_companies(*), lead_contacts(*)')
+    .select('id, agency_id, company_id, contact_id, service, lead_companies(*), lead_contacts(*)')
     .eq('id', outreachId).single()
   if (!row || row.agency_id !== profile.agency_id) {
     return NextResponse.json({ error: 'Lead niet gevonden' }, { status: 404 })
@@ -61,6 +64,32 @@ export async function POST(req: NextRequest) {
     await admin.from('lead_outreach')
       .update({ status: 'won', updated_at: new Date().toISOString() }).eq('id', outreachId)
     return NextResponse.json({ ok: true, status: 'won', clientId: client.id })
+  }
+
+  // Tekst handmatig aanpassen.
+  if (action === 'edit') {
+    const text = typeof openingLine === 'string' ? openingLine.trim() : ''
+    const { error } = await admin.from('lead_outreach')
+      .update({ opening_line: text || null, updated_at: new Date().toISOString() }).eq('id', outreachId)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+    return NextResponse.json({ ok: true, opening_line: text })
+  }
+
+  // AI opnieuw laten schrijven (in de merk-stem).
+  if (action === 'regenerate') {
+    const co = (row as any).lead_companies
+    const ct = (row as any).lead_contacts
+    const { data: brand } = await admin
+      .from('brand_kits').select('brand_voice').eq('agency_id', profile.agency_id).maybeSingle()
+    const newLine = await aiOpeningLine({
+      name: co?.name || 'Bedrijf', city: co?.city, websiteUrl: co?.website_url,
+      contactName: ct?.full_name, service: (row as any).service || 'website',
+      brandVoice: (brand as { brand_voice?: string } | null)?.brand_voice || null,
+    })
+    if (!newLine) return NextResponse.json({ error: 'AI gaf geen tekst (staat ANTHROPIC_API_KEY en tegoed goed?)' }, { status: 502 })
+    await admin.from('lead_outreach')
+      .update({ opening_line: newLine, updated_at: new Date().toISOString() }).eq('id', outreachId)
+    return NextResponse.json({ ok: true, opening_line: newLine })
   }
 
   return NextResponse.json({ error: 'Onbekende actie' }, { status: 400 })

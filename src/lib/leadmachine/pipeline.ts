@@ -142,12 +142,20 @@ const SERVICE_NL: Record<string, string> = {
   local: 'lokale online marketing',
 }
 
-async function writeOpeningLine(company: RawCompany, contact: Contact, service: string): Promise<string | null> {
+export async function aiOpeningLine(opts: {
+  name: string
+  city?: string | null
+  websiteUrl?: string | null
+  contactName?: string | null
+  service: string
+  brandVoice?: string | null
+}): Promise<string | null> {
   if (!ANTHROPIC_API_KEY) return null
-  const pitch = SERVICE_NL[service] || SERVICE_NL.website
+  const pitch = SERVICE_NL[opts.service] || SERVICE_NL.website
+  const tone = opts.brandVoice ? `\nSchrijf in deze merk-stem/toon: ${opts.brandVoice}.` : ''
   const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau. Wij willen dit bedrijf helpen met: ${pitch}.
-Bedrijf: ${company.name}${company.city ? `, ${company.city}` : ''}${company.website_url ? `, site: ${company.website_url}` : ''}.
-Contactpersoon: ${contact.full_name || 'onbekend'}.
+Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
+Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}
 Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -186,6 +194,12 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
   const keyword = campaign.sbi_code || 'bedrijf'
   const region = campaign.region || ''
   const service = (campaign.settings as { service?: string })?.service || 'website'
+
+  // Merk-stem ophalen zodat de AI in de juiste toon schrijft.
+  const { data: brand } = await admin
+    .from('brand_kits').select('brand_voice').eq('agency_id', campaign.agency_id).maybeSingle()
+  const brandVoice: string | null = (brand as { brand_voice?: string } | null)?.brand_voice || null
+
   const raws = await ingestCompanies(keyword, region, limit)
   summary.found = raws.length
 
@@ -216,12 +230,16 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
           found_via: contact.found_via, confidence: contact.confidence, email_verified: verified,
         }).select('id').single()
 
-        const opening = await writeOpeningLine(raw, contact, service)
+        const opening = await aiOpeningLine({
+          name: raw.name, city: raw.city, websiteUrl: raw.website_url,
+          contactName: contact.full_name, service, brandVoice,
+        })
         if (opening) summary.withOpeningLine++
+        // Status 'draft' = wacht op jouw beoordeling vóór verzenden.
         await admin.from('lead_outreach').insert({
           agency_id: campaign.agency_id, client_id: campaign.client_id, company_id: company.id,
           contact_id: savedContact?.id || null, is_primary: true,
-          service, opening_line: opening, status: 'queued',
+          service, opening_line: opening, status: 'draft',
         })
       }
     } catch (e) {
