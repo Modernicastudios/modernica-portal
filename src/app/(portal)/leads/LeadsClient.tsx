@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui'
@@ -41,6 +41,39 @@ const STAGES: { key: string; label: string; statuses: string[] }[] = [
 function stageKey(status: string): string {
   if (status === 'skipped') return 'lost'
   return status
+}
+
+// Vaste, duidelijke uitleg + 'zo werkt het' — wegklikbaar (onthouden in browser).
+function LeadsGuide() {
+  const [show, setShow] = useState(true)
+  useEffect(() => {
+    try { if (localStorage.getItem('leads_guide_hidden') === '1') setShow(false) } catch { /* noop */ }
+  }, [])
+  function hide() { setShow(false); try { localStorage.setItem('leads_guide_hidden', '1') } catch { /* noop */ } }
+  if (!show) return null
+  const steps = [
+    { icon: <Search size={16} />, t: '1. Vinden', d: 'Wij zoeken bedrijven die bij je doelgroep passen (type + plaats).' },
+    { icon: <Pencil size={16} />, t: '2. Schrijven', d: 'De AI maakt per bedrijf een persoonlijk mailtje, in jouw toon en binnen je regels.' },
+    { icon: <Eye size={16} />, t: '3. Controle', d: 'Alles komt in je pijplijn. Laat het automatisch lopen of pas mails aan.' },
+    { icon: <Target size={16} />, t: '4. Versturen', d: 'Via Smartlead, gespreid over je inboxen — start ná de warmup (~2-3 weken).' },
+    { icon: <CheckCircle2 size={16} />, t: '5. Reacties', d: 'Reacties komen terug in je pijplijn + melding. Win je een lead, dan wordt het een klant.' },
+  ]
+  return (
+    <div style={{ background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '16px 18px', marginBottom: '24px', boxShadow: 'var(--shadow)', borderLeft: '3px solid var(--accent1)' }}>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+        <span style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 700, fontSize: '.95rem' }}>Zo werkt de leadmachine</span>
+        <button onClick={hide} style={{ fontSize: '.75rem', color: 'var(--muted)', background: 'none', border: 'none', cursor: 'pointer', fontWeight: 600 }}>Verbergen</button>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: '12px' }}>
+        {steps.map(s => (
+          <div key={s.t} style={{ background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '10px 12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '7px', color: 'var(--accent1)', fontWeight: 700, fontSize: '.8rem', marginBottom: '4px' }}>{s.icon} {s.t}</div>
+            <div style={{ fontSize: '.74rem', color: 'var(--muted)', lineHeight: 1.4 }}>{s.d}</div>
+          </div>
+        ))}
+      </div>
+    </div>
+  )
 }
 
 export default function LeadsClient({ isManager, clients, campaigns, outreach, agencyName, monthlyUsed, monthlyCap }: Props) {
@@ -84,6 +117,8 @@ export default function LeadsClient({ isManager, clients, campaigns, outreach, a
             : 'Nieuwe bedrijven die bij jou passen, met een kant-en-klaar bericht om op te volgen.'}
         </p>
       </div>
+
+      <LeadsGuide />
 
       {/* Overzichtsbalk — in één oogopslag hoe het ervoor staat */}
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
