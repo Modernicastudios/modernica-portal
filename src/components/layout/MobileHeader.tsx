@@ -31,7 +31,7 @@ export default function MobileHeader({ agencyName, userId, onMenuOpen }: Props) 
       left: 0,
       right: 0,
       height: '56px',
-      background: 'var(--accent1)',
+      background: 'var(--sidebar-bg)',
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'space-between',

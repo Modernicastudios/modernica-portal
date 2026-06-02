@@ -179,7 +179,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
     <aside style={{
       width: 'var(--sidebar-width)',
       minHeight: '100vh',
-      background: 'var(--accent1)',
+      background: 'var(--sidebar-bg)',
       display: 'flex',
       flexDirection: 'column',
       position: 'fixed',
@@ -187,7 +187,8 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       top: 0,
       bottom: 0,
       zIndex: 100,
-      boxShadow: '4px 0 32px rgba(26,63,228,.22)',
+      borderRight: '1px solid var(--sidebar-border)',
+      boxShadow: '1px 0 0 rgba(255,255,255,0.03)',
       transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
       transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
     }}>
