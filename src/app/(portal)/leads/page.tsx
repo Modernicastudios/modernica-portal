@@ -53,6 +53,15 @@ export default async function LeadsPage() {
         .order('company_name')
     : { data: [] }
 
+  // Maand-verbruik t.o.v. de kostenrem (voor de overzichtsbalk).
+  const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
+  const { count: monthlyUsed } = await admin
+    .from('lead_companies')
+    .select('id', { count: 'exact', head: true })
+    .eq('agency_id', profile.agency_id)
+    .gte('created_at', firstOfMonth)
+  const monthlyCap = Number(process.env.LEAD_MONTHLY_CAP) || 2000
+
   return (
     <LeadsClient
       isManager={isManager}
@@ -61,6 +70,8 @@ export default async function LeadsPage() {
       clients={clients || []}
       campaigns={campaigns || []}
       outreach={outreach || []}
+      monthlyUsed={monthlyUsed || 0}
+      monthlyCap={monthlyCap}
     />
   )
 }

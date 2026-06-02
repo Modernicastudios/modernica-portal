@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check } from 'lucide-react'
+import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check, Eye } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import type { LeadCampaign, LeadCompany, LeadContact, LeadOutreach } from '@/types/leadmachine'
 
@@ -25,6 +25,8 @@ interface Props {
   campaigns: LeadCampaign[]
   outreach: OutreachRow[]
   agencyName: string
+  monthlyUsed: number
+  monthlyCap: number
 }
 
 const STAGES: { key: string; label: string; statuses: string[] }[] = [
@@ -41,9 +43,11 @@ function stageKey(status: string): string {
   return status
 }
 
-export default function LeadsClient({ isManager, clients, campaigns, outreach, agencyName }: Props) {
+export default function LeadsClient({ isManager, clients, campaigns, outreach, agencyName, monthlyUsed, monthlyCap }: Props) {
   const [camps, setCamps] = useState<LeadCampaign[]>(campaigns)
   const [rows, setRows] = useState<OutreachRow[]>(outreach)
+
+  const stats = STAGES.map(s => ({ label: s.label, count: rows.filter(r => s.statuses.includes(r.status)).length }))
 
   async function changeStatus(id: string, status: string) {
     setRows(prev => prev.map(r => r.id === id ? { ...r, status: status as OutreachRow['status'] } : r))
@@ -79,6 +83,22 @@ export default function LeadsClient({ isManager, clients, campaigns, outreach, a
             ? 'Zet de leadmachine aan per klant. Wij vinden de bedrijven, de juiste contactpersoon en schrijven het bericht.'
             : 'Nieuwe bedrijven die bij jou passen, met een kant-en-klaar bericht om op te volgen.'}
         </p>
+      </div>
+
+      {/* Overzichtsbalk — in één oogopslag hoe het ervoor staat */}
+      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '24px' }}>
+        {stats.map(s => (
+          <div key={s.label} style={{ flex: '1 1 90px', minWidth: '90px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px', boxShadow: 'var(--shadow)' }}>
+            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.3rem' }}>{s.count}</div>
+            <div style={{ fontSize: '.72rem', color: 'var(--muted)' }}>{s.label}</div>
+          </div>
+        ))}
+        <div style={{ flex: '1 1 120px', minWidth: '120px', background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)', padding: '10px 14px', boxShadow: 'var(--shadow)' }}>
+          <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.3rem' }}>
+            {monthlyUsed}<span style={{ fontSize: '.8rem', color: 'var(--muted)', fontWeight: 400 }}> / {monthlyCap}</span>
+          </div>
+          <div style={{ fontSize: '.72rem', color: 'var(--muted)' }}>deze maand (limiet)</div>
+        </div>
       </div>
 
       {isManager && (
@@ -161,7 +181,24 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<string | null>(null)
+  const [previewing, setPreviewing] = useState(false)
+  const [previewLine, setPreviewLine] = useState<string | null>(null)
   const active = campaign?.status === 'active'
+
+  async function doPreview() {
+    setPreviewing(true); setPreviewLine(null)
+    try {
+      const res = await fetch('/api/leads/preview', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ region, sbi, service, inspiration, rules }),
+      })
+      const data = await res.json()
+      if (!res.ok) { setPreviewLine('⚠️ ' + (data.error || 'Mislukt')); return }
+      setPreviewLine(data.line)
+    } catch {
+      setPreviewLine('⚠️ Er ging iets mis')
+    } finally { setPreviewing(false) }
+  }
 
   async function runNow() {
     if (!campaign) return
@@ -174,7 +211,8 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const data = await res.json()
       if (!res.ok) { setRunMsg('Fout: ' + (data.error || 'mislukt')); return }
       const s = data.summary
-      setRunMsg(`${s.found} bedrijven gevonden · ${s.withEmail} met e-mail · ${s.withOpeningLine} met openingszin.`)
+      const skip = s.skipped ? ` · ${s.skipped} overgeslagen (dubbel/eigen klant)` : ''
+      setRunMsg(`${s.found} bedrijven gevonden${skip} · ${s.withEmail} met e-mail · ${s.withOpeningLine} met mailtje.`)
       router.refresh()
     } catch {
       setRunMsg('Er ging iets mis. Probeer opnieuw.')
@@ -315,7 +353,17 @@ function ClientActivationCard({ client, campaign, onSaved }: {
             {saving ? 'Bezig…' : 'Activeren'}
           </button>
         )}
+        <button onClick={doPreview} disabled={previewing} title="Genereer 1 voorbeeldmail met deze instellingen (gratis)"
+          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 14px', borderRadius: 'var(--radius-sm)', border: '1px solid var(--border)', background: 'var(--card)', color: 'var(--text)', fontWeight: 600, fontSize: '.82rem', cursor: previewing ? 'wait' : 'pointer' }}>
+          <Eye size={14} /> {previewing ? 'Even…' : 'Voorbeeld'}
+        </button>
       </div>
+      {previewLine && (
+        <div style={{ marginTop: '10px', fontSize: '.82rem', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '10px 12px', borderLeft: '3px solid var(--accent1)' }}>
+          <div style={{ fontSize: '.7rem', color: 'var(--muted)', marginBottom: '3px', textTransform: 'uppercase', letterSpacing: '.06em' }}>Voorbeeld-openingszin</div>
+          <span style={{ fontStyle: 'italic' }}>“{previewLine}”</span>
+        </div>
+      )}
       {runMsg && (
         <div style={{ marginTop: '10px', fontSize: '.8rem', color: 'var(--muted)', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', padding: '8px 10px' }}>
           {runMsg}

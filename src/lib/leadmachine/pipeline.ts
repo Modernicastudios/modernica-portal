@@ -12,6 +12,7 @@ const MILLIONVERIFIER_API_KEY = process.env.MILLIONVERIFIER_API_KEY || ''
 
 export type RunSummary = {
   found: number
+  skipped: number
   withContact: number
   withEmail: number
   withOpeningLine: number
@@ -25,6 +26,15 @@ type RawCompany = {
   phone: string | null
   address: string | null
   city: string | null
+}
+
+// Haal het 'kale' domein uit een url of domein-string (voor dedup/uitsluiting).
+function domainFromUrl(input: string | null | undefined): string | null {
+  if (!input) return null
+  let s = input.trim().toLowerCase()
+  if (!s) return null
+  try { if (s.includes('://')) s = new URL(s).hostname } catch { /* geen geldige url */ }
+  return s.replace(/^www\./, '').replace(/\/.*$/, '') || null
 }
 
 // ── 1. Ingestion: bedrijven via Apify (Google Maps) ──────────────────────────
@@ -191,7 +201,7 @@ async function verifyEmail(email: string): Promise<'valid' | 'risky' | 'invalid'
 // ── Orchestratie: draai één campagne voor een batch bedrijven ────────────────
 export async function runCampaign(campaignId: string, limit = 5): Promise<RunSummary> {
   const admin = createAdminClient()
-  const summary: RunSummary = { found: 0, withContact: 0, withEmail: 0, withOpeningLine: 0, errors: [] }
+  const summary: RunSummary = { found: 0, skipped: 0, withContact: 0, withEmail: 0, withOpeningLine: 0, errors: [] }
 
   const { data: campaign, error } = await admin
     .from('lead_campaigns').select('*').eq('id', campaignId).single()
@@ -214,8 +224,20 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
   const raws = await ingestCompanies(keyword, region, limit)
   summary.found = raws.length
 
+  // Uitsluiting/dedup: bestaande gevonden bedrijven + eigen klanten nooit (opnieuw) mailen.
+  const suppress = new Set<string>()
+  const { data: existingCos } = await admin
+    .from('lead_companies').select('domain').eq('agency_id', campaign.agency_id).not('domain', 'is', null)
+  existingCos?.forEach((c: { domain: string | null }) => { const d = domainFromUrl(c.domain); if (d) suppress.add(d) })
+  const { data: clientSites } = await admin
+    .from('clients').select('website').eq('agency_id', campaign.agency_id).not('website', 'is', null)
+  clientSites?.forEach((c: { website: string | null }) => { const d = domainFromUrl(c.website); if (d) suppress.add(d) })
+
   for (const raw of raws) {
     try {
+      const dom = domainFromUrl(raw.domain)
+      if (dom && suppress.has(dom)) { summary.skipped++; continue } // dubbel of eigen klant
+      if (dom) suppress.add(dom) // binnen deze batch ook niet dubbel
       const { data: company } = await admin.from('lead_companies').upsert({
         agency_id: campaign.agency_id,
         client_id: campaign.client_id,
