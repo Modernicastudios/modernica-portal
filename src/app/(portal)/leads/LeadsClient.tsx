@@ -150,6 +150,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [region, setRegion] = useState(campaign?.region || client.city || '')
   const [sbi, setSbi] = useState(campaign?.sbi_code || '')
   const [service, setService] = useState<string>(((campaign?.settings as Record<string, unknown>)?.service as string) || 'website')
+  const [autoApprove, setAutoApprove] = useState<boolean>(((campaign?.settings as Record<string, unknown>)?.auto_approve) !== false)
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<string | null>(null)
@@ -179,7 +180,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, service, action }),
+        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, service, autoApprove, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
@@ -190,7 +191,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
-        settings: { ...(campaign?.settings || {}), service },
+        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove },
       } as LeadCampaign)
     } catch {
       alert('Er ging iets mis. Probeer opnieuw.')
@@ -224,6 +225,14 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         Welke bedrijven wil je benaderen <strong>voor {client.company_name}</strong>? Beschrijf de
         doelgroep — de <em>potentiële klanten</em> van {client.company_name}, niet {client.company_name} zelf.
       </div>
+      <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '.78rem', marginBottom: '10px', cursor: 'pointer' }}>
+        <input type="checkbox" checked={autoApprove} onChange={e => setAutoApprove(e.target.checked)} />
+        <span style={{ color: 'var(--text)' }}>
+          {autoApprove
+            ? 'Automatisch versturen — leads gaan meteen door (je kunt alles wel volgen & ingrijpen)'
+            : 'Eerst zelf goedkeuren — elke mail komt in "Te beoordelen" vóór versturen'}
+        </span>
+      </label>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <label style={{ flex: 2, minWidth: '170px' }}>
           <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>Wat voor bedrijven? (doelgroep)</span>

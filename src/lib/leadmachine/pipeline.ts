@@ -194,6 +194,9 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
   const keyword = campaign.sbi_code || 'bedrijf'
   const region = campaign.region || ''
   const service = (campaign.settings as { service?: string })?.service || 'website'
+  // Standaard automatisch: leads gaan meteen door (status 'queued' = goedgekeurd).
+  // Alleen als de agency 'eerst goedkeuren' aanzet, komen ze in 'draft' (te beoordelen).
+  const autoApprove = (campaign.settings as { auto_approve?: boolean })?.auto_approve !== false
 
   // Merk-stem ophalen zodat de AI in de juiste toon schrijft.
   const { data: brand } = await admin
@@ -235,11 +238,10 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
           contactName: contact.full_name, service, brandVoice,
         })
         if (opening) summary.withOpeningLine++
-        // Status 'draft' = wacht op jouw beoordeling vóór verzenden.
         await admin.from('lead_outreach').insert({
           agency_id: campaign.agency_id, client_id: campaign.client_id, company_id: company.id,
           contact_id: savedContact?.id || null, is_primary: true,
-          service, opening_line: opening, status: 'draft',
+          service, opening_line: opening, status: autoApprove ? 'queued' : 'draft',
         })
       }
     } catch (e) {
