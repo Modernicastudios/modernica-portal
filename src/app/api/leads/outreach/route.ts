@@ -81,10 +81,17 @@ export async function POST(req: NextRequest) {
     const ct = (row as any).lead_contacts
     const { data: brand } = await admin
       .from('brand_kits').select('brand_voice').eq('agency_id', profile.agency_id).maybeSingle()
+    // Inspiratie van de bijbehorende campagne meenemen.
+    let inspiration: string | null = null
+    if (co?.campaign_id) {
+      const { data: camp } = await admin.from('lead_campaigns').select('settings').eq('id', co.campaign_id).maybeSingle()
+      inspiration = (camp?.settings as { inspiration?: string } | null)?.inspiration || null
+    }
     const newLine = await aiOpeningLine({
       name: co?.name || 'Bedrijf', city: co?.city, websiteUrl: co?.website_url,
       contactName: ct?.full_name, service: (row as any).service || 'website',
       brandVoice: (brand as { brand_voice?: string } | null)?.brand_voice || null,
+      inspiration,
     })
     if (!newLine) return NextResponse.json({ error: 'AI gaf geen tekst (staat ANTHROPIC_API_KEY en tegoed goed?)' }, { status: 502 })
     await admin.from('lead_outreach')

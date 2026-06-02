@@ -151,6 +151,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [sbi, setSbi] = useState(campaign?.sbi_code || '')
   const [service, setService] = useState<string>(((campaign?.settings as Record<string, unknown>)?.service as string) || 'website')
   const [autoApprove, setAutoApprove] = useState<boolean>(((campaign?.settings as Record<string, unknown>)?.auto_approve) !== false)
+  const [inspiration, setInspiration] = useState<string>(((campaign?.settings as Record<string, unknown>)?.inspiration as string) || '')
   const [saving, setSaving] = useState(false)
   const [running, setRunning] = useState(false)
   const [runMsg, setRunMsg] = useState<string | null>(null)
@@ -180,7 +181,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, service, autoApprove, action }),
+        body: JSON.stringify({ clientId: client.id, region, sbiCode: sbi, service, autoApprove, inspiration, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
@@ -191,7 +192,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
-        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove },
+        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null },
       } as LeadCampaign)
     } catch {
       alert('Er ging iets mis. Probeer opnieuw.')
@@ -232,6 +233,18 @@ function ClientActivationCard({ client, campaign, onSaved }: {
             ? 'Automatisch versturen — leads gaan meteen door (je kunt alles wel volgen & ingrijpen)'
             : 'Eerst zelf goedkeuren — elke mail komt in "Te beoordelen" vóór versturen'}
         </span>
+      </label>
+      <label style={{ display: 'block', marginBottom: '10px' }}>
+        <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
+          Inspiratie / aanwijzingen voor de mail (optioneel)
+        </span>
+        <textarea
+          value={inspiration}
+          onChange={e => setInspiration(e.target.value)}
+          rows={2}
+          placeholder="Bv. 'noem dat we lokaal werken, kort & informeel' of een voorbeeld-openingszin. De AI gebruikt dit als basis."
+          style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', resize: 'vertical' }}
+        />
       </label>
       <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <label style={{ flex: 2, minWidth: '170px' }}>

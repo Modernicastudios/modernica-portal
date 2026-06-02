@@ -149,13 +149,15 @@ export async function aiOpeningLine(opts: {
   contactName?: string | null
   service: string
   brandVoice?: string | null
+  inspiration?: string | null
 }): Promise<string | null> {
   if (!ANTHROPIC_API_KEY) return null
   const pitch = SERVICE_NL[opts.service] || SERVICE_NL.website
   const tone = opts.brandVoice ? `\nSchrijf in deze merk-stem/toon: ${opts.brandVoice}.` : ''
+  const insp = opts.inspiration ? `\nGebruik deze voorbeelden/aanwijzingen als inspiratie voor toon en inhoud (niet letterlijk overnemen, wel per bedrijf personaliseren): ${opts.inspiration}.` : ''
   const prompt = `Je schrijft de openingszin van een koude wervingsmail namens Modernica Studios, een creatief/marketingbureau. Wij willen dit bedrijf helpen met: ${pitch}.
 Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
-Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}
+Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}
 Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geen begroeting, geen clichés, geen aanhalingstekens. Alleen die ene zin.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {
@@ -197,6 +199,7 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
   // Standaard automatisch: leads gaan meteen door (status 'queued' = goedgekeurd).
   // Alleen als de agency 'eerst goedkeuren' aanzet, komen ze in 'draft' (te beoordelen).
   const autoApprove = (campaign.settings as { auto_approve?: boolean })?.auto_approve !== false
+  const inspiration = (campaign.settings as { inspiration?: string })?.inspiration || null
 
   // Merk-stem ophalen zodat de AI in de juiste toon schrijft.
   const { data: brand } = await admin
@@ -235,7 +238,7 @@ export async function runCampaign(campaignId: string, limit = 5): Promise<RunSum
 
         const opening = await aiOpeningLine({
           name: raw.name, city: raw.city, websiteUrl: raw.website_url,
-          contactName: contact.full_name, service, brandVoice,
+          contactName: contact.full_name, service, brandVoice, inspiration,
         })
         if (opening) summary.withOpeningLine++
         await admin.from('lead_outreach').insert({
