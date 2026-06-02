@@ -109,16 +109,19 @@ export default function AgencySettingsClient({ agency, brandKit: initialBrandKit
 
   async function saveAgency() {
     setSaving(true)
-    const { error: agErr } = await supabase
-      .from('agencies')
-      .update({ name: agencyForm.name })
-      .eq('id', agencyId)
-    const { error: bkErr } = await supabase
-      .from('brand_kits')
-      .upsert({ ...brandForm, agency_id: agencyId }, { onConflict: 'agency_id' })
-    if (!agErr && !bkErr) showToast('Instellingen opgeslagen')
-    else showToast('Fout bij opslaan', false)
-    setSaving(false)
+    try {
+      const res = await fetch('/api/settings/agency', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: agencyForm.name, brand: brandForm }),
+      })
+      const data = await res.json().catch(() => ({}))
+      if (res.ok) showToast('Instellingen opgeslagen')
+      else showToast(data.error || 'Fout bij opslaan', false)
+    } catch {
+      showToast('Fout bij opslaan', false)
+    } finally {
+      setSaving(false)
+    }
   }
 
   async function handleLogoFile(file: File) {
