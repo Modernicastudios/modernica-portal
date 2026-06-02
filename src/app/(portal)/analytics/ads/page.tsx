@@ -14,7 +14,7 @@ export default async function AdsPage() {
     .single()
 
   const agencyId = profile?.agency_id || ''
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
   const isClient = !!profile?.client_id
 
   const twelveMonthsAgo = new Date()

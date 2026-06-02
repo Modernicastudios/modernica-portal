@@ -14,7 +14,7 @@ export default async function ReportsPage() {
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
   const agencyId = profile?.agency_id
 
   if (profile?.role === 'client') redirect('/dashboard')

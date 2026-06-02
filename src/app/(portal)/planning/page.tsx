@@ -15,7 +15,7 @@ export default async function PlanningPage() {
     .single()
 
   const agencyId: string = profile?.agency_id || ''
-  const isAdmin: boolean = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin: boolean = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
   const isClient: boolean = !!profile?.client_id
 
   const [

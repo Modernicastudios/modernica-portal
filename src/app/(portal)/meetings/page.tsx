@@ -17,7 +17,7 @@ export default async function MeetingsPage() {
   if (profile?.client_id) redirect('/dashboard')
 
   const agencyId = profile?.agency_id
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
 
   const [{ data: meetings }, { data: clients }, { data: projects }] = await Promise.all([
     supabase

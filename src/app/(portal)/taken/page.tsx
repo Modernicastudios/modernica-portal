@@ -16,7 +16,7 @@ export default async function TakenPage() {
   if (!profile) redirect('/login')
 
   const agencyId: string = profile.agency_id || ''
-  const isAdmin = profile.role === 'admin' || profile.role === 'manager'
+  const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
   const isClient = profile.role === 'client'
   const clientId = profile.client_id || null
 

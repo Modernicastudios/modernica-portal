@@ -11,7 +11,7 @@ import {
   LayoutDashboard, BarChart2, TrendingUp, Kanban, CalendarDays, CheckSquare,
   ThumbsUp, Calendar, Video, MessageSquare, Lightbulb, Image, PieChart,
   FileText, Users, Link2, Settings, CreditCard, Shield, User, LogOut, X,
-  BarChart3, Clock, ChevronDown, Target, Search,
+  BarChart3, Clock, ChevronDown, Target, Search, Rocket, Activity,
 } from 'lucide-react'
 
 interface Props {
@@ -100,6 +100,9 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
       ...(leadMachineOn ? [{ href: '/leads', label: 'Leads & E-mail', icon: <Target size={16} /> }] : []),
     ] },
+    { label: 'Eigen marketing', items: [
+      { href: '/eigen-marketing', label: 'Voor jezelf', icon: <Rocket size={16} /> },
+    ] },
     { label: 'Werk', items: [
       { href: '/projects', label: 'Projecten', icon: <Kanban size={16} /> },
       { href: '/taken', label: 'Taken', icon: <CheckSquare size={16} /> },
@@ -119,6 +122,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
       { href: '/settings/integrations', label: 'Koppelingen', icon: <Link2 size={16} /> },
       { href: '/settings/agency', label: 'Agency-instellingen', icon: <Settings size={16} /> },
       { href: '/settings/billing', label: 'Abonnement', icon: <CreditCard size={16} /> },
+      { href: '/settings/status', label: 'Systeemstatus', icon: <Activity size={16} /> },
       { href: '/settings/profile', label: 'Mijn profiel', icon: <User size={16} /> },
     ] },
     ...(isSuperAdmin ? [{ label: 'Super Admin', items: [

@@ -15,7 +15,7 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .single()
 
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
   const agencyId = profile?.agency_id || ''
   const clientId = profile?.client_id || null
 

@@ -15,7 +15,7 @@ export default async function ApprovePage() {
     .single()
 
   const agencyId = profile?.agency_id || ''
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
   const isClient = !!profile?.client_id
 
   let postsQuery = supabase

@@ -14,7 +14,7 @@ export default async function IdeasPage() {
     .single()
 
   const agencyId = profile?.agency_id || ''
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
 
   // Clients have no access to ideas board — redirect to their workspace
   if (profile?.role === 'client') redirect('/dashboard')

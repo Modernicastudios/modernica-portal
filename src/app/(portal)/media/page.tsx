@@ -14,7 +14,7 @@ export default async function MediaPage() {
     .single()
 
   const agencyId = profile?.agency_id
-  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager'
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'manager' || profile?.role === 'super_admin'
 
   // Clients have no direct access to agency media library
   if (profile?.role === 'client') redirect('/dashboard')
