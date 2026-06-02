@@ -189,6 +189,7 @@ export async function aiOpeningLine(opts: {
 Bedrijf: ${opts.name}${opts.city ? `, ${opts.city}` : ''}${opts.websiteUrl ? `, site: ${opts.websiteUrl}` : ''}.
 Contactpersoon: ${opts.contactName || 'onbekend'}.${tone}${insp}${rulesTxt}
 Schrijf één natuurlijke, persoonlijke openingszin in het Nederlands (max 25 woorden) die concreet naar dit bedrijf verwijst en subtiel aansluit op ${pitch}. Geef ALLEEN die kale zin terug: geen begroeting, geen aanhalingstekens, geen kopjes, geen markdown (#, **), geen uitleg en geen alternatieven.
+TOON (ALTIJD naleven): blijf positief, complimenterend en respectvol. Kraak NOOIT hun huidige website of aanpak af — gebruik nooit woorden als 'slecht', 'lelijk', 'matig' of 'verouderd' als verwijt. Benoem hooguit subtiel en vriendelijk dat iets nóg frisser, moderner of sterker kan, vanuit waardering voor wat er al staat. Geen druk, geen overdreven verkooppraat.
 BELANGRIJK: heb je weinig concrete info over dit specifieke bedrijf, schrijf dan juist een VOORZICHTIGE, vrijblijvende zin (bv. of ${pitch} misschien interessant zou zijn) — zónder valse claims, aannames of stellige beweringen. Doe nooit alsof je iets zeker weet als dat niet zo is, maar lever altijd één bruikbare zin.`
   try {
     const res = await fetch('https://api.anthropic.com/v1/messages', {

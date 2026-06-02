@@ -65,6 +65,43 @@ export async function createCampaignWithSequence(opts: {
   }
 }
 
+// Haalt alle gekoppelde inboxen (e-mailaccounts) op. Gebruikt om ze automatisch
+// aan een nieuwe campagne te hangen.
+export async function listEmailAccounts(): Promise<{ ok: boolean; ids: number[]; error?: string }> {
+  if (!SMARTLEAD_API_KEY) return { ok: false, ids: [], error: 'SMARTLEAD_API_KEY ontbreekt' }
+  try {
+    const res = await fetch(`${SMARTLEAD_BASE}/email-accounts/?api_key=${SMARTLEAD_API_KEY}`)
+    if (!res.ok) return { ok: false, ids: [], error: `Inboxen ophalen mislukt (${res.status})` }
+    const data = await res.json()
+    const arr = Array.isArray(data) ? data : (data.data || data.email_accounts || [])
+    const ids = arr.map((a: { id?: number; email_account_id?: number }) => Number(a.id ?? a.email_account_id)).filter((n: number) => Number.isFinite(n) && n > 0)
+    return { ok: true, ids }
+  } catch (e) {
+    return { ok: false, ids: [], error: e instanceof Error ? e.message : 'Onbekende fout' }
+  }
+}
+
+// Koppelt inboxen (e-mailaccounts) aan een campagne. Meerdere campagnes mogen
+// dezelfde inboxen delen; Smartlead bewaakt de totale daglimiet per inbox.
+export async function attachEmailAccounts(campaignId: string, ids: number[]): Promise<{ ok: boolean; error?: string }> {
+  if (!SMARTLEAD_API_KEY) return { ok: false, error: 'SMARTLEAD_API_KEY ontbreekt' }
+  if (ids.length === 0) return { ok: true }
+  try {
+    const res = await fetch(`${SMARTLEAD_BASE}/campaigns/${campaignId}/email-accounts?api_key=${SMARTLEAD_API_KEY}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email_account_ids: ids }),
+    })
+    if (!res.ok) {
+      const txt = (await res.text()).slice(0, 300)
+      return { ok: false, error: `Inboxen koppelen mislukt (${res.status}): ${txt}` }
+    }
+    return { ok: true }
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : 'Onbekende fout' }
+  }
+}
+
 // Voeg leads toe aan een Smartlead-campagne. Smartlead verstuurt ze dan zelf
 // (met rotatie over de inboxen + daglimieten), zodra de campagne actief is.
 export async function pushLeadsToCampaign(campaignId: string, leads: SmartleadLead[]): Promise<{ ok: boolean; error?: string }> {

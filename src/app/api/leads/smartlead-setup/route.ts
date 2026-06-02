@@ -1,7 +1,37 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import { createCampaignWithSequence, smartleadConfigured } from '@/lib/leadmachine/smartlead'
+import { createCampaignWithSequence, smartleadConfigured, listEmailAccounts, attachEmailAccounts } from '@/lib/leadmachine/smartlead'
+
+// Bouwt onderwerp + e-mailtekst per dienst. Toon: altijd positief, nooit
+// afbranden, met een gratis preview als haakje en een zachte open afsluiter.
+function buildTemplate(service: string, agencyName: string): { subject: string; htmlBody: string } {
+  const sign = `<p>Groet,<br>${agencyName}</p>`
+  if (service === 'website') {
+    return {
+      subject: 'Een frisse blik op de site van {{company_name}}?',
+      htmlBody: [
+        '<p>Hi {{first_name}},</p>',
+        '<p>{{opening_line}}</p>',
+        `<p>Wij van ${agencyName} maken websites die fijn werken én er strak uitzien. Wat er bij {{company_name}} staat ziet er al goed uit — we denken dat het op punten misschien nóg frisser of moderner kan.</p>`,
+        '<p>Het mooie: we maken vrijblijvend een <strong>gratis preview</strong> van hoe jullie nieuwe site eruit zou kunnen zien. Geen verplichtingen, gewoon kijken of het je aanspreekt.</p>',
+        '<p>Lijkt het je wat? Laat het me even weten, dan maak ik die preview voor je.</p>',
+        sign,
+      ].join(''),
+    }
+  }
+  return {
+    subject: 'Een idee voor {{company_name}}, {{first_name}}',
+    htmlBody: [
+      '<p>Hi {{first_name}},</p>',
+      '<p>{{opening_line}}</p>',
+      `<p>Wij van ${agencyName} helpen bedrijven aan meer klanten met slimme marketing. Wat jullie nu doen ziet er al goed uit — we denken dat er op punten misschien nog iets moois bij kan.</p>`,
+      '<p>Vrijblijvend laten we graag zien wat we voor {{company_name}} zouden kunnen betekenen.</p>',
+      '<p>Lijkt het je wat? Laat het me even weten, dan denk ik graag met je mee.</p>',
+      sign,
+    ].join(''),
+  }
+}
 
 export const maxDuration = 30
 
@@ -49,16 +79,8 @@ export async function POST(req: NextRequest) {
     label = client?.company_name || 'Klant'
   }
   const name = `${agencyName} – ${label} (leadmachine)`
-
-  // Standaard Nederlands sjabloon. {{opening_line}} = de AI-openingszin per lead.
-  const subject = 'Even kort, {{first_name}}'
-  const htmlBody = [
-    '<p>Hi {{first_name}},</p>',
-    '<p>{{opening_line}}</p>',
-    `<p>Wij van ${agencyName} helpen bedrijven aan meer klanten met slimme websites, social media en advertenties. Ik dacht dat dit ook voor {{company_name}} interessant kon zijn.</p>`,
-    '<p>Heb je deze week 10 minuten om kort te sparren?</p>',
-    `<p>Groet,<br>${agencyName}</p>`,
-  ].join('')
+  const service = String(settings.service || 'website')
+  const { subject, htmlBody } = buildTemplate(service, agencyName)
 
   const result = await createCampaignWithSequence({ name, subject, htmlBody })
   if (!result.ok || !result.campaignId) {
@@ -69,5 +91,23 @@ export async function POST(req: NextRequest) {
   const newSettings = { ...settings, smartlead_campaign_id: result.campaignId }
   await admin.from('lead_campaigns').update({ settings: newSettings, updated_at: new Date().toISOString() }).eq('id', campaign.id)
 
-  return NextResponse.json({ ok: true, smartleadCampaignId: result.campaignId, warning: result.error || null })
+  // Alle inboxen automatisch aan de campagne koppelen (mogen door meerdere
+  // campagnes gedeeld worden). Lukt dit niet, dan blijft de campagne wel staan.
+  let attached = 0
+  let attachWarning: string | null = null
+  const accounts = await listEmailAccounts()
+  if (accounts.ok && accounts.ids.length > 0) {
+    const att = await attachEmailAccounts(result.campaignId, accounts.ids)
+    if (att.ok) attached = accounts.ids.length
+    else attachWarning = att.error || 'Inboxen koppelen mislukte'
+  } else if (accounts.error) {
+    attachWarning = accounts.error
+  }
+
+  return NextResponse.json({
+    ok: true,
+    smartleadCampaignId: result.campaignId,
+    attached,
+    warning: result.error || attachWarning || null,
+  })
 }

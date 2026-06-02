@@ -231,9 +231,13 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const data = await res.json()
       if (!res.ok) { setSetupMsg('⚠️ ' + (data.error || 'Mislukt')); return }
       if (data.smartleadCampaignId) setSmartleadId(String(data.smartleadCampaignId))
-      setSetupMsg(data.alreadyLinked
-        ? 'Al gekoppeld — campagne-ID staat ingevuld.'
-        : `Smartlead-campagne aangemaakt ✓ (ID ${data.smartleadCampaignId}). Koppel in Smartlead nog je inboxen en zet 'm aan.`)
+      if (data.alreadyLinked) {
+        setSetupMsg('Al gekoppeld — campagne-ID staat ingevuld.')
+      } else {
+        const inbox = data.attached ? `${data.attached} inboxen automatisch gekoppeld. ` : ''
+        const warn = data.warning ? `Let op: ${data.warning}. ` : ''
+        setSetupMsg(`Smartlead-campagne + sjabloon aangemaakt ✓ (ID ${data.smartleadCampaignId}). ${inbox}${warn}Zet 'm in Smartlead alleen nog op 'aan' (na de warm-up).`)
+      }
     } catch {
       setSetupMsg('⚠️ Er ging iets mis')
     } finally { setSetupBusy(false) }
