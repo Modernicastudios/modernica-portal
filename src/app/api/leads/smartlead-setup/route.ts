@@ -4,9 +4,13 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { createCampaignWithSequence, smartleadConfigured, listEmailAccounts, attachEmailAccounts } from '@/lib/leadmachine/smartlead'
 
 // Bouwt onderwerp + e-mailtekst per dienst. Toon: altijd positief, nooit
-// afbranden, met een gratis preview als haakje en een zachte open afsluiter.
-function buildTemplate(service: string, agencyName: string): { subject: string; htmlBody: string } {
-  const sign = `<p>Groet,<br>${agencyName}</p>`
+// afbranden, met gratis advies/offerte als haakje en een zachte open afsluiter.
+function buildTemplate(service: string, agencyName: string, signature?: string | null): { subject: string; htmlBody: string } {
+  // Handtekening: gebruik de ingevulde handtekening (naam, website, telefoon,
+  // links), anders alleen de agency-naam. Regelovergangen worden <br>.
+  const sign = signature && signature.trim()
+    ? `<p>${signature.trim().replace(/\n/g, '<br>')}</p>`
+    : `<p>Groet,<br>${agencyName}</p>`
   if (service === 'website') {
     return {
       subject: 'Een frisse blik op de site van {{company_name}}?',
@@ -80,7 +84,8 @@ export async function POST(req: NextRequest) {
   }
   const name = `${agencyName} – ${label} (leadmachine)`
   const service = String(settings.service || 'website')
-  const { subject, htmlBody } = buildTemplate(service, agencyName)
+  const signature = typeof settings.signature === 'string' ? settings.signature : null
+  const { subject, htmlBody } = buildTemplate(service, agencyName, signature)
 
   const result = await createCampaignWithSequence({ name, subject, htmlBody })
   if (!result.ok || !result.campaignId) {

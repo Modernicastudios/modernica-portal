@@ -214,6 +214,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
   const [inspiration, setInspiration] = useState<string>(((campaign?.settings as Record<string, unknown>)?.inspiration as string) || '')
   const [rules, setRules] = useState<string>(((campaign?.settings as Record<string, unknown>)?.rules as string) || '')
   const [smartleadId, setSmartleadId] = useState<string>(((campaign?.settings as Record<string, unknown>)?.smartlead_campaign_id as string) || '')
+  const [signature, setSignature] = useState<string>(((campaign?.settings as Record<string, unknown>)?.signature as string) || '')
   const [sending, setSending] = useState(false)
   const [sendMsg, setSendMsg] = useState<string | null>(null)
   const [saving, setSaving] = useState(false)
@@ -304,7 +305,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
       const res = await fetch('/api/leads/campaign', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, rules, smartleadCampaignId: smartleadId, action }),
+        body: JSON.stringify({ clientId: realClientId, region, sbiCode: sbi, service, autoApprove, inspiration, rules, smartleadCampaignId: smartleadId, signature, action }),
       })
       const data = await res.json()
       if (!res.ok) { alert(data.error || 'Mislukt'); return }
@@ -315,7 +316,7 @@ function ClientActivationCard({ client, campaign, onSaved }: {
         status: data.status,
         region: region || null,
         sbi_code: sbi || null,
-        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null, rules: rules.trim() || null, smartlead_campaign_id: smartleadId.trim() || null },
+        settings: { ...(campaign?.settings || {}), service, auto_approve: autoApprove, inspiration: inspiration.trim() || null, rules: rules.trim() || null, smartlead_campaign_id: smartleadId.trim() || null, signature: signature.trim() || null },
       } as LeadCampaign)
     } catch {
       alert('Er ging iets mis. Probeer opnieuw.')
@@ -378,6 +379,18 @@ function ClientActivationCard({ client, campaign, onSaved }: {
           onChange={e => setRules(e.target.value)}
           rows={2}
           placeholder="Bv. 'nooit prijzen noemen, nooit resultaten beloven, nooit het woord gratis, altijd vrijblijvend, altijd in het Nederlands.' De AI houdt zich hier strikt aan."
+          style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', resize: 'vertical' }}
+        />
+      </label>
+      <label style={{ display: 'block', marginBottom: '10px' }}>
+        <span style={{ display: 'block', fontSize: '.72rem', color: 'var(--muted)', marginBottom: '4px' }}>
+          Handtekening — komt onderaan elke mail (naam, website, telefoon, links)
+        </span>
+        <textarea
+          value={signature}
+          onChange={e => setSignature(e.target.value)}
+          rows={4}
+          placeholder={'Bv.\nSjoerd Bom — Modernica Studios\nwww.modernicastudios.com\n06 - 12 34 56 78\nlinkedin.com/in/sjoerdbom'}
           style={{ width: '100%', padding: '8px 10px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: '.82rem', background: 'var(--bg)', outline: 'none', resize: 'vertical' }}
         />
       </label>
