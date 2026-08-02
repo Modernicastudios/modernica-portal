@@ -21,15 +21,24 @@ export default async function LeadsPage() {
     .order('updated_at', { ascending: false })
     .limit(200)
 
-  // Stage stats over hele pool
-  const { data: allStages } = await admin
-    .from('lead_outreach')
-    .select('pipeline_stage')
-    .eq('agency_id', profile.agency_id)
-
+  // Stage stats over hele pool — pagineer om Supabase 1000 limit te omzeilen
   const stageStats: Record<string, number> = {}
-  for (const o of allStages || []) {
-    stageStats[o.pipeline_stage || 'nieuw'] = (stageStats[o.pipeline_stage || 'nieuw'] || 0) + 1
+  {
+    let offset = 0
+    const batch = 1000
+    for (let i = 0; i < 10; i++) {
+      const { data: allStages } = await admin
+        .from('lead_outreach')
+        .select('pipeline_stage')
+        .eq('agency_id', profile.agency_id)
+        .range(offset, offset + batch - 1)
+      if (!allStages || allStages.length === 0) break
+      for (const o of allStages) {
+        stageStats[o.pipeline_stage || 'nieuw'] = (stageStats[o.pipeline_stage || 'nieuw'] || 0) + 1
+      }
+      if (allStages.length < batch) break
+      offset += batch
+    }
   }
 
   // Callbacks due nu
