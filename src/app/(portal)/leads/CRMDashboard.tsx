@@ -11,10 +11,16 @@ interface Props {
   totalLeads: number
   callbacksDue: number
   callsToday: number
+  callsWeek?: number
+  outcomeToday?: Record<string, number>
+  outcomeWeek?: Record<string, number>
+  recentActivities?: any[]
+  recentCalls?: any[]
+  upcomingMeetings?: any[]
   userName: string
 }
 
-export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksDue, callsToday, userName }: Props) {
+export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksDue, callsToday, callsWeek = 0, outcomeToday = {}, outcomeWeek = {}, recentActivities = [], recentCalls = [], upcomingMeetings = [], userName }: Props) {
   const [query, setQuery] = useState('')
   const [stageFilter, setStageFilter] = useState<string | null>(null)
   const [importing, setImporting] = useState(false)
@@ -134,6 +140,76 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
           <ArrowRight size={16} style={{ marginLeft: 'auto', color: '#8F8AA3' }} />
         </Link>
       </div>
+
+      {/* ═══════════ DATA + CONTROLE ═══════════ */}
+      {(callsWeek > 0 || upcomingMeetings.length > 0 || recentActivities.length > 0) && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 20, fontWeight: 800, marginBottom: 14 }}>📊 Data + controle</h2>
+
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 14, marginBottom: 20 }}>
+            {/* Vandaag */}
+            <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Vandaag</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: '#3F06E3', marginBottom: 8 }}>{callsToday}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>gesprekken gelogd</div>
+              {Object.keys(outcomeToday).length > 0 && (
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
+                  {Object.entries(outcomeToday).map(([k, v]) => (
+                    <span key={k} style={{ fontSize: 10, padding: '2px 8px', background: '#F1ECFF', color: '#3F06E3', borderRadius: 100, fontWeight: 600 }}>{k}: {v}</span>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Deze week */}
+            <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deze week</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: '#8B5CF6', marginBottom: 8 }}>{callsWeek}</div>
+              <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>totaal gesprekken</div>
+              <div style={{ fontSize: 12, color: '#059669' }}>
+                {outcomeWeek.klant_geworden ? `🎉 ${outcomeWeek.klant_geworden} klant(en) gewonnen` :
+                 outcomeWeek.gesprek_ingepland ? `📅 ${outcomeWeek.gesprek_ingepland} afspraak/afspraken` : 'Nog geen conversies'}
+              </div>
+            </div>
+
+            {/* Aankomend */}
+            {upcomingMeetings.length > 0 && (
+              <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Aankomend</div>
+                <div style={{ fontSize: 32, fontWeight: 800, color: '#22C55E', marginBottom: 8 }}>{upcomingMeetings.length}</div>
+                <div style={{ fontSize: 12, color: 'var(--muted)' }}>meetings ingepland</div>
+                <div style={{ marginTop: 8, fontSize: 11 }}>
+                  {upcomingMeetings.slice(0, 2).map((m: any) => (
+                    <div key={m.id} style={{ marginBottom: 4 }}>
+                      <strong>{new Date(m.scheduled_at).toLocaleString('nl-NL', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</strong> — {m.lead_companies?.name}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Recent activity */}
+          {recentActivities.length > 0 && (
+            <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18, marginBottom: 20 }}>
+              <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Laatste activiteit</div>
+              <div style={{ maxHeight: 300, overflowY: 'auto' }}>
+                {recentActivities.slice(0, 15).map((a: any) => (
+                  <div key={a.id} style={{ padding: '8px 0', borderBottom: '1px solid #F6F3FF', display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                    <span style={{ fontSize: 16 }}>{activityIcon(a.type)}</span>
+                    <div style={{ flex: 1, fontSize: 13 }}>
+                      <div>{a.summary}</div>
+                      <div style={{ fontSize: 11, color: '#8F8AA3', marginTop: 2 }}>
+                        {a.lead_companies?.name} · {formatRel(a.created_at)}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ═══════════ ALLE LEADS ═══════════ */}
       <div style={{ marginBottom: 16 }}>
@@ -301,4 +377,22 @@ const ghostBtn: React.CSSProperties = {
 }
 const inputStyle: React.CSSProperties = {
   padding: '10px 14px', border: '1px solid #E7E2F4', borderRadius: 10, fontSize: 14, outline: 'none',
+}
+
+function activityIcon(type: string): string {
+  const map: Record<string, string> = {
+    call_logged: '📞', note_added: '📝', email_sent: '📤', email_opened: '👁️', email_replied: '💬',
+    meeting_scheduled: '📅', meeting_held: '✅', stage_changed: '🔄', assigned: '👤', imported: '⬇️',
+    contact_updated: '✏️', company_updated: '✏️',
+  }
+  return map[type] || '•'
+}
+
+function formatRel(iso: string): string {
+  const d = new Date(iso)
+  const now = new Date()
+  const diffH = (now.getTime() - d.getTime()) / 3600000
+  if (diffH < 1) return `${Math.floor(diffH * 60)}m geleden`
+  if (diffH < 24) return `${Math.floor(diffH)}u geleden`
+  return d.toLocaleDateString('nl-NL', { day: 'numeric', month: 'short' })
 }

@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save } from 'lucide-react'
+import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save, BookOpen } from 'lucide-react'
 import { CALL_OUTCOMES, PIPELINE_STAGES, type CallOutcome } from '@/types/leadmachine'
+import ScriptPanel from './ScriptPanel'
 
 interface Lead {
   id: string
@@ -159,6 +160,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
   }
 
   const [generatingPoints, setGeneratingPoints] = useState(false)
+  const [showScript, setShowScript] = useState(false)
   async function generateTalkingPoints() {
     if (!lead || generatingPoints) return
     setGeneratingPoints(true)
@@ -256,9 +258,20 @@ export default function BellenClient({ userName }: { userName: string; userId: s
             <strong>{userName}</strong>
             {stats && stats.callbacks_due > 0 && <> · <span style={{ color: '#3F06E3', fontWeight: 700 }}>{stats.callbacks_due} callbacks</span></>}
           </div>
-          <button onClick={skipLead} style={{ ...btnGhost, padding: '6px 10px', fontSize: 12 }}>Skip →</button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button onClick={() => setShowScript(true)} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px',
+              background: '#F1ECFF', border: '1px solid #3F06E3', borderRadius: 8,
+              fontSize: 12, color: '#3F06E3', cursor: 'pointer', fontWeight: 700,
+            }}>
+              <BookOpen size={14} /> Script
+            </button>
+            <button onClick={skipLead} style={{ ...btnGhost, padding: '6px 10px', fontSize: 12 }}>Skip →</button>
+          </div>
         </div>
       </div>
+
+      {showScript && <ScriptPanel onClose={() => setShowScript(false)} />}
 
       {/* Reason badge */}
       <div style={{ marginBottom: 8 }}>

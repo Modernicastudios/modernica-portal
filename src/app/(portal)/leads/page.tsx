@@ -41,13 +41,31 @@ export default async function LeadsPage() {
     .eq('pipeline_stage', 'callback')
     .lte('next_action_at', now)
 
-  // Belactiviteit vandaag
+  // Belactiviteit vandaag + week
   const todayStart = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).toISOString()
-  const { count: callsToday } = await admin
-    .from('lead_calls')
-    .select('id', { count: 'exact', head: true })
-    .eq('agency_id', profile.agency_id)
-    .gte('called_at', todayStart)
+  const weekAgo = new Date(Date.now() - 7 * 86400 * 1000).toISOString()
+
+  const [callsTodayR, callsWeekR, recentActs, recentCalls, meetingsUpcoming] = await Promise.all([
+    admin.from('lead_calls').select('outcome, called_by').eq('agency_id', profile.agency_id).gte('called_at', todayStart),
+    admin.from('lead_calls').select('outcome, called_at, called_by').eq('agency_id', profile.agency_id).gte('called_at', weekAgo),
+    admin.from('lead_activities').select('*, lead_companies(name)').eq('agency_id', profile.agency_id).order('created_at', { ascending: false }).limit(25),
+    admin.from('lead_calls').select('*, lead_companies(name)').eq('agency_id', profile.agency_id).order('called_at', { ascending: false }).limit(15),
+    admin.from('lead_meetings').select('*, lead_companies(name)').eq('agency_id', profile.agency_id).gte('scheduled_at', new Date().toISOString()).eq('status', 'planned').order('scheduled_at').limit(10),
+  ])
+
+  const callsToday = callsTodayR.data || []
+  const callsWeek = callsWeekR.data || []
+
+  // Outcome verdeling
+  const outcomeToday: Record<string, number> = {}
+  for (const c of callsToday) outcomeToday[c.outcome] = (outcomeToday[c.outcome] || 0) + 1
+
+  const outcomeWeek: Record<string, number> = {}
+  for (const c of callsWeek) outcomeWeek[c.outcome] = (outcomeWeek[c.outcome] || 0) + 1
+
+  // Callers this week (voor manager overview)
+  const callersMap: Record<string, number> = {}
+  for (const c of callsWeek) if (c.called_by) callersMap[c.called_by] = (callersMap[c.called_by] || 0) + 1
 
   const totalLeads = Object.values(stageStats).reduce((a, b) => a + b, 0)
 
@@ -57,7 +75,13 @@ export default async function LeadsPage() {
       stageStats={stageStats}
       totalLeads={totalLeads}
       callbacksDue={callbacksDue || 0}
-      callsToday={callsToday || 0}
+      callsToday={callsToday.length}
+      callsWeek={callsWeek.length}
+      outcomeToday={outcomeToday}
+      outcomeWeek={outcomeWeek}
+      recentActivities={recentActs.data || []}
+      recentCalls={recentCalls.data || []}
+      upcomingMeetings={meetingsUpcoming.data || []}
       userName={profile.full_name || 'Jij'}
     />
   )
