@@ -86,9 +86,14 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
             <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 4 }}>Leads &amp; CRM</h1>
             <div style={{ color: 'var(--muted)', fontSize: 14 }}>Hi {userName} · {totalLeads} leads in je pool</div>
           </div>
-          <button onClick={runImport} disabled={importing} style={ghostBtn}>
-            {importing ? <><Loader2 size={14} className="anim-spin" /> Bezig...</> : <><Download size={14} /> Import Smartlead</>}
-          </button>
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <Link href="/leads/rapport?preset=week" style={{ ...ghostBtn, textDecoration: 'none' }}>
+              📊 Download rapport
+            </Link>
+            <button onClick={runImport} disabled={importing} style={ghostBtn}>
+              {importing ? <><Loader2 size={14} className="anim-spin" /> Bezig...</> : <><Download size={14} /> Import Smartlead</>}
+            </button>
+          </div>
         </div>
         {importResult && (
           <div style={{ marginTop: 14, padding: 12, borderRadius: 10, background: importResult.error ? '#FEF2F2' : '#F0FDF4', color: importResult.error ? '#991B1B' : '#065F46', fontSize: 13 }}>
