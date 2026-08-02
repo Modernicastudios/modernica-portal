@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save, BookOpen } from 'lucide-react'
+import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save, BookOpen, Trash2 } from 'lucide-react'
 import { CALL_OUTCOMES, PIPELINE_STAGES, type CallOutcome } from '@/types/leadmachine'
 import ScriptPanel from './ScriptPanel'
 
@@ -180,6 +180,19 @@ export default function BellenClient({ userName }: { userName: string; userId: s
     setGeneratingPoints(false)
   }
 
+  async function deleteLead(reason: string) {
+    if (!lead) return
+    if (!confirm(`Deze lead verwijderen uit CRM?\n\nReden: ${reason}\n\nDit haalt hem uit de bel-queue. Emails/notes blijven bewaard in bedrijfshistorie.`)) return
+    await fetch('/api/leads/crm', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'delete_lead',
+        payload: { outreach_id: lead.id, reason },
+      }),
+    })
+    await loadNext()
+  }
+
   async function switchService(newService: 'social' | 'recruitment' | 'video' | 'ads' | 'local') {
     if (!lead) return
     const labels: Record<string, string> = {
@@ -353,22 +366,31 @@ export default function BellenClient({ userName }: { userName: string; userId: s
                 {lead.lead_companies.domain || 'open →'}
               </span>
             </a>
-            {/* Site is nieuw? Switch service */}
-            <div style={{ padding: 10, background: '#FFFBEB', borderRadius: 10, marginBottom: 8, fontSize: 11 }}>
-              <div style={{ color: '#92400E', fontWeight: 700, marginBottom: 6 }}>
-                Site is prima / nieuw? Switch pitch:
+            {/* Site is nieuw? Switch service OF verwijder */}
+            <div style={{ padding: 12, background: '#FFFBEB', borderRadius: 10, marginBottom: 8, fontSize: 12 }}>
+              <div style={{ color: '#92400E', fontWeight: 700, marginBottom: 8 }}>
+                Site is nieuw / al prima?
               </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              <div style={{ marginBottom: 8, fontSize: 11, color: '#92400E' }}>Switch naar andere pitch:</div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
                 <button onClick={() => switchService('social')} style={switchBtn}>
-                  → Social media pitch
+                  → Social media
                 </button>
                 <button onClick={() => switchService('recruitment')} style={switchBtn}>
-                  → Personeelswerving pitch
+                  → Personeelswerving
                 </button>
                 <button onClick={() => switchService('video')} style={switchBtn}>
-                  → Video/content pitch
+                  → Video / content
                 </button>
               </div>
+              <div style={{ marginBottom: 6, fontSize: 11, color: '#92400E' }}>Geen behoefte? Verwijder uit CRM:</div>
+              <button onClick={() => deleteLead('Website is al prima — geen match')} style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 12px',
+                background: 'white', border: '1px solid #EF4444', borderRadius: 8,
+                fontSize: 12, color: '#991B1B', fontWeight: 700, cursor: 'pointer',
+              }}>
+                <Trash2 size={12} /> Verwijder deze lead
+              </button>
             </div>
           </>
         )}
@@ -432,6 +454,14 @@ export default function BellenClient({ userName }: { userName: string; userId: s
             <button onClick={() => setShowOutcome(true)} style={btnSecondary}>Log zonder bellen</button>
             <button onClick={skipLead} style={btnGhost}>Skip →</button>
           </div>
+          <button onClick={() => deleteLead('Handmatig verwijderd door cold caller')} style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            marginTop: 8, width: '100%', padding: '10px 12px',
+            background: 'transparent', border: '1px solid #FCA5A5', borderRadius: 10,
+            color: '#991B1B', fontSize: 12, fontWeight: 600, cursor: 'pointer',
+          }}>
+            <Trash2 size={13} /> Verwijder deze lead helemaal
+          </button>
         </>
       )}
 

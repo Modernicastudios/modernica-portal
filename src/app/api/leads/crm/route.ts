@@ -241,6 +241,30 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ ok: true, contact: data })
   }
 
+  if (action === 'delete_lead') {
+    const { outreach_id, reason } = payload
+    if (!outreach_id) return NextResponse.json({ error: 'outreach_id required' }, { status: 400 })
+
+    // Get company_id first for logging
+    const { data: current } = await admin.from('lead_outreach').select('company_id, contact_id')
+      .eq('id', outreach_id).eq('agency_id', profile.agency_id).single()
+    if (!current) return NextResponse.json({ error: 'not found' }, { status: 404 })
+
+    // Log delete as activity before deleting
+    await admin.from('lead_activities').insert({
+      agency_id: profile.agency_id, company_id: current.company_id, actor_id: profile.id,
+      type: 'stage_changed', summary: `Lead verwijderd${reason ? ': ' + reason : ''}`,
+      metadata: { reason: reason || null, deleted_outreach_id: outreach_id },
+    })
+
+    // Delete outreach (calls/notes cascade or are kept per FK setup)
+    const { error } = await admin.from('lead_outreach').delete()
+      .eq('id', outreach_id).eq('agency_id', profile.agency_id)
+    if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+
+    return NextResponse.json({ ok: true, deleted: outreach_id })
+  }
+
   if (action === 'update_outreach') {
     const { outreach_id, updates } = payload
     if (!outreach_id) return NextResponse.json({ error: 'outreach_id required' }, { status: 400 })
