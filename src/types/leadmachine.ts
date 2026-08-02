@@ -107,3 +107,166 @@ export interface LeadJob {
   created_at: string
   updated_at: string
 }
+
+// ==============================================================
+// CRM extensions (migration 027)
+// ==============================================================
+
+export type CallOutcome =
+  | 'geen_gehoor'
+  | 'voicemail'
+  | 'verkeerd_nummer'
+  | 'niet_beschikbaar'
+  | 'niet_geinteresseerd'
+  | 'callback_gevraagd'
+  | 'gesprek_gehad'
+  | 'gesprek_ingepland'
+  | 'offerte_gevraagd'
+  | 'klant_geworden'
+  | 'ander'
+
+export type PipelineStage =
+  | 'nieuw'
+  | 'gebeld_geen_gehoor'
+  | 'callback'
+  | 'gesprek_gehad'
+  | 'gesprek_ingepland'
+  | 'offerte_verstuurd'
+  | 'klant'
+  | 'niet_geinteresseerd'
+  | 'verkeerd_nummer'
+  | 'dood'
+
+export type ActivityType =
+  | 'call_logged'
+  | 'note_added'
+  | 'email_sent'
+  | 'email_opened'
+  | 'email_replied'
+  | 'meeting_scheduled'
+  | 'meeting_held'
+  | 'stage_changed'
+  | 'assigned'
+  | 'imported'
+  | 'contact_updated'
+  | 'company_updated'
+
+export interface LeadCall {
+  id: string
+  agency_id: string
+  client_id: string | null
+  company_id: string
+  contact_id: string | null
+  outreach_id: string | null
+  called_by: string | null
+  called_at: string
+  duration_seconds: number | null
+  outcome: CallOutcome
+  notes: string | null
+  callback_at: string | null
+  created_at: string
+}
+
+export interface LeadNote {
+  id: string
+  agency_id: string
+  client_id: string | null
+  company_id: string
+  outreach_id: string | null
+  contact_id: string | null
+  author_id: string | null
+  body: string
+  is_pinned: boolean
+  created_at: string
+  updated_at: string
+}
+
+export interface LeadMeeting {
+  id: string
+  agency_id: string
+  client_id: string | null
+  company_id: string
+  contact_id: string | null
+  outreach_id: string | null
+  scheduled_by: string | null
+  scheduled_at: string
+  duration_min: number | null
+  location: string | null
+  meeting_url: string | null
+  meeting_type: 'call' | 'video' | 'in_person'
+  status: 'planned' | 'held' | 'cancelled' | 'no_show'
+  notes: string | null
+  outcome_notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export interface LeadActivity {
+  id: string
+  agency_id: string
+  client_id: string | null
+  company_id: string
+  outreach_id: string | null
+  contact_id: string | null
+  actor_id: string | null
+  type: ActivityType
+  summary: string | null
+  metadata: Record<string, unknown>
+  created_at: string
+}
+
+export const PIPELINE_STAGES: Array<{ key: PipelineStage; label: string; color: string }> = [
+  { key: 'nieuw', label: 'Nieuw', color: '#6B7280' },
+  { key: 'gebeld_geen_gehoor', label: 'Geen gehoor', color: '#F59E0B' },
+  { key: 'callback', label: 'Terugbellen', color: '#3F06E3' },
+  { key: 'gesprek_gehad', label: 'Gesprek gehad', color: '#8B5CF6' },
+  { key: 'gesprek_ingepland', label: 'Afspraak', color: '#22C55E' },
+  { key: 'offerte_verstuurd', label: 'Offerte', color: '#0EA5E9' },
+  { key: 'klant', label: 'Klant', color: '#059669' },
+  { key: 'niet_geinteresseerd', label: 'Niet geïnteresseerd', color: '#EF4444' },
+  { key: 'verkeerd_nummer', label: 'Verkeerd nummer', color: '#9CA3AF' },
+  { key: 'dood', label: 'Dood spoor', color: '#4B5563' },
+]
+
+export const CALL_OUTCOMES: Array<{ key: CallOutcome; label: string; emoji: string; nextAction?: 'callback' | 'schedule' | null }> = [
+  { key: 'geen_gehoor',        label: 'Geen gehoor',           emoji: '📵', nextAction: 'callback' },
+  { key: 'voicemail',           label: 'Voicemail',             emoji: '🎙️', nextAction: 'callback' },
+  { key: 'niet_beschikbaar',    label: 'Niet beschikbaar',      emoji: '⏰', nextAction: 'callback' },
+  { key: 'callback_gevraagd',   label: 'Terugbellen op tijd',   emoji: '📞', nextAction: 'callback' },
+  { key: 'gesprek_gehad',       label: 'Gesprek gehad',         emoji: '💬' },
+  { key: 'gesprek_ingepland',   label: 'Afspraak ingepland',    emoji: '📅', nextAction: 'schedule' },
+  { key: 'offerte_gevraagd',    label: 'Offerte gevraagd',      emoji: '📄' },
+  { key: 'klant_geworden',      label: 'KLANT GEWORDEN',        emoji: '🎉' },
+  { key: 'niet_geinteresseerd', label: 'Niet geïnteresseerd',   emoji: '❌' },
+  { key: 'verkeerd_nummer',     label: 'Verkeerd nummer',       emoji: '⚠️' },
+  { key: 'ander',               label: 'Ander',                 emoji: '❓' },
+]
+
+// Uitbreidingen op bestaande interfaces (subset velden overriden)
+export interface LeadOutreachExtended extends Omit<LeadOutreach, 'status'> {
+  status: 'draft' | 'queued' | 'pushed' | 'skipped' | 'replied' | 'won' | 'lost'
+  assigned_to: string | null
+  next_action_at: string | null
+  next_action_note: string | null
+  priority: number
+  last_contacted_at: string | null
+  pipeline_stage: PipelineStage
+}
+
+export interface LeadCompanyExtended extends LeadCompany {
+  phone_secondary: string | null
+  notes: string | null
+  industry: string | null
+  postcode: string | null
+  province: string | null
+  employee_count: number | null
+  smartlead_source: string | null
+}
+
+export interface LeadContactExtended extends LeadContact {
+  phone: string | null
+  linkedin_url: string | null
+  first_name: string | null
+  last_name: string | null
+  is_primary: boolean
+}

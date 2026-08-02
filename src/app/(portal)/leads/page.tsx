@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import LeadsClient from './LeadsClient'
 import LeadsLocked from './LeadsLocked'
+import CRMNav from './CRMNav'
 
 const MANAGER_ROLES = new Set(['admin', 'manager', 'super_admin'])
 
@@ -63,15 +64,18 @@ export default async function LeadsPage() {
   const monthlyCap = Number(process.env.LEAD_MONTHLY_CAP) || 2000
 
   return (
-    <LeadsClient
-      isManager={isManager}
-      isClient={isClient}
-      agencyName={agency?.name || 'Mijn agency'}
-      clients={clients || []}
-      campaigns={campaigns || []}
-      outreach={outreach || []}
-      monthlyUsed={monthlyUsed || 0}
-      monthlyCap={monthlyCap}
-    />
+    <div style={{ padding: '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
+      <CRMNav />
+      <LeadsClient
+        isManager={isManager}
+        isClient={isClient}
+        agencyName={agency?.name || 'Mijn agency'}
+        clients={clients || []}
+        campaigns={campaigns || []}
+        outreach={outreach || []}
+        monthlyUsed={monthlyUsed || 0}
+        monthlyCap={monthlyCap}
+      />
+    </div>
   )
 }
