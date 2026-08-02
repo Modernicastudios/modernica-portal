@@ -58,6 +58,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
   const [nextActionNote, setNextActionNote] = useState('')
   const [callbackDate, setCallbackDate] = useState('')
   const [callbackTime, setCallbackTime] = useState('')
+  const [correctedPhone, setCorrectedPhone] = useState('')
   const [saving, setSaving] = useState(false)
   const [showEditContact, setShowEditContact] = useState(false)
   const [showExtraFields, setShowExtraFields] = useState(false)
@@ -84,7 +85,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
     setNotes(''); setNextActionNote('')
     setCallbackDate(''); setCallbackTime('')
     setCallActive(false); setCallStart(null); setDuration(0)
-    setShowExtraFields(false)
+    setShowExtraFields(false); setCorrectedPhone('')
   }
 
   useEffect(() => { loadNext() }, [loadNext])
@@ -133,6 +134,24 @@ export default function BellenClient({ userName }: { userName: string; userId: s
           },
         }),
       })
+      // Als verkeerd_nummer + correctie gegeven → update company phone (en switch back naar 'nieuw')
+      if (selectedOutcome === 'verkeerd_nummer' && correctedPhone.trim()) {
+        await fetch('/api/leads/crm', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_company',
+            payload: { company_id: lead.company_id, updates: { phone: correctedPhone.trim() } },
+          }),
+        })
+        // Terugzetten naar nieuw zodat hij morgen weer gebeld kan worden met juiste nummer
+        await fetch('/api/leads/crm', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_outreach',
+            payload: { outreach_id: lead.id, updates: { pipeline_stage: 'nieuw' } },
+          }),
+        })
+      }
       if (nextActionNote.trim()) {
         await fetch('/api/leads/crm', {
           method: 'POST', headers: { 'Content-Type': 'application/json' },
@@ -552,6 +571,21 @@ export default function BellenClient({ userName }: { userName: string; userId: s
                       <button key={q.label} onClick={() => setQuickCallback(q.hours, setCallbackDate, setCallbackTime)}
                         style={{ ...btnGhost, padding: '8px 12px', fontSize: 12 }}>{q.label}</button>
                     ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedOutcome === 'verkeerd_nummer' && (
+                <div style={{ marginBottom: 14, padding: 12, background: '#FEF3C7', borderRadius: 10, border: '1px solid #F59E0B' }}>
+                  <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: 'block', color: '#92400E' }}>
+                    Weet je het juiste nummer? (optioneel)
+                  </label>
+                  <input type="tel" value={correctedPhone} onChange={e => setCorrectedPhone(e.target.value)}
+                    placeholder="Bijv. 020-1234567 of 06-12345678"
+                    style={{ ...inputStyle, width: '100%' }} />
+                  <div style={{ fontSize: 11, color: '#92400E', marginTop: 6 }}>
+                    Als je een correct nummer invult, wordt het bijgewerkt en komt de lead weer in de bel-queue.
+                    Laat leeg als je 'm helemaal wil skippen.
                   </div>
                 </div>
               )}
