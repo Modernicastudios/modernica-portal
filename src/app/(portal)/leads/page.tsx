@@ -1,11 +1,7 @@
 import { redirect } from 'next/navigation'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-import LeadsClient from './LeadsClient'
-import LeadsLocked from './LeadsLocked'
-import CRMNav from './CRMNav'
-
-const MANAGER_ROLES = new Set(['admin', 'manager', 'super_admin'])
+import CRMDashboard from './CRMDashboard'
 
 export default async function LeadsPage() {
   const supabase = await createClient()
@@ -17,65 +13,52 @@ export default async function LeadsPage() {
     .from('user_profiles').select('*').eq('id', user.id).single()
   if (!profile?.agency_id) redirect('/dashboard')
 
-  const { data: agency } = await admin
-    .from('agencies').select('id, name, features').eq('id', profile.agency_id).single()
-
-  // Feature-gate: staat de leadmachine uit, dan een net uitleg-scherm.
-  if (!agency?.features?.lead_machine) {
-    return <LeadsLocked />
-  }
-
-  const isManager = MANAGER_ROLES.has(profile.role)
-  const isClient = !!profile.client_id
-
-  // Outreach met bedrijf + contact erbij — dit is het resultaat dat je wilt zien.
-  const outreachQuery = admin
+  // Alle leads (recentste eerst, limit 200 voor snelheid — filter/pagineer in client)
+  const { data: outreach } = await admin
     .from('lead_outreach')
     .select('*, lead_companies(*), lead_contacts(*)')
     .eq('agency_id', profile.agency_id)
-    .order('created_at', { ascending: false })
+    .order('updated_at', { ascending: false })
     .limit(200)
 
-  const { data: outreach } = isClient
-    ? await outreachQuery.eq('client_id', profile.client_id)
-    : await outreachQuery
-
-  const { data: campaigns } = await admin
-    .from('lead_campaigns')
-    .select('*')
+  // Stage stats over hele pool
+  const { data: allStages } = await admin
+    .from('lead_outreach')
+    .select('pipeline_stage')
     .eq('agency_id', profile.agency_id)
 
-  // Klanten alleen nodig voor de agency-weergave (per-klant activeren).
-  const { data: clients } = isManager
-    ? await admin
-        .from('clients')
-        .select('id, company_name, industry, city')
-        .eq('agency_id', profile.agency_id)
-        .order('company_name')
-    : { data: [] }
+  const stageStats: Record<string, number> = {}
+  for (const o of allStages || []) {
+    stageStats[o.pipeline_stage || 'nieuw'] = (stageStats[o.pipeline_stage || 'nieuw'] || 0) + 1
+  }
 
-  // Maand-verbruik t.o.v. de kostenrem (voor de overzichtsbalk).
-  const firstOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString()
-  const { count: monthlyUsed } = await admin
-    .from('lead_companies')
+  // Callbacks due nu
+  const now = new Date().toISOString()
+  const { count: callbacksDue } = await admin
+    .from('lead_outreach')
     .select('id', { count: 'exact', head: true })
     .eq('agency_id', profile.agency_id)
-    .gte('created_at', firstOfMonth)
-  const monthlyCap = Number(process.env.LEAD_MONTHLY_CAP) || 2000
+    .eq('pipeline_stage', 'callback')
+    .lte('next_action_at', now)
+
+  // Belactiviteit vandaag
+  const todayStart = new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).toISOString()
+  const { count: callsToday } = await admin
+    .from('lead_calls')
+    .select('id', { count: 'exact', head: true })
+    .eq('agency_id', profile.agency_id)
+    .gte('called_at', todayStart)
+
+  const totalLeads = Object.values(stageStats).reduce((a, b) => a + b, 0)
 
   return (
-    <div style={{ padding: '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
-      <CRMNav />
-      <LeadsClient
-        isManager={isManager}
-        isClient={isClient}
-        agencyName={agency?.name || 'Mijn agency'}
-        clients={clients || []}
-        campaigns={campaigns || []}
-        outreach={outreach || []}
-        monthlyUsed={monthlyUsed || 0}
-        monthlyCap={monthlyCap}
-      />
-    </div>
+    <CRMDashboard
+      leads={outreach || []}
+      stageStats={stageStats}
+      totalLeads={totalLeads}
+      callbacksDue={callbacksDue || 0}
+      callsToday={callsToday || 0}
+      userName={profile.full_name || 'Jij'}
+    />
   )
 }

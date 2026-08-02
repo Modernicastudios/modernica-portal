@@ -229,12 +229,26 @@ export default function BellenClient({ userName, userId }: { userName: string; u
           </div>
         )}
 
-        {/* Website link */}
+        {/* Website check knop — cold caller kan snel checken of site verouderd is */}
         {lead.lead_companies?.website_url && (
           <a href={lead.lead_companies.website_url} target="_blank" rel="noopener"
+            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+              padding: '14px 16px', background: 'white', border: '2px solid #E7E2F4',
+              borderRadius: 12, fontSize: 14, color: '#3F06E3', textDecoration: 'none',
+              marginBottom: 10, fontWeight: 600 }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+              <Globe size={16} /> Check website — is deze verouderd?
+            </span>
+            <span style={{ fontSize: 11, color: '#8F8AA3', fontWeight: 500 }}>
+              {lead.lead_companies.domain || 'open →'}
+            </span>
+          </a>
+        )}
+        {lead.lead_contacts?.email && (
+          <a href={`mailto:${lead.lead_contacts.email}`}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#F8F7FF',
               borderRadius: 10, fontSize: 13, color: '#3F06E3', textDecoration: 'none', marginBottom: 8 }}>
-            <Globe size={14} /> {lead.lead_companies.domain || lead.lead_companies.website_url}
+            <Mail size={14} /> Stuur mail naar {lead.lead_contacts.email}
           </a>
         )}
 
