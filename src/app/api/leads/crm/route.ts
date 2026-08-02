@@ -25,50 +25,29 @@ export async function GET(req: NextRequest) {
   const action = url.searchParams.get('action')
 
   if (action === 'next_lead') {
-    // Volgende lead: prioriteit → callback voor vandaag/nu → nieuw
-    // Filter: alleen assigned aan huidige user OF onassigned
-    const now = new Date().toISOString()
+    // Atomic claim via Postgres function — voorkomt dat 2 callers dezelfde lead krijgen
+    const { data: claimed, error: claimErr } = await admin.rpc('claim_next_lead', {
+      p_agency_id: profile.agency_id,
+      p_caller_id: profile.id,
+      p_lock_minutes: 30,
+    })
 
-    // 1. Callbacks die aan tijd zijn
-    const { data: callbacks } = await admin
+    if (claimErr) return NextResponse.json({ error: claimErr.message }, { status: 500 })
+    if (!claimed) return NextResponse.json({ lead: null })
+
+    // Fetch met related data
+    const { data: full } = await admin
       .from('lead_outreach')
       .select('*, lead_companies(*), lead_contacts(*)')
-      .eq('agency_id', profile.agency_id)
-      .eq('pipeline_stage', 'callback')
-      .lte('next_action_at', now)
-      .order('next_action_at', { ascending: true })
-      .limit(1)
+      .eq('id', claimed.id)
+      .single()
 
-    if (callbacks?.length) return NextResponse.json({ lead: callbacks[0], reason: 'callback_due' })
+    // Determine reason
+    let reason = 'fresh'
+    if (claimed.pipeline_stage === 'callback') reason = 'callback_due'
+    else if (claimed.assigned_to === profile.id) reason = 'assigned'
 
-    // 2. Nieuwe of geen-gehoor die assigned zijn aan user
-    const { data: assigned } = await admin
-      .from('lead_outreach')
-      .select('*, lead_companies(*), lead_contacts(*)')
-      .eq('agency_id', profile.agency_id)
-      .eq('assigned_to', profile.id)
-      .in('pipeline_stage', ['nieuw', 'gebeld_geen_gehoor'])
-      .order('priority', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(1)
-
-    if (assigned?.length) return NextResponse.json({ lead: assigned[0], reason: 'assigned' })
-
-    // 3. Anders: onassigned nieuwe leads (met telefoonnr)
-    const { data: fresh } = await admin
-      .from('lead_outreach')
-      .select('*, lead_companies!inner(*), lead_contacts(*)')
-      .eq('agency_id', profile.agency_id)
-      .is('assigned_to', null)
-      .in('pipeline_stage', ['nieuw', 'gebeld_geen_gehoor'])
-      .not('lead_companies.phone', 'is', null)
-      .order('priority', { ascending: false })
-      .order('created_at', { ascending: true })
-      .limit(1)
-
-    if (fresh?.length) return NextResponse.json({ lead: fresh[0], reason: 'fresh' })
-
-    return NextResponse.json({ lead: null })
+    return NextResponse.json({ lead: full, reason })
   }
 
   if (action === 'lead') {
