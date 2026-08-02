@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save, BookOpen, Trash2 } from 'lucide-react'
 import { CALL_OUTCOMES, PIPELINE_STAGES, type CallOutcome } from '@/types/leadmachine'
 import ScriptPanel from './ScriptPanel'
+import Onboarding from './Onboarding'
 
 interface Lead {
   id: string
@@ -285,6 +286,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
       </div>
 
       {showScript && <ScriptPanel onClose={() => setShowScript(false)} />}
+      <Onboarding />
 
       {/* Reason badge */}
       <div style={{ marginBottom: 8 }}>
