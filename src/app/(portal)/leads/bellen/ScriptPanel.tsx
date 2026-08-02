@@ -1,9 +1,9 @@
 'use client'
 
 import { useState } from 'react'
-import { X, User, Briefcase, Euro, Trophy, MessageSquare, HelpCircle, Rocket } from 'lucide-react'
+import { X, User, Briefcase, Euro, Trophy, MessageSquare, HelpCircle, Rocket, Target } from 'lucide-react'
 
-type Tab = 'wie' | 'wat' | 'prijzen' | 'cases' | 'openers' | 'bezwaren' | 'afsluiter'
+type Tab = 'wie' | 'wat' | 'prijzen' | 'cases' | 'openers' | 'bezwaren' | 'niche' | 'afsluiter'
 
 export default function ScriptPanel({ onClose }: { onClose: () => void }) {
   const [tab, setTab] = useState<Tab>('wie')
@@ -15,6 +15,7 @@ export default function ScriptPanel({ onClose }: { onClose: () => void }) {
     { key: 'cases', label: 'Cases', icon: <Trophy size={14} /> },
     { key: 'openers', label: 'Openers', icon: <MessageSquare size={14} /> },
     { key: 'bezwaren', label: 'Bezwaren', icon: <HelpCircle size={14} /> },
+    { key: 'niche', label: 'Per niche', icon: <Target size={14} /> },
     { key: 'afsluiter', label: 'Afsluiter', icon: <Rocket size={14} /> },
   ]
 
@@ -61,6 +62,7 @@ export default function ScriptPanel({ onClose }: { onClose: () => void }) {
           {tab === 'cases' && <SectionCases />}
           {tab === 'openers' && <SectionOpeners />}
           {tab === 'bezwaren' && <SectionBezwaren />}
+          {tab === 'niche' && <SectionNiche />}
           {tab === 'afsluiter' && <SectionAfsluiter />}
         </div>
       </div>
@@ -344,6 +346,174 @@ function SectionBezwaren() {
       <Objection q="&quot;We hebben net iemand aangenomen&quot;">
         <p><strong>Reactie:</strong> &quot;Top, veel succes! Als het je collega ooit helpt om externe support te hebben — bijv. video-productie of grote projecten — hoor ik het graag.&quot;</p>
       </Objection>
+    </div>
+  )
+}
+
+function SectionNiche() {
+  return (
+    <div>
+      <h3 style={headerStyle}>Tegen-antwoorden per branche</h3>
+      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+        Elke branche heeft z&apos;n eigen bezwaren. Hier sterke, zelfverzekerde antwoorden
+        die aansluiten bij hun realiteit — geen sales-fluff, wél waar.
+      </p>
+
+      {/* BOUWBEDRIJVEN */}
+      <NicheBlock icon="🏗️" title="Bouwbedrijven &amp; aannemers" color="#F97316">
+        <NRebut q='"We hebben het al te druk"'>
+          <p>&quot;Dan is dit juist het moment. Nu komt werk via mond-tot-mond, dat werkt zolang het werkt. Maar bij drukte kan je pas selectief kiezen als er meer aanvragen binnenkomen dan je nodig hebt. Een goede site helpt je juist bij het uitkiezen — geen last van, wel meer keuze.&quot;</p>
+        </NRebut>
+        <NRebut q='"We hebben geen website nodig, klanten kennen ons wel"'>
+          <p>&quot;Klopt, jullie bestaande klanten wel. Maar wat gebeurt er als er nieuwe generatie opdrachtgevers komt? Die Googlen eerst. Ik zag jullie site en de kwaliteit die daar staat weerspiegelt niet wat jullie feitelijk leveren — dat kost je opdrachten die je niet eens weet dat je misloopt.&quot;</p>
+        </NRebut>
+        <NRebut q='"Onze site is al 5 jaar oud maar werkt prima"'>
+          <p>&quot;Dat is precies het probleem. Een oude site zegt tegen bezoekers &apos;dit bedrijf loopt achter&apos;. Terwijl jullie waarschijnlijk juist voorop lopen in kwaliteit. Bij Kunststofhuis Waterland hadden we ditzelfde — website 5 jaar oud, dus 0 aanvragen. Na renovatie: 7+ per maand. De kwaliteit die je levert moet je online ook laten zien.&quot;</p>
+        </NRebut>
+        <NRebut q='"Elke euro moet ik terugverdienen"'>
+          <p>&quot;Snap ik. Reken 1 extra project van €10k+ per jaar via de site — de site heeft zichzelf tienvoudig terugbetaald. En bij bouw praten we vaak over grotere opdrachten, dus zelfs 1 nieuwe klant per jaar tikt hard aan.&quot;</p>
+        </NRebut>
+        <div style={{ padding: 12, background: '#FFF9EF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#92400E' }}>
+          <strong>Dingen om te benoemen bij bouwbedrijven:</strong>
+          <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+            <li>Referentieprojecten kunnen zichtbaar</li>
+            <li>Foto&apos;s van eigen werk — geen stock</li>
+            <li>Duidelijke expertise-pagina&apos;s (nieuwbouw / renovatie / utiliteit)</li>
+            <li>Certificaten en garanties zichtbaar</li>
+            <li>Kwaliteit online = signaal aan grote opdrachtgevers</li>
+          </ul>
+        </div>
+      </NicheBlock>
+
+      {/* HORECA */}
+      <NicheBlock icon="🍽️" title="Restaurants &amp; horeca" color="#EF4444">
+        <NRebut q='"We hebben geen tijd voor online, druk in de keuken"'>
+          <p>&quot;Snap ik als geen ander. Maar juist online geeft je tijd terug — als reserveringen via de site komen, hoef je die aan de telefoon niet meer op te nemen. Bij Bierbrasserie Koster: van 0 groepsreserveringen naar 1-3 grote groepen (20+ personen) per maand. Dat scheelt telefoontjes én levert direct omzet.&quot;</p>
+        </NRebut>
+        <NRebut q='"Onze klanten zijn vaste gasten"'>
+          <p>&quot;Fantastisch. Maar wat als er iemand hierheen verhuist, of een nieuw bedrijf in de buurt zoekt een lunch-plek? Die Googlen. Als ze jullie niet vinden of jullie site oogt gedateerd — pak je een concurrent die net over de streep is. Voor 1-2 nieuwe reserveringen per week is de site sneller terugverdiend dan een dinerpakket voor 4.&quot;</p>
+        </NRebut>
+        <NRebut q='"Google en Instagram is toch genoeg?"'>
+          <p>&quot;Google en Instagram zijn tussenstappen — bezoekers klikken door naar je site voor menu, prijzen, openingstijden, reserveren. Als je site die vragen niet snel beantwoordt, valt de reservering weg. Wij bouwen sites die daar juist op scoren.&quot;</p>
+        </NRebut>
+        <div style={{ padding: 12, background: '#FFF9EF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#92400E' }}>
+          <strong>Dingen om te benoemen bij horeca:</strong>
+          <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+            <li>Reserveringsformulier (groepen, arrangementen)</li>
+            <li>Menu direct zichtbaar (mobiel!)</li>
+            <li>Sfeerfoto&apos;s — wij kunnen ook zelf schieten</li>
+            <li>Openingstijden en route (Google Maps)</li>
+            <li>Instagram-feed embedded voor social proof</li>
+          </ul>
+        </div>
+      </NicheBlock>
+
+      {/* INSTALLATIE / TECHNIEK */}
+      <NicheBlock icon="🔧" title="Installatiebedrijven &amp; techniek" color="#0EA5E9">
+        <NRebut q='"Wij werken vooral op offerte, niet via de site"'>
+          <p>&quot;Klopt bij grotere projecten. Maar de eerste offerte-aanvraag begint online — mensen Googlen op &apos;airco specialist regio&apos; of &apos;installateur badkamer&apos;. Als jullie daar bovenaan staan met een goede site + duidelijke expertise, komen die offerte-aanvragen bij jullie ipv bij de concurrent. De LED Installateur haalt zo 3-5 kwalificatie-aanvragen per week via online.&quot;</p>
+        </NRebut>
+        <NRebut q='"Concurrenten hebben ook een site en die haalt niks"'>
+          <p>&quot;Precies daarom. Een gemiddelde site levert niks op omdat &apos;ie generic is. Wij bouwen sites die richten op jullie specifieke expertise + regio, met goede SEO. Zo pak je juist de leads die jullie concurrenten laten liggen omdat hun site niet gevonden wordt.&quot;</p>
+        </NRebut>
+        <div style={{ padding: 12, background: '#EFF6FF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#0369A1' }}>
+          <strong>Dingen om te benoemen:</strong>
+          <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+            <li>Servicegebied duidelijk (welke gemeenten)</li>
+            <li>Specialisaties met eigen pagina</li>
+            <li>Offerte-formulier met slimme velden</li>
+            <li>Reviews en garantie zichtbaar</li>
+            <li>Google &quot;services near me&quot; ranking</li>
+          </ul>
+        </div>
+      </NicheBlock>
+
+      {/* RETAIL / WINKELS */}
+      <NicheBlock icon="🛍️" title="Retail &amp; winkels" color="#EC4899">
+        <NRebut q='"Onze klanten komen fysiek langs"'>
+          <p>&quot;Ja, maar ze checken eerst online. Openingstijden, of jullie een specifiek product hebben, wat de sfeer is. Als jullie site oud of onduidelijk is, wachten ze niet — ze gaan naar iemand anders. Sterke lokale site = meer voetgangers.&quot;</p>
+        </NRebut>
+        <NRebut q='"Webshops zijn te veel gedoe"'>
+          <p>&quot;Hoeft niet een volle webshop te zijn. Wat wél helpt: een goede online showroom met foto&apos;s + &apos;bel voor voorraad&apos;-knop. Dat zit dicht op wat jullie nu doen, maar dan online zichtbaar. Kan uitgebreid worden naar webshop als je merkt dat het werkt.&quot;</p>
+        </NRebut>
+        <div style={{ padding: 12, background: '#FDF2F8', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#9F1239' }}>
+          <strong>Dingen om te benoemen:</strong>
+          <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+            <li>Product-highlights zonder volle shop</li>
+            <li>Adres, openingstijden, route</li>
+            <li>Instagram-integratie</li>
+            <li>Google Business koppeling</li>
+          </ul>
+        </div>
+      </NicheBlock>
+
+      {/* SPORT / WELLNESS */}
+      <NicheBlock icon="💪" title="Sport, fitness &amp; wellness" color="#22C55E">
+        <NRebut q='"Ledenwerving via Instagram is genoeg"'>
+          <p>&quot;Instagram is voor herkenning, maar aanmelden gebeurt op de site. Als die niet meteen laat zien &apos;dit is voor mij, dit kost X, ik meld me nu aan&apos; — dan haakt de lead af. Een goede site verhoogt de aanmelding-conversie van je bestaande Instagram-verkeer.&quot;</p>
+        </NRebut>
+        <NRebut q='"Onze klanten kennen ons"'>
+          <p>&quot;Bestaande wel. Maar wie gaat er verhuizen naar de buurt en zoekt een nieuwe sportschool? Die Googlen. Als jullie boven aan de zoekresultaten staan met heldere info + prijs + snelle aanmelding — pak je die.&quot;</p>
+        </NRebut>
+        <div style={{ padding: 12, background: '#F0FDF4', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#065F46' }}>
+          <strong>Dingen om te benoemen:</strong>
+          <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+            <li>Direct inschrijven / proefles boeken</li>
+            <li>Rooster zichtbaar</li>
+            <li>Foto&apos;s van sfeer en instructeurs</li>
+            <li>Prijzen transparant</li>
+          </ul>
+        </div>
+      </NicheBlock>
+
+      {/* ZORG */}
+      <NicheBlock icon="🏥" title="Zorg &amp; praktijken" color="#8B5CF6">
+        <NRebut q='"Patiënten komen via verwijzing"'>
+          <p>&quot;Deels. Maar steeds meer patiënten Googlen &apos;fysio in X&apos; of &apos;tandarts in Y&apos;. Als jullie site niet snel laat zien waarom jullie de juiste keuze zijn — kiezen ze een concurrent die dat wél doet. Voor lokale gezondheidszorg is website vindbaarheid tegenwoordig cruciaal.&quot;</p>
+        </NRebut>
+        <NRebut q='"Website is duur voor een kleine praktijk"'>
+          <p>&quot;Bij een kleine praktijk kan het vanaf €750 al — een simpele professionele site met adres, openingstijden, contactformulier en team-info. Meer heb je vaak niet nodig. Kost jullie dan misschien 3-4 nieuwe patiënten en het is terugbetaald.&quot;</p>
+        </NRebut>
+        <div style={{ padding: 12, background: '#F5F0FF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#5B21B6' }}>
+          <strong>Dingen om te benoemen:</strong>
+          <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
+            <li>Vertrouwen via team-foto&apos;s en cv&apos;s</li>
+            <li>Direct online afspraak boeken (integratie mogelijk)</li>
+            <li>Vergoedingen en verzekering info</li>
+            <li>Google &quot;X in stad&quot; ranking</li>
+          </ul>
+        </div>
+      </NicheBlock>
+
+      {/* UNIVERSELE GOUDEN LIJNEN */}
+      <div style={{ marginTop: 20, padding: 16, background: '#F1ECFF', borderRadius: 12 }}>
+        <strong style={{ color: '#3F06E3', fontSize: 14 }}>💎 Universele sterke lijnen (voor elke niche bruikbaar)</strong>
+        <ul style={{ paddingLeft: 20, marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#1A1730' }}>
+          <li>&quot;Jullie site is het visitekaartje — nu spreekt &apos;ie niet de taal van jullie kwaliteit.&quot;</li>
+          <li>&quot;In 5 seconden beslissen bezoekers of ze blijven of weggaan. Wat zegt jullie site in 5 seconden?&quot;</li>
+          <li>&quot;Wij lossen dit vaak op door een preview te maken — dan zie je meteen of onze aanpak past. Kost jullie niks.&quot;</li>
+          <li>&quot;We zijn geen 12-maanden contract. Als het na 3 maanden niks oplevert, stop je gewoon.&quot;</li>
+          <li>&quot;Modernica is klein en persoonlijk — je hebt direct contact, geen accountmanager.&quot;</li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+function NicheBlock({ icon, title, color, children }: any) {
+  return (
+    <div style={{ marginBottom: 24, padding: 16, background: 'white', borderRadius: 12, borderLeft: `4px solid ${color}`, border: '1px solid #E7E2F4' }}>
+      <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12, color }}>{icon} {title}</div>
+      {children}
+    </div>
+  )
+}
+
+function NRebut({ q, children }: { q: string; children: React.ReactNode }) {
+  return (
+    <div style={{ marginBottom: 10 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#1A1730' }}>{q}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.55, color: '#5F5A72', paddingLeft: 12, borderLeft: '2px solid #E7E2F4' }}>{children}</div>
     </div>
   )
 }
