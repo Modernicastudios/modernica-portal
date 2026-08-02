@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Phone, Globe, Mail, MapPin, ChevronRight, Check, X, Clock, Calendar, FileText, ArrowRight, Loader2, PhoneCall } from 'lucide-react'
+import Link from 'next/link'
+import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save } from 'lucide-react'
 import { CALL_OUTCOMES, PIPELINE_STAGES, type CallOutcome } from '@/types/leadmachine'
 
 interface Lead {
@@ -40,7 +41,7 @@ interface Stats {
   callbacks_due: number
 }
 
-export default function BellenClient({ userName, userId }: { userName: string; userId: string }) {
+export default function BellenClient({ userName }: { userName: string; userId: string }) {
   const [lead, setLead] = useState<Lead | null>(null)
   const [reason, setReason] = useState<string>('')
   const [loading, setLoading] = useState(true)
@@ -52,16 +53,16 @@ export default function BellenClient({ userName, userId }: { userName: string; u
   const [showOutcome, setShowOutcome] = useState(false)
   const [selectedOutcome, setSelectedOutcome] = useState<CallOutcome | null>(null)
   const [notes, setNotes] = useState('')
+  const [nextActionNote, setNextActionNote] = useState('')
   const [callbackDate, setCallbackDate] = useState('')
   const [callbackTime, setCallbackTime] = useState('')
   const [saving, setSaving] = useState(false)
   const [showEditContact, setShowEditContact] = useState(false)
+  const [showExtraFields, setShowExtraFields] = useState(false)
 
   const loadNext = useCallback(async () => {
     setLoading(true)
-    setLead(null); setShowOutcome(false); setSelectedOutcome(null)
-    setNotes(''); setCallbackDate(''); setCallbackTime('')
-    setCallActive(false); setCallStart(null); setDuration(0)
+    resetCallState()
     try {
       const [nextR, statsR] = await Promise.all([
         fetch('/api/leads/crm?action=next_lead'),
@@ -75,6 +76,14 @@ export default function BellenClient({ userName, userId }: { userName: string; u
     } catch (e) { console.error(e) }
     setLoading(false)
   }, [])
+
+  function resetCallState() {
+    setShowOutcome(false); setSelectedOutcome(null)
+    setNotes(''); setNextActionNote('')
+    setCallbackDate(''); setCallbackTime('')
+    setCallActive(false); setCallStart(null); setDuration(0)
+    setShowExtraFields(false)
+  }
 
   useEffect(() => { loadNext() }, [loadNext])
 
@@ -92,14 +101,19 @@ export default function BellenClient({ userName, userId }: { userName: string; u
     setShowOutcome(true)
   }
 
+  function cancelCall() {
+    if (confirm('Belpoging niet loggen en teruggaan naar lead-overzicht?')) {
+      resetCallState()
+    }
+  }
+
   async function saveOutcome() {
     if (!selectedOutcome || !lead) return
     setSaving(true)
     try {
       let callbackIso: string | null = null
       if (callbackDate) {
-        const iso = new Date(`${callbackDate}T${callbackTime || '09:00'}`).toISOString()
-        callbackIso = iso
+        callbackIso = new Date(`${callbackDate}T${callbackTime || '09:00'}`).toISOString()
       }
       await fetch('/api/leads/crm', {
         method: 'POST',
@@ -117,6 +131,15 @@ export default function BellenClient({ userName, userId }: { userName: string; u
           },
         }),
       })
+      if (nextActionNote.trim()) {
+        await fetch('/api/leads/crm', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            action: 'update_outreach',
+            payload: { outreach_id: lead.id, updates: { next_action_note: nextActionNote.trim() } },
+          }),
+        })
+      }
       await loadNext()
     } catch (e) { console.error(e); alert('Fout bij opslaan') }
     setSaving(false)
@@ -135,6 +158,36 @@ export default function BellenClient({ userName, userId }: { userName: string; u
     await loadNext()
   }
 
+  async function switchService(newService: 'social' | 'recruitment' | 'video' | 'ads' | 'local') {
+    if (!lead) return
+    const labels: Record<string, string> = {
+      social: 'Social media', recruitment: 'Personeelswerving',
+      video: 'Video/content', ads: 'Advertenties', local: 'Local marketing',
+    }
+    if (!confirm(`Lead pitch wisselen naar "${labels[newService]}"?\n\nEr wordt een notitie toegevoegd dat website niet nodig is, en pipeline blijft nieuw voor de nieuwe service.`)) return
+    await fetch('/api/leads/crm', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'update_outreach',
+        payload: { outreach_id: lead.id, updates: { service: newService, pipeline_stage: 'nieuw' } },
+      }),
+    })
+    await fetch('/api/leads/crm', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        action: 'add_note',
+        payload: {
+          company_id: lead.company_id,
+          outreach_id: lead.id,
+          contact_id: lead.contact_id,
+          body: `Website is al prima/nieuw — pitch geswitcht naar: ${labels[newService]}`,
+        },
+      }),
+    })
+    alert(`✓ Geswitcht naar ${labels[newService]} pipeline`)
+    await loadNext()
+  }
+
   const outcomeRequiresCallback = selectedOutcome
     && ['geen_gehoor','voicemail','niet_beschikbaar','callback_gevraagd'].includes(selectedOutcome)
 
@@ -143,7 +196,7 @@ export default function BellenClient({ userName, userId }: { userName: string; u
   if (loading) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', minHeight: '70vh' }}>
-        <Loader2 size={40} style={{ animation: 'spin 1s linear infinite' }} />
+        <Loader2 size={40} className="anim-spin" />
       </div>
     )
   }
@@ -156,31 +209,51 @@ export default function BellenClient({ userName, userId }: { userName: string; u
         <p style={{ color: 'var(--muted)', marginBottom: 30 }}>
           Er staan geen leads te bellen. Nieuwe leads komen automatisch binnen als callbacks aan tijd zijn.
         </p>
-        <button onClick={loadNext} style={btnPrimary}>Opnieuw checken</button>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <button onClick={loadNext} style={btnPrimary}>Opnieuw checken</button>
+          <Link href="/leads" style={{ ...btnGhost, textDecoration: 'none', textAlign: 'center' }}>← Terug naar overzicht</Link>
+        </div>
       </div>
     )
   }
 
   return (
-    <div style={{ maxWidth: 520, margin: '0 auto', padding: '12px 12px 100px', minHeight: '100vh' }}>
-      {/* Top: user + stats */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 12, padding: '8px 4px' }}>
-        <div style={{ fontSize: 13, color: 'var(--muted)' }}>
-          <strong style={{ color: 'var(--foreground)' }}>{userName}</strong>
-          {stats && ` · ${stats.callbacks_due} callbacks vandaag`}
+    <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 12px 100px', minHeight: '100vh' }}>
+      {/* STICKY TOP BAR met terug knop */}
+      <div style={{
+        position: 'sticky', top: 0, background: 'var(--bg, #FCFBFF)', zIndex: 10,
+        padding: '12px 0', borderBottom: '1px solid #E7E2F4', marginBottom: 12,
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+          <Link href="/leads" style={{
+            display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px',
+            background: 'white', border: '1px solid #E7E2F4', borderRadius: 8,
+            fontSize: 13, color: '#5F5A72', textDecoration: 'none', fontWeight: 600,
+          }}>
+            <ChevronLeft size={16} /> Overzicht
+          </Link>
+          <div style={{ fontSize: 12, color: 'var(--muted)' }}>
+            <strong>{userName}</strong>
+            {stats && stats.callbacks_due > 0 && <> · <span style={{ color: '#3F06E3', fontWeight: 700 }}>{stats.callbacks_due} callbacks</span></>}
+          </div>
+          <button onClick={skipLead} style={{ ...btnGhost, padding: '6px 10px', fontSize: 12 }}>Skip →</button>
         </div>
+      </div>
+
+      {/* Reason badge */}
+      <div style={{ marginBottom: 8 }}>
         <span style={{
           background: reason === 'callback_due' ? '#3F06E3' : '#F1ECFF',
           color: reason === 'callback_due' ? 'white' : '#3F06E3',
           fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100,
         }}>
           {reason === 'callback_due' && '📞 CALLBACK TIJD'}
-          {reason === 'assigned' && 'Toegewezen'}
-          {reason === 'fresh' && 'Nieuw'}
+          {reason === 'assigned' && 'Aan jou toegewezen'}
+          {reason === 'fresh' && 'Nieuwe lead uit pool'}
         </span>
       </div>
 
-      {/* Lead card */}
+      {/* LEAD CARD */}
       <div style={{
         background: 'white', borderRadius: 20, padding: 20, marginBottom: 16,
         boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #E7E2F4',
@@ -188,7 +261,7 @@ export default function BellenClient({ userName, userId }: { userName: string; u
         <div style={{ marginBottom: 4 }}>
           <span style={{
             display: 'inline-block', padding: '4px 10px', borderRadius: 100,
-            background: stage?.color + '20', color: stage?.color, fontSize: 11, fontWeight: 700,
+            background: (stage?.color || '#888') + '20', color: stage?.color, fontSize: 11, fontWeight: 700,
           }}>{stage?.label}</span>
         </div>
         <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 8 }}>
@@ -215,11 +288,6 @@ export default function BellenClient({ userName, userId }: { userName: string; u
                 {lead.lead_contacts.role && (
                   <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>{lead.lead_contacts.role}</div>
                 )}
-                {lead.lead_contacts.email && (
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 13, color: '#3F06E3' }}>
-                    <Mail size={12} /> {lead.lead_contacts.email}
-                  </div>
-                )}
               </div>
               <button onClick={() => setShowEditContact(true)} style={{
                 background: 'transparent', border: '1px solid #E7E2F4', padding: '6px 10px',
@@ -229,26 +297,45 @@ export default function BellenClient({ userName, userId }: { userName: string; u
           </div>
         )}
 
-        {/* Website check knop — cold caller kan snel checken of site verouderd is */}
+        {/* Website check knop */}
         {lead.lead_companies?.website_url && (
-          <a href={lead.lead_companies.website_url} target="_blank" rel="noopener"
-            style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-              padding: '14px 16px', background: 'white', border: '2px solid #E7E2F4',
-              borderRadius: 12, fontSize: 14, color: '#3F06E3', textDecoration: 'none',
-              marginBottom: 10, fontWeight: 600 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Globe size={16} /> Check website — is deze verouderd?
-            </span>
-            <span style={{ fontSize: 11, color: '#8F8AA3', fontWeight: 500 }}>
-              {lead.lead_companies.domain || 'open →'}
-            </span>
-          </a>
+          <>
+            <a href={lead.lead_companies.website_url} target="_blank" rel="noopener"
+              style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
+                padding: '14px 16px', background: 'white', border: '2px solid #E7E2F4',
+                borderRadius: 12, fontSize: 14, color: '#3F06E3', textDecoration: 'none',
+                marginBottom: 8, fontWeight: 600 }}>
+              <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Globe size={16} /> Check website — is deze verouderd?
+              </span>
+              <span style={{ fontSize: 11, color: '#8F8AA3', fontWeight: 500 }}>
+                {lead.lead_companies.domain || 'open →'}
+              </span>
+            </a>
+            {/* Site is nieuw? Switch service */}
+            <div style={{ padding: 10, background: '#FFFBEB', borderRadius: 10, marginBottom: 8, fontSize: 11 }}>
+              <div style={{ color: '#92400E', fontWeight: 700, marginBottom: 6 }}>
+                Site is prima / nieuw? Switch pitch:
+              </div>
+              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+                <button onClick={() => switchService('social')} style={switchBtn}>
+                  → Social media pitch
+                </button>
+                <button onClick={() => switchService('recruitment')} style={switchBtn}>
+                  → Personeelswerving pitch
+                </button>
+                <button onClick={() => switchService('video')} style={switchBtn}>
+                  → Video/content pitch
+                </button>
+              </div>
+            </div>
+          </>
         )}
         {lead.lead_contacts?.email && (
           <a href={`mailto:${lead.lead_contacts.email}`}
             style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#F8F7FF',
               borderRadius: 10, fontSize: 13, color: '#3F06E3', textDecoration: 'none', marginBottom: 8 }}>
-            <Mail size={14} /> Stuur mail naar {lead.lead_contacts.email}
+            <Mail size={14} /> {lead.lead_contacts.email}
           </a>
         )}
 
@@ -260,16 +347,16 @@ export default function BellenClient({ userName, userId }: { userName: string; u
           </div>
         )}
 
-        {/* Notes */}
+        {/* Bestaande notes */}
         {lead.lead_companies?.notes && (
           <div style={{ padding: 10, background: '#F0FDF4', borderRadius: 10, marginTop: 10, fontSize: 13, lineHeight: 1.4 }}>
-            <strong style={{ color: '#059669', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Aantekening</strong>
+            <strong style={{ color: '#059669', fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.06em' }}>Bedrijfsnotitie</strong>
             <div style={{ marginTop: 4 }}>{lead.lead_companies.notes}</div>
           </div>
         )}
       </div>
 
-      {/* Call action */}
+      {/* CALL ACTION */}
       {!showOutcome && (
         <>
           {lead.lead_companies?.phone ? (
@@ -295,20 +382,30 @@ export default function BellenClient({ userName, userId }: { userName: string; u
         </>
       )}
 
-      {/* Outcome flow */}
+      {/* OUTCOME FLOW */}
       {showOutcome && (
         <div style={{
           background: 'white', borderRadius: 20, padding: 20, marginTop: 16,
           boxShadow: '0 4px 20px rgba(0,0,0,0.08)', border: '1px solid #E7E2F4',
         }}>
+          {/* Header met annuleer knop */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
+            <h2 style={{ fontSize: 18, fontWeight: 800 }}>Wat is er gebeurd?</h2>
+            <button onClick={cancelCall} style={{
+              display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px',
+              background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 8,
+              fontSize: 12, color: '#991B1B', cursor: 'pointer', fontWeight: 600,
+            }}>
+              <X size={14} /> Annuleer
+            </button>
+          </div>
+
           {callActive && (
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, marginBottom: 16, padding: 10, background: '#F0FDF4', borderRadius: 10, color: '#059669', fontWeight: 700 }}>
               <div style={{ width: 8, height: 8, borderRadius: '50%', background: '#22C55E', animation: 'pulse 1.5s infinite' }} />
               In gesprek — {formatDuration(duration)}
             </div>
           )}
-
-          <h2 style={{ fontSize: 18, fontWeight: 800, marginBottom: 12 }}>Wat is er gebeurd?</h2>
 
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginBottom: 16 }}>
             {CALL_OUTCOMES.map(o => (
@@ -337,7 +434,7 @@ export default function BellenClient({ userName, userId }: { userName: string; u
                       style={inputStyle} min={new Date().toISOString().split('T')[0]} />
                     <input type="time" value={callbackTime} onChange={e => setCallbackTime(e.target.value)} style={inputStyle} />
                   </div>
-                  <div style={{ display: 'flex', gap: 6 }}>
+                  <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
                     {quickCallbacks.map(q => (
                       <button key={q.label} onClick={() => setQuickCallback(q.hours, setCallbackDate, setCallbackTime)}
                         style={{ ...btnGhost, padding: '8px 12px', fontSize: 12 }}>{q.label}</button>
@@ -346,14 +443,41 @@ export default function BellenClient({ userName, userId }: { userName: string; u
                 </div>
               )}
 
+              {/* Notes — bigger by default */}
+              <label style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, display: 'block' }}>Notities uit gesprek</label>
               <textarea value={notes} onChange={e => setNotes(e.target.value)}
-                placeholder="Notities uit gesprek (optioneel)..." rows={4}
-                style={{ ...inputStyle, width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
+                placeholder="Wat is er besproken? Vraag of pijnpunt? Interessante info voor volgende keer?"
+                rows={6}
+                style={{ ...inputStyle, width: '100%', resize: 'vertical', fontFamily: 'inherit', minHeight: 120 }} />
 
-              <button onClick={saveOutcome} disabled={saving}
-                style={{ ...btnPrimary, marginTop: 14, width: '100%', opacity: saving ? 0.6 : 1 }}>
-                {saving ? 'Opslaan...' : 'Opslaan + volgende lead →'}
+              {/* Extra velden — expandable */}
+              <button onClick={() => setShowExtraFields(!showExtraFields)}
+                style={{
+                  background: 'transparent', border: 'none', padding: '10px 0',
+                  color: '#5F5A72', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', gap: 4,
+                }}>
+                <ChevronDown size={14} style={{ transform: showExtraFields ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
+                {showExtraFields ? 'Extra veld verbergen' : 'Extra veld: volgende actie / opmerking'}
               </button>
+
+              {showExtraFields && (
+                <div style={{ marginBottom: 14 }}>
+                  <label style={{ fontSize: 12, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>Wat moet er als volgende gebeuren?</label>
+                  <textarea value={nextActionNote} onChange={e => setNextActionNote(e.target.value)}
+                    placeholder="Bijv: 'Preview aan Piet mailen', 'Offerte in maak', 'Bel over 2 weken terug'"
+                    rows={3}
+                    style={{ ...inputStyle, width: '100%', resize: 'vertical', fontFamily: 'inherit' }} />
+                </div>
+              )}
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, marginTop: 14 }}>
+                <button onClick={cancelCall} style={{ ...btnGhost }}>← Terug</button>
+                <button onClick={saveOutcome} disabled={saving}
+                  style={{ ...btnPrimary, opacity: saving ? 0.6 : 1 }}>
+                  {saving ? 'Opslaan...' : 'Opslaan + volgende →'}
+                </button>
+              </div>
             </>
           )}
         </div>
@@ -365,9 +489,9 @@ export default function BellenClient({ userName, userId }: { userName: string; u
           lead={lead}
           onClose={() => setShowEditContact(false)}
           onSave={async (updates) => {
-            const companyUpdates: any = {}
-            const contactUpdates: any = {}
-            for (const k of ['name', 'phone', 'website_url', 'city', 'industry']) {
+            const companyUpdates: Record<string, unknown> = {}
+            const contactUpdates: Record<string, unknown> = {}
+            for (const k of ['name', 'phone', 'website_url', 'city', 'industry', 'notes']) {
               if (k in updates) companyUpdates[k] = updates[k]
             }
             for (const k of ['first_name', 'last_name', 'email', 'phone', 'role']) {
@@ -388,6 +512,7 @@ export default function BellenClient({ userName, userId }: { userName: string; u
       )}
 
       <style>{`
+        .anim-spin { animation: spin 1s linear infinite; }
         @keyframes pulse { 0%,100% { opacity: 1 } 50% { opacity: .3 } }
         @keyframes spin { to { transform: rotate(360deg) } }
       `}</style>
@@ -399,6 +524,7 @@ const quickCallbacks = [
   { label: '1u', hours: 1 },
   { label: '3u', hours: 3 },
   { label: 'Morgen', hours: 24 },
+  { label: '3 dagen', hours: 72 },
   { label: 'Week', hours: 168 },
 ]
 
@@ -428,13 +554,19 @@ const btnGhost: React.CSSProperties = {
 const inputStyle: React.CSSProperties = {
   padding: '10px 12px', border: '1px solid #E7E2F4', borderRadius: 10, fontSize: 14, outline: 'none',
 }
+const switchBtn: React.CSSProperties = {
+  padding: '6px 10px', background: 'white', border: '1px solid #F59E0B',
+  borderRadius: 8, fontSize: 11, color: '#92400E', cursor: 'pointer', fontWeight: 700,
+}
 
-function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () => void, onSave: (u: any) => void }) {
+function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () => void, onSave: (u: Record<string, unknown>) => void }) {
   const c = lead.lead_companies
   const p = lead.lead_contacts
-  const [form, setForm] = useState({
-    name: c?.name || '', phone: c?.phone || '', website_url: c?.website_url || '', city: c?.city || '', industry: c?.industry || '',
-    c_first_name: p?.first_name || '', c_last_name: p?.last_name || '', c_email: p?.email || '', c_phone: p?.phone || '', c_role: p?.role || '',
+  const [form, setForm] = useState<Record<string, string>>({
+    name: c?.name || '', phone: c?.phone || '', website_url: c?.website_url || '',
+    city: c?.city || '', industry: c?.industry || '', notes: c?.notes || '',
+    c_first_name: p?.first_name || '', c_last_name: p?.last_name || '',
+    c_email: p?.email || '', c_phone: p?.phone || '', c_role: p?.role || '',
   })
   return (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'flex-end', justifyContent: 'center', zIndex: 100 }}>
@@ -451,11 +583,17 @@ function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () =
           { k: 'website_url', label: 'Website' },
           { k: 'city', label: 'Stad' },
           { k: 'industry', label: 'Branche' },
+          { k: 'notes', label: 'Bedrijfsnotitie', textarea: true },
         ].map(f => (
           <div key={f.k} style={{ marginBottom: 10 }}>
             <label style={{ fontSize: 12, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>{f.label}</label>
-            <input type={f.type || 'text'} value={(form as any)[f.k]} onChange={e => setForm({ ...form, [f.k]: e.target.value })}
-              style={{ ...inputStyle, width: '100%' }} />
+            {f.textarea ? (
+              <textarea rows={3} value={form[f.k] || ''} onChange={e => setForm({ ...form, [f.k]: e.target.value })}
+                style={{ ...inputStyle, width: '100%', fontFamily: 'inherit' }} />
+            ) : (
+              <input type={f.type || 'text'} value={form[f.k] || ''} onChange={e => setForm({ ...form, [f.k]: e.target.value })}
+                style={{ ...inputStyle, width: '100%' }} />
+            )}
           </div>
         ))}
 
@@ -469,12 +607,14 @@ function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () =
         ].map(f => (
           <div key={f.k} style={{ marginBottom: 10 }}>
             <label style={{ fontSize: 12, color: 'var(--muted)', display: 'block', marginBottom: 4 }}>{f.label}</label>
-            <input type={f.type || 'text'} value={(form as any)[f.k]} onChange={e => setForm({ ...form, [f.k]: e.target.value })}
+            <input type={f.type || 'text'} value={form[f.k] || ''} onChange={e => setForm({ ...form, [f.k]: e.target.value })}
               style={{ ...inputStyle, width: '100%' }} />
           </div>
         ))}
 
-        <button onClick={() => onSave(form)} style={{ ...btnPrimary, width: '100%', marginTop: 14 }}>Opslaan</button>
+        <button onClick={() => onSave(form)} style={{ ...btnPrimary, width: '100%', marginTop: 14 }}>
+          <Save size={16} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> Opslaan
+        </button>
       </div>
     </div>
   )

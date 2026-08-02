@@ -120,8 +120,12 @@ export type CallOutcome =
   | 'niet_geinteresseerd'
   | 'callback_gevraagd'
   | 'gesprek_gehad'
-  | 'gesprek_ingepland'
+  | 'geinteresseerd'
+  | 'preview_gevraagd'
+  | 'preview_verstuurd'
   | 'offerte_gevraagd'
+  | 'offerte_verstuurd'
+  | 'gesprek_ingepland'
   | 'klant_geworden'
   | 'ander'
 
@@ -129,9 +133,13 @@ export type PipelineStage =
   | 'nieuw'
   | 'gebeld_geen_gehoor'
   | 'callback'
+  | 'geinteresseerd'
   | 'gesprek_gehad'
   | 'gesprek_ingepland'
+  | 'preview_verstuurd'
+  | 'offerte_in_maak'
   | 'offerte_verstuurd'
+  | 'onderhandeling'
   | 'klant'
   | 'niet_geinteresseerd'
   | 'verkeerd_nummer'
@@ -216,30 +224,38 @@ export interface LeadActivity {
 }
 
 export const PIPELINE_STAGES: Array<{ key: PipelineStage; label: string; color: string }> = [
-  { key: 'nieuw', label: 'Nieuw', color: '#6B7280' },
-  { key: 'gebeld_geen_gehoor', label: 'Geen gehoor', color: '#F59E0B' },
-  { key: 'callback', label: 'Terugbellen', color: '#3F06E3' },
-  { key: 'gesprek_gehad', label: 'Gesprek gehad', color: '#8B5CF6' },
-  { key: 'gesprek_ingepland', label: 'Afspraak', color: '#22C55E' },
-  { key: 'offerte_verstuurd', label: 'Offerte', color: '#0EA5E9' },
-  { key: 'klant', label: 'Klant', color: '#059669' },
-  { key: 'niet_geinteresseerd', label: 'Niet geïnteresseerd', color: '#EF4444' },
-  { key: 'verkeerd_nummer', label: 'Verkeerd nummer', color: '#9CA3AF' },
-  { key: 'dood', label: 'Dood spoor', color: '#4B5563' },
+  { key: 'nieuw',                label: 'Nieuw',               color: '#6B7280' },
+  { key: 'gebeld_geen_gehoor',   label: 'Geen gehoor',         color: '#F59E0B' },
+  { key: 'callback',             label: 'Terugbellen',         color: '#3F06E3' },
+  { key: 'geinteresseerd',       label: 'Geïnteresseerd',      color: '#EAB308' },
+  { key: 'gesprek_gehad',        label: 'Gesprek gehad',       color: '#8B5CF6' },
+  { key: 'gesprek_ingepland',    label: 'Afspraak',            color: '#22C55E' },
+  { key: 'preview_verstuurd',    label: 'Preview verstuurd',   color: '#EC4899' },
+  { key: 'offerte_in_maak',      label: 'Offerte in maak',     color: '#F97316' },
+  { key: 'offerte_verstuurd',    label: 'Offerte verstuurd',   color: '#0EA5E9' },
+  { key: 'onderhandeling',       label: 'Onderhandeling',      color: '#6366F1' },
+  { key: 'klant',                label: 'KLANT',               color: '#059669' },
+  { key: 'niet_geinteresseerd',  label: 'Niet geïnteresseerd', color: '#EF4444' },
+  { key: 'verkeerd_nummer',      label: 'Verkeerd nummer',     color: '#9CA3AF' },
+  { key: 'dood',                 label: 'Dood spoor',          color: '#4B5563' },
 ]
 
 export const CALL_OUTCOMES: Array<{ key: CallOutcome; label: string; emoji: string; nextAction?: 'callback' | 'schedule' | null }> = [
-  { key: 'geen_gehoor',        label: 'Geen gehoor',           emoji: '📵', nextAction: 'callback' },
-  { key: 'voicemail',           label: 'Voicemail',             emoji: '🎙️', nextAction: 'callback' },
-  { key: 'niet_beschikbaar',    label: 'Niet beschikbaar',      emoji: '⏰', nextAction: 'callback' },
-  { key: 'callback_gevraagd',   label: 'Terugbellen op tijd',   emoji: '📞', nextAction: 'callback' },
-  { key: 'gesprek_gehad',       label: 'Gesprek gehad',         emoji: '💬' },
-  { key: 'gesprek_ingepland',   label: 'Afspraak ingepland',    emoji: '📅', nextAction: 'schedule' },
-  { key: 'offerte_gevraagd',    label: 'Offerte gevraagd',      emoji: '📄' },
-  { key: 'klant_geworden',      label: 'KLANT GEWORDEN',        emoji: '🎉' },
-  { key: 'niet_geinteresseerd', label: 'Niet geïnteresseerd',   emoji: '❌' },
-  { key: 'verkeerd_nummer',     label: 'Verkeerd nummer',       emoji: '⚠️' },
-  { key: 'ander',               label: 'Ander',                 emoji: '❓' },
+  { key: 'geen_gehoor',          label: 'Geen gehoor',           emoji: '📵', nextAction: 'callback' },
+  { key: 'voicemail',            label: 'Voicemail',             emoji: '🎙️', nextAction: 'callback' },
+  { key: 'niet_beschikbaar',     label: 'Niet beschikbaar',      emoji: '⏰', nextAction: 'callback' },
+  { key: 'callback_gevraagd',    label: 'Terugbellen op tijd',   emoji: '📞', nextAction: 'callback' },
+  { key: 'gesprek_gehad',        label: 'Gesprek gehad',         emoji: '💬' },
+  { key: 'geinteresseerd',       label: 'Geïnteresseerd',        emoji: '👀' },
+  { key: 'preview_gevraagd',     label: 'Preview gevraagd',      emoji: '🖼️' },
+  { key: 'preview_verstuurd',    label: 'Preview verstuurd',     emoji: '📤' },
+  { key: 'offerte_gevraagd',     label: 'Offerte gevraagd',      emoji: '📝' },
+  { key: 'offerte_verstuurd',    label: 'Offerte verstuurd',     emoji: '📄' },
+  { key: 'gesprek_ingepland',    label: 'Afspraak ingepland',    emoji: '📅', nextAction: 'schedule' },
+  { key: 'klant_geworden',       label: 'KLANT GEWORDEN',        emoji: '🎉' },
+  { key: 'niet_geinteresseerd',  label: 'Niet geïnteresseerd',   emoji: '❌' },
+  { key: 'verkeerd_nummer',      label: 'Verkeerd nummer',       emoji: '⚠️' },
+  { key: 'ander',                label: 'Ander',                 emoji: '❓' },
 ]
 
 // Uitbreidingen op bestaande interfaces (subset velden overriden)
