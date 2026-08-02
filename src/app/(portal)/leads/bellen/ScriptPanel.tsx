@@ -355,31 +355,43 @@ function SectionNiche() {
     <div>
       <h3 style={headerStyle}>Tegen-antwoorden per branche</h3>
       <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
-        Elke branche heeft z&apos;n eigen bezwaren. Hier sterke, zelfverzekerde antwoorden
-        die aansluiten bij hun realiteit — geen sales-fluff, wél waar.
+        Elke branche heeft z&apos;n eigen bezwaren. Per bezwaar 3 antwoord-varianten:
+        <strong> zacht</strong> (voorzichtig openen), <strong>direct</strong> (helder confronteren),
+        <strong> data</strong> (case-based). Kies wat past bij de toon van het gesprek.
       </p>
 
       {/* BOUWBEDRIJVEN */}
       <NicheBlock icon="🏗️" title="Bouwbedrijven &amp; aannemers" color="#F97316">
-        <NRebut q='"We hebben het al te druk"'>
-          <p>&quot;Dan is dit juist het moment. Nu komt werk via mond-tot-mond, dat werkt zolang het werkt. Maar bij drukte kan je pas selectief kiezen als er meer aanvragen binnenkomen dan je nodig hebt. Een goede site helpt je juist bij het uitkiezen — geen last van, wel meer keuze.&quot;</p>
-        </NRebut>
-        <NRebut q='"We hebben geen website nodig, klanten kennen ons wel"'>
-          <p>&quot;Klopt, jullie bestaande klanten wel. Maar wat gebeurt er als er nieuwe generatie opdrachtgevers komt? Die Googlen eerst. Ik zag jullie site en de kwaliteit die daar staat weerspiegelt niet wat jullie feitelijk leveren — dat kost je opdrachten die je niet eens weet dat je misloopt.&quot;</p>
-        </NRebut>
-        <NRebut q='"Onze site is al 5 jaar oud maar werkt prima"'>
-          <p>&quot;Dat is precies het probleem. Een oude site zegt tegen bezoekers &apos;dit bedrijf loopt achter&apos;. Terwijl jullie waarschijnlijk juist voorop lopen in kwaliteit. Bij Kunststofhuis Waterland hadden we ditzelfde — website 5 jaar oud, dus 0 aanvragen. Na renovatie: 7+ per maand. De kwaliteit die je levert moet je online ook laten zien.&quot;</p>
-        </NRebut>
-        <NRebut q='"Elke euro moet ik terugverdienen"'>
-          <p>&quot;Snap ik. Reken 1 extra project van €10k+ per jaar via de site — de site heeft zichzelf tienvoudig terugbetaald. En bij bouw praten we vaak over grotere opdrachten, dus zelfs 1 nieuwe klant per jaar tikt hard aan.&quot;</p>
-        </NRebut>
+        <NRebut q='"We hebben het al te druk"' variants={[
+          { tone: 'zacht', text: '"Snap ik, dat betekent dat het goed gaat. En dat is juist het moment — nu heb je de rust om iets neer te zetten wat over 6 maanden voor je werkt. In een dip staan er al 10 bureaus op te bellen."' },
+          { tone: 'direct', text: '"Dan is dit juist hét moment. Nu komt werk via mond-tot-mond en dat werkt zolang het werkt. Een goede site geeft je bij drukte de keuze om selectief te zijn — niet meer werk, wel betere klanten."' },
+          { tone: 'data', text: '"Perfect. Bij bouwbedrijven zien we vaak dat een strakke site vooral helpt met kwaliteit selectie: hogere opdracht-waarde, minder gedoe. Bij Kunststofhuis Waterland: 7 aanvragen per maand, waarvan ze de bulk kunnen wegwuiven en pakken wat past."' },
+        ]} />
+
+        <NRebut q='"We hebben geen website nodig, klanten kennen ons wel"' variants={[
+          { tone: 'zacht', text: '"Klopt, jullie bestaande netwerk is sterk. Maar denk aan de volgende generatie opdrachtgevers — de projectmanagers die nu opkomen zoeken alles online. Zonder professionele site val je bij hen buiten de shortlist."' },
+          { tone: 'direct', text: '"Bestaande klanten wel. Maar wat gebeurt er als er nieuwe grote opdrachtgever komt? Die Googlt eerst en beslist in 5 seconden of jullie serieus zijn. Nu spreekt jullie site niet de taal van jullie werkelijke kwaliteit."' },
+          { tone: 'data', text: '"75% van B2B beslissers checkt online voor eerste contact. Dat betekent dat je 3 van de 4 mogelijke opdrachten misloopt zonder professionele online uitstraling — zonder dat je het weet."' },
+        ]} />
+
+        <NRebut q='"Onze site is al 5 jaar oud maar werkt prima"' variants={[
+          { tone: 'zacht', text: '"Dat kan zeker. Alleen — een 5 jaar oude site oogt tegenwoordig niet meer op de hoogte van je vakmanschap. Bezoekers concluderen onbewust: dit bedrijf loopt achter. Dat verdien je niet."' },
+          { tone: 'direct', text: '"Precies dat is het probleem. Een 5 jaar oude site zegt tegen bezoekers dit bedrijf loopt achter. Terwijl jullie waarschijnlijk juist voorop lopen in kwaliteit. Die mismatch kost je opdrachten."' },
+          { tone: 'data', text: '"Bij Kunststofhuis Waterland hadden we exact dit: site 5 jaar oud, 0 aanvragen. Na renovatie: 7+ aanvragen per maand binnen 2 maanden. De kwaliteit die jullie leveren moet ook online te zien zijn — anders mis je opdrachten."' },
+        ]} />
+
+        <NRebut q='"Elke euro moet ik terugverdienen"' variants={[
+          { tone: 'zacht', text: '"Terecht. Dat vinden wij ook. Bij bouw draait het vaak om 1 project van €10k+ dat de site tienvoudig terugverdient. Als jullie 1 keer per jaar een grote opdracht via online halen — is de investering voorbij."' },
+          { tone: 'direct', text: '"Snap ik. Kijk naar het simpelste: 1 extra project per jaar via de site = €5-25k. De site zelf kost eenmalig €1.500-3.000. Reken maar terug. Enige risico is: niks doen."' },
+          { tone: 'data', text: '"Onze klanten in de bouw verdienen de site gemiddeld terug binnen 3 maanden — bij grotere opdrachten sneller. Kunststofhuis Waterland: €0 aanvragen naar 7+/maand. Zelfs bij lage conversie tikt dat direct hard aan."' },
+        ]} />
+
         <div style={{ padding: 12, background: '#FFF9EF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#92400E' }}>
           <strong>Dingen om te benoemen bij bouwbedrijven:</strong>
           <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
-            <li>Referentieprojecten kunnen zichtbaar</li>
-            <li>Foto&apos;s van eigen werk — geen stock</li>
-            <li>Duidelijke expertise-pagina&apos;s (nieuwbouw / renovatie / utiliteit)</li>
-            <li>Certificaten en garanties zichtbaar</li>
+            <li>Referentieprojecten zichtbaar met eigen foto&apos;s</li>
+            <li>Kwaliteitscertificaten (VCA, ISO) op de site</li>
+            <li>Expertise per specialisatie (nieuwbouw / renovatie / utiliteit)</li>
             <li>Kwaliteit online = signaal aan grote opdrachtgevers</li>
           </ul>
         </div>
@@ -387,19 +399,28 @@ function SectionNiche() {
 
       {/* HORECA */}
       <NicheBlock icon="🍽️" title="Restaurants &amp; horeca" color="#EF4444">
-        <NRebut q='"We hebben geen tijd voor online, druk in de keuken"'>
-          <p>&quot;Snap ik als geen ander. Maar juist online geeft je tijd terug — als reserveringen via de site komen, hoef je die aan de telefoon niet meer op te nemen. Bij Bierbrasserie Koster: van 0 groepsreserveringen naar 1-3 grote groepen (20+ personen) per maand. Dat scheelt telefoontjes én levert direct omzet.&quot;</p>
-        </NRebut>
-        <NRebut q='"Onze klanten zijn vaste gasten"'>
-          <p>&quot;Fantastisch. Maar wat als er iemand hierheen verhuist, of een nieuw bedrijf in de buurt zoekt een lunch-plek? Die Googlen. Als ze jullie niet vinden of jullie site oogt gedateerd — pak je een concurrent die net over de streep is. Voor 1-2 nieuwe reserveringen per week is de site sneller terugverdiend dan een dinerpakket voor 4.&quot;</p>
-        </NRebut>
-        <NRebut q='"Google en Instagram is toch genoeg?"'>
-          <p>&quot;Google en Instagram zijn tussenstappen — bezoekers klikken door naar je site voor menu, prijzen, openingstijden, reserveren. Als je site die vragen niet snel beantwoordt, valt de reservering weg. Wij bouwen sites die daar juist op scoren.&quot;</p>
-        </NRebut>
+        <NRebut q='"We hebben geen tijd voor online, druk in de keuken"' variants={[
+          { tone: 'zacht', text: '"Snap ik, dat is precies waarom wij het uit handen nemen. Jullie doen wat jullie het beste kunnen (koken + gasten), wij zorgen dat de site de aanvragen ophaalt zonder dat het jullie tijd kost."' },
+          { tone: 'direct', text: '"Dan geeft de site je juist tijd terug. Reserveringen via site = geen telefoon meer op te nemen tijdens service. Een goede site scheelt je uren per week."' },
+          { tone: 'data', text: '"Bij Bierbrasserie Koster: van 0 groepsreserveringen naar 1-3 grote groepen (20+ personen) per maand. Dat betekent minder telefoontjes tijdens service EN meer omzet. Beide winst."' },
+        ]} />
+
+        <NRebut q='"Onze klanten zijn vaste gasten"' variants={[
+          { tone: 'zacht', text: '"Fantastisch, dat zegt veel over jullie kwaliteit. Maar nieuwe verhuizers of bedrijven zoeken een lunchplek via Google. Als jullie niet vindbaar zijn kennen zij jullie niet."' },
+          { tone: 'direct', text: '"Vaste gasten zorgen voor omzet-stabiliteit. Nieuwe gasten zorgen voor groei. Als jullie site niet oogt zoals jullie eten smaakt, kies je effectief voor stagnatie."' },
+          { tone: 'data', text: '"Voor 1-2 nieuwe reserveringen per week is de site sneller terugverdiend dan één dinerpakket voor 4. En het compound-effect: die nieuwe gasten worden vaste gasten."' },
+        ]} />
+
+        <NRebut q='"Google en Instagram is toch genoeg?"' variants={[
+          { tone: 'zacht', text: '"Google en Instagram zijn een prima ingang — maar het is de site waar mensen daarna doorklikken om te beslissen. Als de site die vraag &apos;kom ik hier?&apos; niet snel beantwoordt, valt de reservering weg."' },
+          { tone: 'direct', text: '"Google en Instagram brengen bezoekers naar je site. Als je site die bezoekers niet omzet in gasten, is het geld weggegooid. Wij bouwen sites die dat wél doen."' },
+          { tone: 'data', text: '"Instagram-verkeer bounced gemiddeld 60% op een slechte site. Met een goede site is dat 25%. Voor jullie betekent dat elke Instagram-post ineens ~2x zoveel gasten oplevert."' },
+        ]} />
+
         <div style={{ padding: 12, background: '#FFF9EF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#92400E' }}>
           <strong>Dingen om te benoemen bij horeca:</strong>
           <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
-            <li>Reserveringsformulier (groepen, arrangementen)</li>
+            <li>Reserverings-integratie (groepen, arrangementen)</li>
             <li>Menu direct zichtbaar (mobiel!)</li>
             <li>Sfeerfoto&apos;s — wij kunnen ook zelf schieten</li>
             <li>Openingstijden en route (Google Maps)</li>
@@ -410,12 +431,18 @@ function SectionNiche() {
 
       {/* INSTALLATIE / TECHNIEK */}
       <NicheBlock icon="🔧" title="Installatiebedrijven &amp; techniek" color="#0EA5E9">
-        <NRebut q='"Wij werken vooral op offerte, niet via de site"'>
-          <p>&quot;Klopt bij grotere projecten. Maar de eerste offerte-aanvraag begint online — mensen Googlen op &apos;airco specialist regio&apos; of &apos;installateur badkamer&apos;. Als jullie daar bovenaan staan met een goede site + duidelijke expertise, komen die offerte-aanvragen bij jullie ipv bij de concurrent. De LED Installateur haalt zo 3-5 kwalificatie-aanvragen per week via online.&quot;</p>
-        </NRebut>
-        <NRebut q='"Concurrenten hebben ook een site en die haalt niks"'>
-          <p>&quot;Precies daarom. Een gemiddelde site levert niks op omdat &apos;ie generic is. Wij bouwen sites die richten op jullie specifieke expertise + regio, met goede SEO. Zo pak je juist de leads die jullie concurrenten laten liggen omdat hun site niet gevonden wordt.&quot;</p>
-        </NRebut>
+        <NRebut q='"Wij werken vooral op offerte, niet via de site"' variants={[
+          { tone: 'zacht', text: '"Klopt voor grotere projecten. Maar de eerste kennismaking begint tegenwoordig online — mensen Googlen naar &apos;installateur in X&apos;. Als jullie daar bovenaan staan, komen die offerte-aanvragen bij jullie."' },
+          { tone: 'direct', text: '"Offertes moeten ergens uit voortkomen. En steeds vaker begint dat met een Google search. Zonder goede site zit je gewoon niet aan tafel bij de eerste selectie."' },
+          { tone: 'data', text: '"De LED Installateur haalt 3-5 kwalificatie-aanvragen per week via online — daaruit rollen ~2 offertes per week. Zelfde patroon zien we bij installateurs: online is nu de eerste stap naar offerte."' },
+        ]} />
+
+        <NRebut q='"Concurrenten hebben ook een site en die haalt niks"' variants={[
+          { tone: 'zacht', text: '"Vaak omdat die site generic is — één van veel. Wij bouwen sites die richten op jullie unieke specialisatie + regio. Dat maakt het verschil tussen &apos;zomaar een installateur&apos; en &apos;dé specialist voor X in Y&apos;."' },
+          { tone: 'direct', text: '"Precies daarom. Gemiddelde site levert niks op omdat &apos;ie generic is. Wij bouwen sites die opvallen: specifieke expertise, regio, sterke SEO. Zo pak je juist de leads die concurrenten laten liggen."' },
+          { tone: 'data', text: '"Sites die niet vindbaar zijn krijgen 0 verkeer — dan is het geen wonder dat er niks komt. Wij checken je huidige positie in Google en laten zien hoe we die 10+ plaatsen kunnen opschuiven."' },
+        ]} />
+
         <div style={{ padding: 12, background: '#EFF6FF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#0369A1' }}>
           <strong>Dingen om te benoemen:</strong>
           <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
@@ -430,12 +457,18 @@ function SectionNiche() {
 
       {/* RETAIL / WINKELS */}
       <NicheBlock icon="🛍️" title="Retail &amp; winkels" color="#EC4899">
-        <NRebut q='"Onze klanten komen fysiek langs"'>
-          <p>&quot;Ja, maar ze checken eerst online. Openingstijden, of jullie een specifiek product hebben, wat de sfeer is. Als jullie site oud of onduidelijk is, wachten ze niet — ze gaan naar iemand anders. Sterke lokale site = meer voetgangers.&quot;</p>
-        </NRebut>
-        <NRebut q='"Webshops zijn te veel gedoe"'>
-          <p>&quot;Hoeft niet een volle webshop te zijn. Wat wél helpt: een goede online showroom met foto&apos;s + &apos;bel voor voorraad&apos;-knop. Dat zit dicht op wat jullie nu doen, maar dan online zichtbaar. Kan uitgebreid worden naar webshop als je merkt dat het werkt.&quot;</p>
-        </NRebut>
+        <NRebut q='"Onze klanten komen fysiek langs"' variants={[
+          { tone: 'zacht', text: '"Ja, maar ze checken eerst online: openingstijden, of jullie een specifiek product hebben. Een goede site zorgt dat ze niet naar de concurrent gaan voordat ze bij jullie langskomen."' },
+          { tone: 'direct', text: '"Nog belangrijker: mensen willen weten waarom ze naar jullie moeten komen. Zonder duidelijke online etalage kiezen ze de zaak die zich wél laat zien."' },
+          { tone: 'data', text: '"70% van winkelbezoekers checkt eerst online. Als jullie site oud oogt of onduidelijk is, gaan ze naar de winkel die zich duidelijker profileert. Sterke site = meer voetgangers, letterlijk."' },
+        ]} />
+
+        <NRebut q='"Webshops zijn te veel gedoe"' variants={[
+          { tone: 'zacht', text: '"Hoeft ook helemaal geen webshop te zijn. Een online showroom met foto&apos;s en &apos;bel voor voorraad&apos;-knop kan al enorm helpen — zonder logistieke rompslomp."' },
+          { tone: 'direct', text: '"Dat begrijp ik. Wij bouwen liever een sterke online showroom dan een half-werkende webshop. Later uitbreiden kan altijd — beginnen met minder gedoe en meer resultaat."' },
+          { tone: 'data', text: '"90% van onze retail-klanten start zonder webshop. Sterk showroom + bel-voor-voorraad = veel meer voetgangers zonder de logistiek van pakketten. Werkt gewoon."' },
+        ]} />
+
         <div style={{ padding: 12, background: '#FDF2F8', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#9F1239' }}>
           <strong>Dingen om te benoemen:</strong>
           <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
@@ -449,12 +482,18 @@ function SectionNiche() {
 
       {/* SPORT / WELLNESS */}
       <NicheBlock icon="💪" title="Sport, fitness &amp; wellness" color="#22C55E">
-        <NRebut q='"Ledenwerving via Instagram is genoeg"'>
-          <p>&quot;Instagram is voor herkenning, maar aanmelden gebeurt op de site. Als die niet meteen laat zien &apos;dit is voor mij, dit kost X, ik meld me nu aan&apos; — dan haakt de lead af. Een goede site verhoogt de aanmelding-conversie van je bestaande Instagram-verkeer.&quot;</p>
-        </NRebut>
-        <NRebut q='"Onze klanten kennen ons"'>
-          <p>&quot;Bestaande wel. Maar wie gaat er verhuizen naar de buurt en zoekt een nieuwe sportschool? Die Googlen. Als jullie boven aan de zoekresultaten staan met heldere info + prijs + snelle aanmelding — pak je die.&quot;</p>
-        </NRebut>
+        <NRebut q='"Ledenwerving via Instagram is genoeg"' variants={[
+          { tone: 'zacht', text: '"Instagram brengt mensen naar jullie toe. Maar aanmelden gebeurt op de site. Als die niet meteen &apos;dit is voor mij, ik meld me nu&apos; triggert, haakt de lead af. Een goede site verhoogt de Instagram-conversie."' },
+          { tone: 'direct', text: '"Instagram = herkenning. Site = aanmelding. Zonder goede site verlies je gewoon aanmeldingen die Instagram al binnen bracht. Dat is dubbel jammer."' },
+          { tone: 'data', text: '"Bij fitness-clubs zien we standaard: Instagram brengt de mensen, maar de site converteert. Van 100 Insta-bezoekers meldt ~2% zich aan bij slechte site, ~8% bij goede site. 4x meer leden."' },
+        ]} />
+
+        <NRebut q='"Onze klanten kennen ons"' variants={[
+          { tone: 'zacht', text: '"Prachtig, dat is de basis. Maar iedereen die naar de buurt verhuist en een nieuwe sportschool zoekt, Googlet. Als jullie niet bovenaan staan pakt de concurrent de nieuweling."' },
+          { tone: 'direct', text: '"Bestaande leden zijn goed. Groei komt van nieuwe leden. Zonder goede vindbaarheid mis je precies die nieuwe leden."' },
+          { tone: 'data', text: '"Sportscholen met sterke lokale SEO groeien gemiddeld 2-3x sneller in ledenaantal dan concurrenten zonder. Dat is direct omzet."' },
+        ]} />
+
         <div style={{ padding: 12, background: '#F0FDF4', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#065F46' }}>
           <strong>Dingen om te benoemen:</strong>
           <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
@@ -468,12 +507,18 @@ function SectionNiche() {
 
       {/* ZORG */}
       <NicheBlock icon="🏥" title="Zorg &amp; praktijken" color="#8B5CF6">
-        <NRebut q='"Patiënten komen via verwijzing"'>
-          <p>&quot;Deels. Maar steeds meer patiënten Googlen &apos;fysio in X&apos; of &apos;tandarts in Y&apos;. Als jullie site niet snel laat zien waarom jullie de juiste keuze zijn — kiezen ze een concurrent die dat wél doet. Voor lokale gezondheidszorg is website vindbaarheid tegenwoordig cruciaal.&quot;</p>
-        </NRebut>
-        <NRebut q='"Website is duur voor een kleine praktijk"'>
-          <p>&quot;Bij een kleine praktijk kan het vanaf €750 al — een simpele professionele site met adres, openingstijden, contactformulier en team-info. Meer heb je vaak niet nodig. Kost jullie dan misschien 3-4 nieuwe patiënten en het is terugbetaald.&quot;</p>
-        </NRebut>
+        <NRebut q='"Patiënten komen via verwijzing"' variants={[
+          { tone: 'zacht', text: '"Deels via verwijzing, ja. Maar patiënten Googlen tegenwoordig ook zelf op &apos;fysio in X&apos; of &apos;tandarts in Y&apos;. Zonder sterke lokale site val je buiten die boot."' },
+          { tone: 'direct', text: '"Verwijzers verwijzen. Maar mensen kiezen zelf. En dat begint online. Zonder goede site kies je onbewust voor stagnatie van patiënten-instroom."' },
+          { tone: 'data', text: '"Bij zorgpraktijken zien we: 60-70% van nieuwe patiënten begint met een Google search — ook als ze een verwijzing hebben. Bij sterke site pak je gewoon meer van die groep."' },
+        ]} />
+
+        <NRebut q='"Website is duur voor een kleine praktijk"' variants={[
+          { tone: 'zacht', text: '"Een simpele professionele site kan bij ons vanaf €750. Team-info, adres, contact, tijden. Meer heb je vaak niet nodig. Kost jullie dan 3-4 nieuwe patiënten en het is terugbetaald."' },
+          { tone: 'direct', text: '"Kleine praktijk = kleine site = kleine investering. €750-1.500 eenmalig. Verdient zichzelf binnen enkele weken terug bij 1-2 nieuwe patiënten."' },
+          { tone: 'data', text: '"Een gemiddelde nieuwe patiënt betekent voor jullie ~€500-1.500 aan behandelingen. Voor de kosten van 1-2 patiënten is de site af. Dat is een no-brainer."' },
+        ]} />
+
         <div style={{ padding: 12, background: '#F5F0FF', borderRadius: 8, marginTop: 12, fontSize: 12, color: '#5B21B6' }}>
           <strong>Dingen om te benoemen:</strong>
           <ul style={{ paddingLeft: 20, marginTop: 6, lineHeight: 1.6 }}>
@@ -494,6 +539,7 @@ function SectionNiche() {
           <li>&quot;Wij lossen dit vaak op door een preview te maken — dan zie je meteen of onze aanpak past. Kost jullie niks.&quot;</li>
           <li>&quot;We zijn geen 12-maanden contract. Als het na 3 maanden niks oplevert, stop je gewoon.&quot;</li>
           <li>&quot;Modernica is klein en persoonlijk — je hebt direct contact, geen accountmanager.&quot;</li>
+          <li>&quot;Doe alsof je even geen zorg hoeft te maken. Wij komen met een gratis preview, dan zie je zelf.&quot;</li>
         </ul>
       </div>
     </div>
@@ -509,11 +555,27 @@ function NicheBlock({ icon, title, color, children }: any) {
   )
 }
 
-function NRebut({ q, children }: { q: string; children: React.ReactNode }) {
+const toneColors: Record<string, { bg: string; text: string }> = {
+  zacht:  { bg: '#F0FDF4', text: '#065F46' },
+  direct: { bg: '#FEF3C7', text: '#92400E' },
+  data:   { bg: '#EFF6FF', text: '#0369A1' },
+}
+
+function NRebut({ q, variants }: { q: string; variants: Array<{ tone: string; text: string }> }) {
   return (
-    <div style={{ marginBottom: 10 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 6, color: '#1A1730' }}>{q}</div>
-      <div style={{ fontSize: 13, lineHeight: 1.55, color: '#5F5A72', paddingLeft: 12, borderLeft: '2px solid #E7E2F4' }}>{children}</div>
+    <div style={{ marginBottom: 14 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: '#1A1730' }}>{q}</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        {variants.map((v, i) => {
+          const c = toneColors[v.tone] || { bg: '#F6F3FF', text: '#5F5A72' }
+          return (
+            <div key={i} style={{ padding: 10, background: c.bg, borderRadius: 8, borderLeft: `3px solid ${c.text}` }}>
+              <div style={{ fontSize: 10, fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{v.tone}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: '#1A1730' }}>{v.text}</div>
+            </div>
+          )
+        })}
+      </div>
     </div>
   )
 }
