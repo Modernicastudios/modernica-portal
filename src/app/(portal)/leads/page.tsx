@@ -13,13 +13,23 @@ export default async function LeadsPage() {
     .from('user_profiles').select('*').eq('id', user.id).single()
   if (!profile?.agency_id) redirect('/dashboard')
 
-  // Alle leads (recentste eerst, limit 200 voor snelheid — filter/pagineer in client)
-  const { data: outreach } = await admin
-    .from('lead_outreach')
-    .select('*, lead_companies(*), lead_contacts(*)')
-    .eq('agency_id', profile.agency_id)
-    .order('updated_at', { ascending: false })
-    .limit(200)
+  // Alle leads — paginated fetch tot ~2500 (voor volledig zicht)
+  const outreach: any[] = []
+  {
+    let offset = 0
+    for (let i = 0; i < 3; i++) {
+      const { data } = await admin
+        .from('lead_outreach')
+        .select('*, lead_companies(*), lead_contacts(*)')
+        .eq('agency_id', profile.agency_id)
+        .order('updated_at', { ascending: false })
+        .range(offset, offset + 999)
+      if (!data || data.length === 0) break
+      outreach.push(...data)
+      if (data.length < 1000) break
+      offset += 1000
+    }
+  }
 
   // Stage stats over hele pool — pagineer om Supabase 1000 limit te omzeilen
   const stageStats: Record<string, number> = {}
@@ -80,7 +90,7 @@ export default async function LeadsPage() {
 
   return (
     <CRMDashboard
-      leads={outreach || []}
+      leads={outreach}
       stageStats={stageStats}
       totalLeads={totalLeads}
       callbacksDue={callbacksDue || 0}

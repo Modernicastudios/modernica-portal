@@ -23,6 +23,7 @@ interface Props {
 export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksDue, callsToday, callsWeek = 0, outcomeToday = {}, outcomeWeek = {}, recentActivities = [], recentCalls = [], upcomingMeetings = [], userName }: Props) {
   const [query, setQuery] = useState('')
   const [stageFilter, setStageFilter] = useState<string | null>(null)
+  const [displayLimit, setDisplayLimit] = useState(200)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<any>(null)
 
@@ -233,13 +234,13 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
         </div>
 
         <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 10 }}>
-          {filtered.length} van {leads.length} zichtbaar
+          {Math.min(displayLimit, filtered.length)} van {filtered.length} getoond (totaal {leads.length} in pool)
         </div>
       </div>
 
       {/* ═══════════ LEAD CARDS (ipv tabel — overzichtelijker) ═══════════ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: 12 }}>
-        {filtered.map(l => {
+        {filtered.slice(0, displayLimit).map(l => {
           const co = l.lead_companies
           const ct = l.lead_contacts
           const stage = PIPELINE_STAGES.find(s => s.key === l.pipeline_stage) || PIPELINE_STAGES[0]
@@ -322,6 +323,27 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
       {filtered.length === 0 && (
         <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', background: 'white', borderRadius: 12, border: '1px solid #E7E2F4' }}>
           Geen leads matchen deze filter
+        </div>
+      )}
+
+      {filtered.length > displayLimit && (
+        <div style={{ textAlign: 'center', marginTop: 24 }}>
+          <button onClick={() => setDisplayLimit(displayLimit + 200)} style={{
+            padding: '12px 24px', background: 'white', color: '#3F06E3',
+            border: '1px solid #3F06E3', borderRadius: 12, cursor: 'pointer',
+            fontWeight: 700, fontSize: 14,
+          }}>
+            Toon volgende 200 ({filtered.length - displayLimit} over)
+          </button>
+          {filtered.length - displayLimit > 200 && (
+            <button onClick={() => setDisplayLimit(filtered.length)} style={{
+              marginLeft: 8, padding: '12px 24px', background: 'transparent', color: '#5F5A72',
+              border: '1px solid #E7E2F4', borderRadius: 12, cursor: 'pointer',
+              fontWeight: 600, fontSize: 14,
+            }}>
+              Toon alles ({filtered.length - displayLimit} extra)
+            </button>
+          )}
         </div>
       )}
 
