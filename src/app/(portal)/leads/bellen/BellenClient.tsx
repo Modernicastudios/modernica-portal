@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import Link from 'next/link'
-import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save, BookOpen, Trash2 } from 'lucide-react'
+import { Phone, Globe, Mail, MapPin, ChevronLeft, Check, X, Clock, Calendar, ArrowRight, Loader2, PhoneCall, Edit3, ChevronDown, Save, BookOpen, Trash2, Copy, MessageCircle } from 'lucide-react'
 import { CALL_OUTCOMES, PIPELINE_STAGES, type CallOutcome } from '@/types/leadmachine'
 import ScriptPanel from './ScriptPanel'
 import Onboarding from './Onboarding'
@@ -433,18 +433,46 @@ export default function BellenClient({ userName }: { userName: string; userId: s
         )}
       </div>
 
-      {/* CALL ACTION */}
+      {/* CALL ACTION — werkt op mobiel + laptop */}
       {!showOutcome && (
         <>
           {lead.lead_companies?.phone ? (
-            <a href={`tel:${lead.lead_companies.phone}`} onClick={startCall} style={{
-              display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 12,
+            <div style={{
               background: 'linear-gradient(135deg, #3F06E3, #6D3EEB)', color: 'white',
-              padding: '20px', borderRadius: 20, fontWeight: 800, fontSize: 22, textDecoration: 'none',
+              padding: 20, borderRadius: 20,
               boxShadow: '0 8px 30px rgba(63, 6, 227, 0.35)',
             }}>
-              <PhoneCall size={26} /> {lead.lead_companies.phone}
-            </a>
+              <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.1em', opacity: 0.85, marginBottom: 8, textAlign: 'center' }}>Bel dit nummer</div>
+              <div style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.01em', textAlign: 'center', marginBottom: 14, fontFamily: 'ui-monospace, monospace' }}>
+                {lead.lead_companies.phone}
+              </div>
+
+              {/* Actie-knoppen — grid 2 op mobile, 3 op desktop */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(120px, 1fr))', gap: 8, marginBottom: 12 }}>
+                <a href={`tel:${lead.lead_companies.phone}`} onClick={startCall} style={callSubBtn}>
+                  <PhoneCall size={16} /> Bellen
+                </a>
+                <button onClick={() => { navigator.clipboard.writeText(lead.lead_companies!.phone!); alert('📋 Nummer gekopieerd — plak in je telefoon') }} style={callSubBtn}>
+                  <Copy size={16} /> Kopieer
+                </button>
+                <a href={`https://wa.me/${(lead.lead_companies.phone || '').replace(/[^0-9]/g, '').replace(/^0/, '31')}`}
+                   target="_blank" rel="noopener" style={callSubBtn}>
+                  <MessageCircle size={16} /> WhatsApp
+                </a>
+              </div>
+
+              <button onClick={startCall} style={{
+                width: '100%', padding: '12px', background: 'white', color: '#3F06E3',
+                border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer',
+              }}>
+                ✓ Ik heb gebeld → log gesprek
+              </button>
+
+              <p style={{ fontSize: 11, textAlign: 'center', opacity: 0.8, marginTop: 10 }}>
+                📱 Op mobiel: klik &quot;Bellen&quot;<br />
+                💻 Op laptop: kopieer nummer of gebruik FaceTime/WhatsApp
+              </p>
+            </div>
           ) : (
             <div style={{ padding: 16, background: '#FEF2F2', border: '1px solid #FCA5A5', borderRadius: 12, textAlign: 'center', color: '#991B1B' }}>
               Geen telefoonnummer bekend
@@ -642,6 +670,12 @@ const inputStyle: React.CSSProperties = {
 const switchBtn: React.CSSProperties = {
   padding: '6px 10px', background: 'white', border: '1px solid #F59E0B',
   borderRadius: 8, fontSize: 11, color: '#92400E', cursor: 'pointer', fontWeight: 700,
+}
+const callSubBtn: React.CSSProperties = {
+  display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+  padding: '10px 12px', background: 'rgba(255,255,255,0.2)', color: 'white',
+  border: '1px solid rgba(255,255,255,0.3)', borderRadius: 10,
+  fontSize: 13, fontWeight: 600, cursor: 'pointer', textDecoration: 'none',
 }
 
 function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () => void, onSave: (u: Record<string, unknown>) => void }) {
