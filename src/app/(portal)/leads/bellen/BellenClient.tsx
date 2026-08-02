@@ -158,6 +158,26 @@ export default function BellenClient({ userName }: { userName: string; userId: s
     await loadNext()
   }
 
+  const [generatingPoints, setGeneratingPoints] = useState(false)
+  async function generateTalkingPoints() {
+    if (!lead || generatingPoints) return
+    setGeneratingPoints(true)
+    try {
+      const r = await fetch('/api/leads/talking-points', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ outreach_id: lead.id }),
+      })
+      const d = await r.json()
+      if (d.ok) {
+        alert('✓ Gesprekspunten gegenereerd — ze staan nu bij de notities in het lead-detail')
+        // Also update lead notes field if we cached it
+      } else {
+        alert('Fout: ' + (d.error || 'onbekend'))
+      }
+    } catch (e) { alert('Netwerkfout') }
+    setGeneratingPoints(false)
+  }
+
   async function switchService(newService: 'social' | 'recruitment' | 'video' | 'ads' | 'local') {
     if (!lead) return
     const labels: Record<string, string> = {
@@ -264,15 +284,23 @@ export default function BellenClient({ userName }: { userName: string; userId: s
             background: (stage?.color || '#888') + '20', color: stage?.color, fontSize: 11, fontWeight: 700,
           }}>{stage?.label}</span>
         </div>
-        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 8 }}>
+        <h1 style={{ fontSize: 26, fontWeight: 800, letterSpacing: '-0.02em', lineHeight: 1.15, marginBottom: 10 }}>
           {lead.lead_companies?.name}
         </h1>
 
+        {/* GROTE "wat doet dit bedrijf" badge */}
         {lead.lead_companies?.industry && (
-          <div style={{ fontSize: 14, color: 'var(--muted)', marginBottom: 4 }}>{lead.lead_companies.industry}</div>
+          <div style={{
+            display: 'inline-flex', alignItems: 'center', gap: 6,
+            padding: '6px 12px', background: '#F1ECFF', color: '#3F06E3',
+            borderRadius: 100, fontSize: 13, fontWeight: 700, marginBottom: 10,
+          }}>
+            🏢 {lead.lead_companies.industry}
+          </div>
         )}
+
         {lead.lead_companies?.city && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--muted)', marginBottom: 16 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 14, color: 'var(--mid)', marginBottom: 16 }}>
             <MapPin size={14} /> {lead.lead_companies.city}
           </div>
         )}
@@ -338,6 +366,18 @@ export default function BellenClient({ userName }: { userName: string; userId: s
             <Mail size={14} /> {lead.lead_contacts.email}
           </a>
         )}
+
+        {/* AI gesprekspunten knop */}
+        <button onClick={generateTalkingPoints} disabled={generatingPoints}
+          style={{
+            display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8,
+            width: '100%', padding: '12px 14px',
+            background: '#FEF3C7', border: '1px solid #F59E0B', borderRadius: 10,
+            fontSize: 13, color: '#92400E', fontWeight: 700, cursor: 'pointer',
+            marginBottom: 8,
+          }}>
+          {generatingPoints ? <><Loader2 size={14} className="anim-spin" /> AI denkt na...</> : <>🤖 Genereer gesprekspunten met AI</>}
+        </button>
 
         {/* Opening line context */}
         {lead.opening_line && (

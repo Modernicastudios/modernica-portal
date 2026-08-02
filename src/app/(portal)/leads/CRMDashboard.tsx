@@ -173,12 +173,22 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
                 <Link href={`/leads/${l.id}`} style={{ textDecoration: 'none', color: '#1A1730' }}>
                   <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>{co?.name || '?'}</div>
-                  {co?.industry && <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 2 }}>{co.industry}</div>}
                 </Link>
                 <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: stage.color + '20', color: stage.color, whiteSpace: 'nowrap' }}>
                   {stage.label}
                 </span>
               </div>
+
+              {/* Wat doet dit bedrijf — PROMINENT */}
+              {co?.industry && (
+                <div style={{
+                  display: 'inline-block', padding: '3px 10px', borderRadius: 100,
+                  background: '#F1ECFF', color: '#3F06E3',
+                  fontSize: 11, fontWeight: 700, marginBottom: 8,
+                }}>
+                  🏢 {co.industry}
+                </div>
+              )}
 
               {/* Contact */}
               {ct?.full_name && (
