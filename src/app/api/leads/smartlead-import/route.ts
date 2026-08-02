@@ -72,6 +72,8 @@ export async function POST(req: Request) {
     let importedOutreach = 0
     let importedActivities = 0
     let skipped = 0
+    let skippedReplied = 0
+    let skippedBlocked = 0
     const errors: string[] = []
 
     for (const camp of activeCamps) {
@@ -112,6 +114,15 @@ export async function POST(req: Request) {
           const email = (l.lead?.email || '').toLowerCase().trim()
           if (!email || !email.includes('@')) { skipped++; continue }
           if (existingEmails.has(email)) { skipped++; continue }
+
+          // SKIP als lead heeft geantwoord in Smartlead (positief of negatief — geen cold call meer nodig)
+          const emailStats = statsByEmail[email] || []
+          const hasReplied = emailStats.some((s: any) => s.reply_time)
+          if (hasReplied) { skippedReplied++; existingEmails.add(email); continue }
+
+          // SKIP als BLOCKED (unsubscribe/hard bounce/complaint)
+          if (l.status === 'BLOCKED') { skippedBlocked++; existingEmails.add(email); continue }
+
           existingEmails.add(email)
 
           const domain = extractDomain(email)
@@ -170,11 +181,10 @@ export async function POST(req: Request) {
           if (cErr) { errors.push(`contact: ${cErr.message}`); continue }
           importedContacts++
 
-          // Map Smartlead status → CRM stage
-          let stage = 'nieuw'
-          if (l.status === 'INPROGRESS') stage = 'nieuw'
-          if (l.status === 'COMPLETED') stage = 'nieuw'
-          if (l.status === 'BLOCKED') stage = 'niet_geinteresseerd'
+          // Map Smartlead status → CRM stage (BLOCKED en REPLIED al gefilterd)
+          const stage = 'nieuw'
+          const emailsSentCount = emailStats.filter((s: any) => s.sent_time).length
+          const emailsOpenedCount = emailStats.filter((s: any) => s.open_time).length
 
           // Insert outreach
           const { data: newOr, error: oErr } = await admin
@@ -195,8 +205,7 @@ export async function POST(req: Request) {
           if (oErr) { errors.push(`outreach: ${oErr.message}`); continue }
           importedOutreach++
 
-          // Import email activity
-          const emailStats = statsByEmail[email] || []
+          // Import email activity (emailStats al hierboven gedefinieerd)
           for (const es of emailStats) {
             if (es.sent_time) {
               await admin.from('lead_activities').insert({
@@ -239,7 +248,7 @@ export async function POST(req: Request) {
             }
           }
 
-          // Import marker
+          // Import marker + email history samenvatting als pinned note
           await admin.from('lead_activities').insert({
             agency_id: profile.agency_id,
             company_id: companyId,
@@ -248,6 +257,23 @@ export async function POST(req: Request) {
             type: 'imported',
             summary: `Geïmporteerd uit Smartlead: ${camp.name}`,
           })
+
+          // Pinned note met email-historie zodat cold caller direct ziet: al zoveel keer gemailed
+          if (emailsSentCount > 0) {
+            const historyNote = `📧 Email-historie uit Smartlead:\n` +
+              `• ${emailsSentCount} mail(s) verzonden\n` +
+              `• ${emailsOpenedCount} keer geopend\n` +
+              `• Geen antwoord ontvangen\n` +
+              `• Campagne: ${camp.name}`
+            await admin.from('lead_notes').insert({
+              agency_id: profile.agency_id,
+              company_id: companyId,
+              outreach_id: newOr.id,
+              contact_id: newContact.id,
+              body: historyNote,
+              is_pinned: true,
+            })
+          }
         } catch (e: any) {
           errors.push(`lead: ${e?.message || 'unknown'}`)
         }
@@ -260,7 +286,9 @@ export async function POST(req: Request) {
       contacts: importedContacts,
       outreach: importedOutreach,
       activities: importedActivities,
-      skipped,
+      skipped_duplicate: skipped,
+      skipped_replied: skippedReplied,
+      skipped_blocked: skippedBlocked,
       errors: errors.slice(0, 20),
     })
   } catch (e: any) {

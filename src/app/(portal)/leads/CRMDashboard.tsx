@@ -86,7 +86,13 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
         {importResult && (
           <div style={{ marginTop: 14, padding: 12, borderRadius: 10, background: importResult.error ? '#FEF2F2' : '#F0FDF4', color: importResult.error ? '#991B1B' : '#065F46', fontSize: 13 }}>
             {importResult.error ? `Fout: ${importResult.error}`
-              : <><CheckCircle size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} /> Klaar: {importResult.companies} bedrijven, {importResult.contacts} contacten geïmporteerd. Pagina laadt opnieuw...</>}
+              : <>
+                  <CheckCircle size={14} style={{ display: 'inline', marginRight: 6, verticalAlign: 'middle' }} />
+                  <strong>{importResult.companies} bedrijven + {importResult.contacts} contacten</strong> geïmporteerd.
+                  {importResult.skipped_replied > 0 && <> Overgeslagen: {importResult.skipped_replied} die al geantwoord hebben.</>}
+                  {importResult.skipped_blocked > 0 && <> Overgeslagen: {importResult.skipped_blocked} geblokkeerd/uitgeschreven.</>}
+                  {importResult.activities > 0 && <> {importResult.activities} email-activiteiten meegenomen.</>} Pagina laadt opnieuw...
+                </>}
           </div>
         )}
       </div>
