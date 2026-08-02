@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import Link from 'next/link'
 import { Phone, Globe, Mail, MapPin, User, Building2, ArrowLeft, Edit3, Save, X, Calendar, PhoneCall, FileText, Clock, ChevronRight, MessageCircle, Send } from 'lucide-react'
 import { PIPELINE_STAGES, CALL_OUTCOMES, type PipelineStage, type CallOutcome } from '@/types/leadmachine'
 
@@ -19,7 +19,6 @@ interface Props {
 type Tab = 'overview' | 'timeline' | 'calls' | 'notes' | 'meetings'
 
 export default function LeadDetailClient({ outreach: initial, calls: initCalls, notes: initNotes, meetings: initMeetings, activities: initActs, contacts, users, currentUserId }: Props) {
-  const router = useRouter()
   const [outreach, setOutreach] = useState<any>(initial)
   const [calls, setCalls] = useState(initCalls)
   const [notes, setNotes] = useState(initNotes)
@@ -73,9 +72,9 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
   return (
     <div style={{ padding: '20px 24px', maxWidth: 1400, margin: '0 auto' }}>
       {/* Header */}
-      <button onClick={() => router.push('/leads')} style={backBtn}>
+      <Link href="/leads" style={{ ...backBtn, textDecoration: 'none', display: 'inline-flex' }}>
         <ArrowLeft size={16} /> Terug naar leads
-      </button>
+      </Link>
 
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 320px', gap: 24, marginTop: 16 }}>
         {/* MAIN */}
