@@ -82,13 +82,61 @@ function SectionWie() {
         <p>Niet een bureau met veel schakels — een team dat direct meedenkt vanuit jullie doelen.</p>
       </Card>
 
-      <h4 style={subHeaderStyle}>Belangrijkste punten om te noemen</h4>
-      <Bullets items={[
-        'Gevestigd in Santpoort-Noord',
-        'Geen 12-maanden contracten — kort proberen, verlengen als het werkt',
-        'Werken op maat: van kleine websites tot volledige marketing-uitbesteding',
-        'Alles onder één dak: strategie, ontwerp, tekst, foto, video, ads',
-      ]} />
+      <h4 style={subHeaderStyle}>Waarom klanten voor ons kiezen (USP&apos;s)</h4>
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: '#3F06E3' }}>1. Volledige code bouw = volledig ontzorgen</strong>
+        <p style={{ marginTop: 6 }}>
+          Wij bouwen sites in eigen code, geen Squarespace of Wix. Dat betekent: alles kan, geen beperkingen, geen zorgen over onderhoud. Klanten die zelf bouwen lopen vaak vast bij updates of beveiliging.
+        </p>
+      </div>
+
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: '#3F06E3' }}>2. Kwartaal-hosting = elk kwartaal check-in</strong>
+        <p style={{ marginTop: 6 }}>
+          Hosting wordt per kwartaal gefactureerd. Bij elke factuur sturen wij ook een berichtje: &quot;Zijn er veranderingen? Missen we iets?&quot; Zo blijft je site altijd up-to-date zonder dat je het hoeft te onthouden.
+        </p>
+      </div>
+
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: '#3F06E3' }}>3. Persoonlijk contact, één team</strong>
+        <p style={{ marginTop: 6 }}>
+          Geen bureau met accountmanager + designer + developer + copywriter. Sjoerd en Maartje zijn je vaste contact. Kort lijntje, snel schakelen.
+        </p>
+      </div>
+
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: '#3F06E3' }}>4. Geen 12-maanden contracten</strong>
+        <p style={{ marginTop: 6 }}>
+          Kort proberen, verlengen als het werkt. Dat maakt drempel om te starten laag.
+        </p>
+      </div>
+
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 16, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: '#3F06E3' }}>5. Alles onder één dak</strong>
+        <p style={{ marginTop: 6 }}>
+          Design, code, tekst, foto, video, ads. Geen doorverwijzen. Als er iets bij komt kunnen we het intern oppakken.
+        </p>
+      </div>
+
+      <h4 style={subHeaderStyle}>Ideale klant (waar we het meest voor betekenen)</h4>
+      <div style={{ padding: 14, background: '#F0FDF4', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+        <ul style={{ paddingLeft: 20 }}>
+          <li><strong>MKB restaurants en horeca</strong> — Bierbrasserie Koster, Lumi&apos;s</li>
+          <li><strong>MKB bouwbedrijven en industrie</strong> — Kunststofhuis Waterland, De LED Installateur</li>
+          <li><strong>1 tot 100 medewerkers</strong> — te klein = geen budget; te groot = te veel intern proces</li>
+          <li><strong>Denken vanuit persoonlijk contact + reële omzet</strong> — niet enkel &quot;we moeten iets&quot;, maar &quot;we willen groeien&quot;</li>
+        </ul>
+      </div>
+
+      <h4 style={subHeaderStyle}>🚩 Rode vlaggen (niet forceren)</h4>
+      <div style={{ padding: 14, background: '#FEF2F2', borderRadius: 10, fontSize: 13, lineHeight: 1.6, color: '#991B1B' }}>
+        <ul style={{ paddingLeft: 20 }}>
+          <li><strong>Budget-shoppers</strong> — zoeken enkel &quot;de goedkoopste&quot;. Onze prijs matcht niet met bodem-tarief.</li>
+          <li><strong>Verkeerd verwachtingspatroon</strong> — verwachten leads of omzet-groei binnen 2 weken.</li>
+          <li><strong>Te veeleisend / eeuwig revisies</strong> — willen 20+ mockups zonder betaald advies.</li>
+          <li>Beter: netjes bespreken of een <strong>simpeler onepager</strong> (€750) past bij hun budget.</li>
+        </ul>
+      </div>
     </div>
   )
 }
@@ -97,11 +145,23 @@ function SectionWat() {
   return (
     <div>
       <h3 style={headerStyle}>Wat we bieden</h3>
-      <Service title="Websites" desc="Van simpele onepagers tot volledige project-sites. Voor MKB die meer aanvragen of reserveringen via Google wil." />
+      <Service title="Websites" desc="Van simpele onepagers tot volledige project-sites. Volledige code bouw — geen Squarespace of Wix beperkingen." />
       <Service title="Social media" desc="Instagram, LinkedIn, TikTok. Consistent goede posts + video-content dat écht opvalt." />
       <Service title="Video &amp; foto" desc="Product-video, sfeer, bedrijfsverhaal, testimonials. Kwaliteit die past bij jullie merk." />
       <Service title="Online marketing" desc="Meta + Google ads, landing pages per doelgroep, conversie-optimalisatie." />
       <Service title="Content per branche" desc="Contentkalender + productie op maat voor jullie niche. Bijv. horeca of bouw." />
+
+      <h4 style={subHeaderStyle}>Onderhoud &amp; updates na livegang</h4>
+      <div style={{ padding: 14, background: '#F6F3FF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+        <p style={{ marginBottom: 8 }}>Er zijn 2 opties voor updates na livegang:</p>
+        <ul style={{ paddingLeft: 20 }}>
+          <li><strong>Standaard:</strong> updates op verzoek tegen <strong>€65 per uur</strong>. Voor kleine tweaks meestal 15–30 min = weinig kost.</li>
+          <li><strong>Service in hosting:</strong> updates zitten inbegrepen in een iets hogere hosting-prijs. Handig als je regelmatig aanpassingen wil.</li>
+        </ul>
+        <p style={{ marginTop: 8, color: '#3F06E3', fontWeight: 600 }}>
+          Voor beide opties: bij elke kwartaal-factuur sturen we een berichtje &quot;zijn er veranderingen nodig?&quot; — zo blijft niks liggen.
+        </p>
+      </div>
     </div>
   )
 }
@@ -262,7 +322,10 @@ function SectionBezwaren() {
       </Objection>
 
       <Objection q="&quot;We hebben geen budget&quot;">
-        <p><strong>Reactie:</strong> &quot;Snap ik. We kunnen ook klein beginnen — vanaf €750 voor een simpele site, of vanaf €1.250/mnd voor content. Of losse projecten. Waar denk je aan qua investering?&quot;</p>
+        <p><strong>Reactie:</strong> &quot;Snap ik. Wat had je in gedachten qua budget? We hebben ook simpele onepagers vanaf €750 — betere dan wat je zelf in elkaar zou zetten met Wix. Als we weten wat je budget is, kunnen we kijken wat we WEL kunnen doen — misschien een simpelere maar sterke site die past bij wat er nu nodig is.&quot;</p>
+        <p style={{ marginTop: 6, fontSize: 12, color: '#5F5A72' }}>
+          🚩 <em>Pas op:</em> als het budget rond &quot;zo laag mogelijk&quot; zit zonder concrete indicatie — dat is meestal budget-shopper. Vriendelijk afronden.
+        </p>
       </Objection>
 
       <Objection q="&quot;Niet geïnteresseerd&quot;">
@@ -327,18 +390,33 @@ function SectionAfsluiter() {
       </div>
 
       <div style={{ padding: 16, background: '#F6F3FF', borderRadius: 12, marginTop: 20 }}>
-        <strong style={{ color: '#3F06E3', fontSize: 14 }}>⚡ Wat gebeurt er nu als de klant JA zegt (proces)</strong>
+        <strong style={{ color: '#3F06E3', fontSize: 14 }}>⚡ Wat gebeurt er nu als de klant JA zegt — onze werkwijze</strong>
+        <p style={{ marginTop: 8, fontSize: 12, color: '#5F5A72', fontStyle: 'italic' }}>
+          Belangrijk: wij maken de preview VOOR het kennismakingsgesprek, zodat hun eerste reactie meteen zichtbaar is en het gesprek concreter wordt.
+        </p>
         <ol style={{ marginTop: 10, paddingLeft: 20, fontSize: 13, lineHeight: 1.7 }}>
-          <li><strong>Kennismakingsgesprek</strong> (30 min video) — Sjoerd of Maartje neemt behoefte door</li>
-          <li><strong>Voorstel op maat</strong> — binnen 3–5 werkdagen krijg je een concreet voorstel + prijs</li>
-          <li><strong>Getekend contract</strong> — 50% aanbetaling; we starten pas nadat die binnen is</li>
-          <li><strong>Design fase</strong> — mockups + revisierondes (afhankelijk van scope 1–2 weken)</li>
-          <li><strong>Bouw fase</strong> — website wordt gebouwd (1–3 weken voor simpel; langer voor complex)</li>
+          <li><strong>Preview / voorstel maken</strong> — Sjoerd of Maartje maakt binnen paar dagen een gratis preview (kost ons paar uur werk) met de look + prijs offerte</li>
+          <li><strong>Kennismakingsgesprek</strong> (30 min video, of op locatie als ze willen) — samen de preview doornemen, reactie en wensen bespreken</li>
+          <li><strong>Definitief voorstel &amp; contract</strong> — feedback verwerken, contract tekenen, <strong>50% aanbetaling</strong>. We starten pas nadat die binnen is.</li>
+          <li><strong>Design fase</strong> — mockups + revisierondes (1–2 weken afhankelijk van scope)</li>
+          <li><strong>Bouw fase</strong> — website wordt gebouwd (gemiddeld <strong>2 weken</strong>)</li>
           <li><strong>Test + livegang</strong> — samen doorlopen, feedback verwerken</li>
           <li><strong>Livegang + oplevering</strong> — laatste 50% betaling</li>
-          <li><strong>1 maand nazorg standaard</strong> — bugs, kleine tweaks</li>
+          <li><strong>3 maanden nazorg standaard (eerste kwartaal)</strong> — bugs, kleine tweaks, we kijken hoe alles loopt</li>
         </ol>
-        <p style={{ marginTop: 10, fontSize: 12, color: '#5F5A72' }}>Voor een simpele onepager: totaal ~2–4 weken vanaf getekend contract tot live. Complexer: 6–12 weken.</p>
+        <p style={{ marginTop: 10, fontSize: 12, color: '#5F5A72' }}>
+          <strong>Doorlooptijd:</strong> simpele site ~2 weken vanaf contract tot live. Gemiddeld project 2–4 weken, afhankelijk van acceptatie en moeilijkheidsgraad.
+        </p>
+      </div>
+
+      <div style={{ padding: 16, background: '#FFF9EF', borderRadius: 12, marginTop: 16 }}>
+        <strong style={{ color: '#92400E', fontSize: 14 }}>💡 Wat de preview precies is (belangrijk om te weten)</strong>
+        <p style={{ marginTop: 8, fontSize: 13, lineHeight: 1.5 }}>
+          De preview is een <strong>echte look</strong> van hoe hun nieuwe site eruit zou zien — front-end / uiterlijk. Geen werkende back-end nog. Erbij: prijs-offerte + strategische aanpak.
+        </p>
+        <p style={{ marginTop: 8, fontSize: 13 }}>
+          <strong>Conversie:</strong> als iemand écht geïnteresseerd is en de preview te zien krijgt, zegt <strong>~20% ja ik wil door</strong>.
+        </p>
       </div>
     </div>
   )
