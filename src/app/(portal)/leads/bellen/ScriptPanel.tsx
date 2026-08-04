@@ -139,6 +139,59 @@ function SectionWie() {
           <li>Beter: netjes bespreken of een <strong>simpeler onepager</strong> (€750) past bij hun budget.</li>
         </ul>
       </div>
+
+      <h4 style={subHeaderStyle}>💡 Onze waarden — hoe wij werken</h4>
+      <div style={{ display: 'grid', gap: 10 }}>
+        <ValueCard title="Eerlijk vóór alles">
+          Geen loze beloftes, geen &quot;100 leads garantie&quot;. Als iets niet past voor jullie, zeggen we dat.
+          Beter een eerlijke &quot;nee&quot; dan een teleurstellend project.
+        </ValueCard>
+        <ValueCard title="Kwaliteit boven kwantiteit">
+          We pakken liever 10 klanten waar we echt iets voor betekenen dan 50 waar we ons aan verslikken.
+          Elk project krijgt aandacht van Sjoerd of Maartje persoonlijk.
+        </ValueCard>
+        <ValueCard title="Snelheid + korte lijnen">
+          Geen accountmanager tussen jou en de designer. Vragen? App of bel direct.
+          Snelle antwoorden, snelle mockups, snelle livegang.
+        </ValueCard>
+        <ValueCard title="Alles-onder-één-dak">
+          Design, ontwikkeling, tekst, foto, video, ads — alles binnen ons team.
+          Geen doorverwijzen, geen onderaannemers-chaos.
+        </ValueCard>
+        <ValueCard title="Klant leert het zelf, óf wij nemen het over">
+          CMS met dashboard = je kunt zelf teksten aanpassen. Wij helpen bij training.
+          Wil je liever niks zelf doen? Wij nemen het complete beheer over.
+        </ValueCard>
+      </div>
+
+      <h4 style={subHeaderStyle}>🎬 Hoe wij denken over een website</h4>
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+        <p><strong>Een goede website is geen visitekaartje.</strong> Het is jullie 24/7 verkoper.
+        Terwijl jullie werken, koken, opereren of installeren, moet de site het verhaal doen: wie zijn we,
+        waarom moet je ons kiezen, en hoe krijg ik nu contact.</p>
+        <p style={{ marginTop: 8 }}><strong>Modernica sites zijn gebouwd om te verkopen</strong> — niet om alleen mooi te zijn.
+        Alles wat we doen (kopij, foto&apos;s, layout, snelheid, mobiel) draait om één ding: bezoekers
+        laten converteren naar aanvragen, reserveringen of klanten.</p>
+      </div>
+
+      <h4 style={subHeaderStyle}>❤️ Waarom wij dit doen</h4>
+      <div style={{ padding: 14, background: '#F6F3FF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+        <p>Sjoerd en Maartje zijn beiden opgeleid in design en marketing. Ze zagen te vaak dat MKB-ondernemers
+        pas laat bij een bureau kwamen — als het al te laat was, of als ze veel geld hadden verspild aan
+        losse verhalen (webbouwer, foto, tekstschrijver, ads-guy, allemaal apart).</p>
+        <p style={{ marginTop: 8 }}>Modernica Studios is opgezet als antwoord: <strong>één team, alles in huis,
+        eerlijk over wat werkt en wat niet, voor MKB-tarieven</strong>. Groot genoeg om alles te kunnen,
+        klein genoeg om persoonlijk te blijven.</p>
+      </div>
+    </div>
+  )
+}
+
+function ValueCard({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: 12, background: 'white', border: '1px solid #E7E2F4', borderLeft: '3px solid #3F06E3', borderRadius: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: '#3F06E3', marginBottom: 4 }}>{title}</div>
+      <div style={{ fontSize: 13, color: '#1A1730', lineHeight: 1.5 }}>{children}</div>
     </div>
   )
 }
@@ -147,11 +200,54 @@ function SectionWat() {
   return (
     <div>
       <h3 style={headerStyle}>Wat we bieden</h3>
-      <Service title="Websites" desc="Van simpele onepagers tot volledige project-sites. Volledige code bouw — geen Squarespace of Wix beperkingen." />
-      <Service title="Social media" desc="Instagram, LinkedIn, TikTok. Consistent goede posts + video-content dat écht opvalt." />
-      <Service title="Video &amp; foto" desc="Product-video, sfeer, bedrijfsverhaal, testimonials. Kwaliteit die past bij jullie merk." />
-      <Service title="Online marketing" desc="Meta + Google ads, landing pages per doelgroep, conversie-optimalisatie." />
-      <Service title="Content per branche" desc="Contentkalender + productie op maat voor jullie niche. Bijv. horeca of bouw." />
+      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+        Alles onder één dak — één team, korte lijnen. Wat we doen en waarom:
+      </p>
+
+      <ServiceExpanded title="🌐 Websites" tag="Kern">
+        <p><strong>Wat:</strong> volledige eigen code (geen Squarespace/Wix), custom design op maat, snel + mobielvriendelijk, met CMS als klant wil beheren.</p>
+        <p><strong>Wanneer opperen:</strong> als hun huidige site oud oogt, langzaam laadt, of geen aanvragen genereert.</p>
+        <p><strong>Voorbeeld:</strong> Kunststofhuis Waterland — hele site vernieuwd, van 0 → 7+ aanvragen/mnd.</p>
+        <p><strong>Prijzen:</strong> €750 onepager · €1.200–2.000 gemiddeld · €3.000–5.000 complex.</p>
+      </ServiceExpanded>
+
+      <ServiceExpanded title="📱 Social media" tag="Groei">
+        <p><strong>Wat:</strong> Instagram, LinkedIn, TikTok. Contentplan per maand, posts + reels + carrousels. Niet losse posts, wel volledige aanpak.</p>
+        <p><strong>Wanneer opperen:</strong> als ze zeggen &quot;we posten wel maar het levert niks op&quot; of &quot;we hebben geen tijd&quot;.</p>
+        <p><strong>Verschil met concurrent:</strong> wij denken vanuit doel (leads, bekendheid, wervend) — niet vanuit &quot;we moeten posten&quot;.</p>
+        <p><strong>Vaak samen met:</strong> website (verkeer naar site) of video (voor content).</p>
+      </ServiceExpanded>
+
+      <ServiceExpanded title="🎥 Video &amp; foto productie" tag="Beeld">
+        <p><strong>Wat:</strong> productvideo, bedrijfsverhaal, sfeer op locatie, testimonials, reels voor social. Wij regelen shoot + montage.</p>
+        <p><strong>Wanneer opperen:</strong> geen eigen beeldmateriaal, stockfoto&apos;s op site, wil authentiek verhaal vertellen.</p>
+        <p><strong>Voorbeeld:</strong> Stichting Nabestaandenzorg — draaidag per 2 maanden, kant-en-klare video&apos;s + foto&apos;s.</p>
+        <p><strong>Kan los of gebundeld</strong> met website of social. Vaak &apos;n perfect starter-pack.</p>
+      </ServiceExpanded>
+
+      <ServiceExpanded title="🎯 Online marketing / ads" tag="Direct resultaat">
+        <p><strong>Wat:</strong> Meta ads (Facebook/Instagram), Google Ads, LinkedIn ads. Landingspagina&apos;s per doelgroep, conversie-optimalisatie, wekelijkse rapportage.</p>
+        <p><strong>Wanneer opperen:</strong> ze willen snel resultaat, hebben een goed product/dienst maar te weinig zichtbaarheid.</p>
+        <p><strong>Voorbeeld:</strong> StudyBridge — 400+ leads / 60 hires in 6 maanden via Meta + LinkedIn ads.</p>
+        <p><strong>Belangrijk:</strong> ads werken pas echt goed als landing page klopt — dus vaak samen met website.</p>
+      </ServiceExpanded>
+
+      <ServiceExpanded title="📅 Content per branche (abonnement)" tag="Continu">
+        <p><strong>Wat:</strong> maandelijks contentpakket. Contentkalender, video, foto, social posts. Volledige uitbesteding mogelijk.</p>
+        <p><strong>Wanneer opperen:</strong> ze willen consistent goede content maar hebben er geen tijd voor.</p>
+        <p><strong>Prijzen:</strong></p>
+        <ul style={{ paddingLeft: 20, marginTop: 4 }}>
+          <li><strong>€1.250/mnd</strong> — contentpakket (video, foto, social)</li>
+          <li><strong>€2.500/mnd</strong> — volledige marketing-uitbesteding (bovenstaande + ads + landings + rapportage)</li>
+        </ul>
+        <p style={{ marginTop: 6 }}><strong>Geen 12-maanden lock-in</strong> — kort proberen, verlengen als het werkt.</p>
+      </ServiceExpanded>
+
+      <ServiceExpanded title="🎨 Brand refresh &amp; huisstijl" tag="Losse projecten">
+        <p><strong>Wat:</strong> logo update, huisstijl herzien, brand story herformuleren. Losse projecten vanaf €1.500.</p>
+        <p><strong>Wanneer opperen:</strong> hun brand oogt gedateerd of past niet meer bij waar ze naartoe willen.</p>
+        <p><strong>Vaak trigger:</strong> jubileum, nieuwe eigenaar, nieuwe strategie, pivot.</p>
+      </ServiceExpanded>
 
       <h4 style={subHeaderStyle}>Onderhoud &amp; updates na livegang</h4>
       <div style={{ padding: 14, background: '#F6F3FF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
@@ -164,6 +260,28 @@ function SectionWat() {
           Voor beide opties: bij elke kwartaal-factuur sturen we een berichtje &quot;zijn er veranderingen nodig?&quot; — zo blijft niks liggen.
         </p>
       </div>
+
+      <h4 style={subHeaderStyle}>Wat wij NIET doen</h4>
+      <div style={{ padding: 14, background: '#FEF2F2', borderRadius: 10, fontSize: 13, lineHeight: 1.6, color: '#991B1B' }}>
+        <ul style={{ paddingLeft: 20, margin: 0 }}>
+          <li>Grote enterprise-portalen (te complex, past niet bij ons model)</li>
+          <li>Alleen SEO zonder site (SEO doet weinig zonder goede basis)</li>
+          <li>Pure webshops op Shopify (webshop = maatwerk, andere prijs)</li>
+          <li>Klanten die zoeken naar &quot;goedkoopste optie&quot; (mismatch met kwaliteit)</li>
+        </ul>
+      </div>
+    </div>
+  )
+}
+
+function ServiceExpanded({ title, tag, children }: { title: string; tag: string; children: React.ReactNode }) {
+  return (
+    <div style={{ padding: 16, background: 'white', border: '1px solid #E7E2F4', borderRadius: 12, marginBottom: 12 }}>
+      <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
+        <div style={{ fontSize: 15, fontWeight: 800 }}>{title}</div>
+        <span style={{ fontSize: 10, padding: '2px 8px', background: '#F1ECFF', color: '#3F06E3', borderRadius: 100, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{tag}</span>
+      </div>
+      <div style={{ fontSize: 13, color: '#5F5A72', lineHeight: 1.55 }}>{children}</div>
     </div>
   )
 }
@@ -289,27 +407,75 @@ function SectionOpeners() {
     <div>
       <h3 style={headerStyle}>Openings-scripts</h3>
       <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
-        Kies opener op basis van hun context (mail al gehad, warm ijs, geheel koud).
+        Kies opener op basis van context (mail al gehad, verouderde site, receptie, doorverbonden, etc).
+        Elke opener heeft 2 varianten — pak wat past bij je toon.
       </p>
 
-      <OpenerBlock title="Wanneer ze WEL onze mail hebben gehad (staat in de lead)">
-        <p>&quot;Hoi, met [Naam] van Modernica Studios. Ik bel je omdat we je een tijdje terug een mailtje hebben gestuurd over jullie online zichtbaarheid — heb je dat gezien?&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 8 }}><em>Als ja:</em> &quot;Mooi, ik was benieuwd of er iets in speelde — willen jullie iets doen aan de website of social?&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72' }}><em>Als nee:</em> &quot;Geen probleem, sowieso even in het kort: wij helpen [branche] met [waarde]. Speelt er iets rondom [pijnpunt]?&quot;</p>
+      <OpenerBlock title="✉️ Wanneer ze WEL onze mail hebben gehad (staat in lead)">
+        <p><strong>Variant A (warm):</strong> &quot;Hoi, met [Naam] van Modernica Studios. Ik bel je omdat we je een tijdje terug een mailtje hebben gestuurd over jullie online zichtbaarheid — heb je dat gezien?&quot;</p>
+        <p style={{ marginTop: 8 }}><strong>Variant B (direct):</strong> &quot;Hoi, met [Naam] van Modernica. We hebben je vorige maand gemaild over jullie website — ik bel omdat ik denk dat er echt iets zit voor jullie. Heb je 2 minuten?&quot;</p>
+        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 10 }}>
+          <em>Als ja:</em> &quot;Mooi, ik was benieuwd of er iets in speelde — willen jullie iets doen aan de website of social?&quot;<br />
+          <em>Als nee:</em> &quot;Geen probleem, sowieso even in het kort: wij helpen [branche] met [waarde]. Speelt er iets rondom [pijnpunt]?&quot;
+        </p>
       </OpenerBlock>
 
-      <OpenerBlock title="Wanneer hun website er verouderd uitziet">
-        <p>&quot;Hoi, met [Naam] van Modernica. Ik kwam jullie website tegen en zag dat het misschien tijd is voor een refresh — is dat iets waar jullie mee bezig zijn?&quot;</p>
+      <OpenerBlock title="🕰️ Hun website ziet er verouderd uit">
+        <p><strong>Variant A (zacht):</strong> &quot;Hoi, met [Naam] van Modernica. Ik kwam jullie site tegen en dacht: die is toe aan een refresh. Wij bouwen dat soort dingen op maat — is dat iets waar jullie mee bezig zijn?&quot;</p>
+        <p style={{ marginTop: 8 }}><strong>Variant B (direct):</strong> &quot;Hoi, [Naam] van Modernica. Ik zag jullie site en wil eerlijk zijn: die past niet bij het niveau van jullie werk. Denken jullie er al over na om iets te vernieuwen?&quot;</p>
       </OpenerBlock>
 
-      <OpenerBlock title="Wanneer ze een nieuwe/goede site hebben (switch pitch)">
-        <p>&quot;Hoi, met [Naam] van Modernica. Site ziet er top uit trouwens. Ik was benieuwd — is de volgende stap voor jullie meer online zichtbaarheid via social of misschien personeelswerving?&quot;</p>
+      <OpenerBlock title="✨ Hun site is nieuw / prima (switch pitch)">
+        <p><strong>Variant A:</strong> &quot;Hoi, [Naam] van Modernica. Site ziet er top uit trouwens. Ik was benieuwd — is de volgende stap voor jullie meer online zichtbaarheid via social of misschien personeelswerving?&quot;</p>
+        <p style={{ marginTop: 8 }}><strong>Variant B:</strong> &quot;Hoi [Naam]. Compliment eerst — jullie site oogt goed. Daarom bel ik: wij helpen bedrijven zoals jullie ook met de volgende stappen — social, video, ads. Wat is nu jullie grootste online challenge?&quot;</p>
       </OpenerBlock>
 
-      <OpenerBlock title="Neutrale/koude opener">
-        <p>&quot;Hoi, met [Naam] van Modernica Studios uit Noord-Holland. Wij helpen MKB-bedrijven met hun online zichtbaarheid — kan ik je een korte vraag stellen?&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 8 }}><em>Als ja:</em> stel jouw vraag over hun huidige situatie.</p>
+      <OpenerBlock title="🥶 Neutrale / koude opener">
+        <p><strong>Variant A (vraag):</strong> &quot;Hoi, met [Naam] van Modernica Studios uit Noord-Holland. Wij helpen MKB-bedrijven met online zichtbaarheid — kan ik je een korte vraag stellen?&quot;</p>
+        <p style={{ marginTop: 8 }}><strong>Variant B (statement):</strong> &quot;Hoi [Naam], je spreekt met [Jouw naam] van Modernica. We zijn een creative studio en bellen [branche]-bedrijven in [regio] omdat we vaak zien dat er meer uit hun online kan. Klinkt dat als iets wat bij jullie speelt?&quot;</p>
       </OpenerBlock>
+
+      <OpenerBlock title="📞 Als je een receptioniste of collega krijgt">
+        <p><strong>Variant A:</strong> &quot;Hallo, met [Naam] van Modernica Studios. Wie is bij jullie verantwoordelijk voor de website en marketing? Ik heb daar even 5 minuten mee nodig.&quot;</p>
+        <p style={{ marginTop: 8 }}><strong>Variant B:</strong> &quot;Hoi, ik heb een korte vraag over jullie website — met wie kan ik daar het beste over spreken? Zonder verkooppraatje, gewoon inhoudelijk.&quot;</p>
+        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 8 }}>
+          <em>Tip:</em> vraag ook naam + wanneer die persoon bereikbaar is als het niet nu kan.
+        </p>
+      </OpenerBlock>
+
+      <OpenerBlock title="📧 Als je voicemail krijgt">
+        <p>&quot;Hoi, met [Naam] van Modernica Studios. We hebben [bedrijfsnaam] vorige week gemaild over jullie online zichtbaarheid — ik wilde even kort persoonlijk terugkoppelen. Ik bel later opnieuw, of stuur even een berichtje naar [nummer]. Fijne dag.&quot;</p>
+        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 8 }}>
+          <em>Kort houden.</em> Geen prijs of pitch noemen. Doel: herkenning + terugbellen.
+        </p>
+      </OpenerBlock>
+
+      <h4 style={subHeaderStyle}>💡 Discovery-vragen (nadat opener werkt)</h4>
+      <div style={{ padding: 14, background: '#F0FDF4', borderRadius: 10, fontSize: 13, lineHeight: 1.7 }}>
+        <p style={{ marginBottom: 8, color: '#065F46', fontWeight: 700 }}>Doel: eerst begrijpen, dan pitchen. Kies 2-3 die passen:</p>
+        <ul style={{ paddingLeft: 20 }}>
+          <li>&quot;Hoe komen jullie nieuwe klanten nu binnen?&quot;</li>
+          <li>&quot;Als je onze site perfect maakt over 3 maanden — wat is er dan veranderd bij jullie?&quot;</li>
+          <li>&quot;Wat werkt online al goed, wat zou beter kunnen?&quot;</li>
+          <li>&quot;Wie doet nu jullie website / marketing? Intern of extern bureau?&quot;</li>
+          <li>&quot;Wat is jullie grootste frustratie op online-gebied?&quot;</li>
+          <li>&quot;Waar willen jullie over een jaar staan qua nieuwe klanten?&quot;</li>
+          <li>&quot;Hoeveel aanvragen krijgen jullie nu via de site per maand?&quot;</li>
+        </ul>
+      </div>
+
+      <h4 style={subHeaderStyle}>🎯 Wat te noemen om vertrouwen te bouwen</h4>
+      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 10, fontSize: 13, lineHeight: 1.7 }}>
+        <ul style={{ paddingLeft: 20 }}>
+          <li>Modernica bestaat al X jaar, gevestigd in Santpoort-Noord</li>
+          <li>Sjoerd en Maartje — 2 vaste contactpersonen, geen accountmanagers</li>
+          <li>Klanten in [hun branche]: [noem case naam]</li>
+          <li>Referenties op aanvraag — praat gerust eerst met bestaande klant</li>
+          <li>Gratis kennismakingsgesprek + gratis website-preview</li>
+          <li>Geen 12-maanden contracten — vrijheid om te stoppen</li>
+          <li>50/50 betaling — helder en gebruikelijk</li>
+        </ul>
+      </div>
     </div>
   )
 }
