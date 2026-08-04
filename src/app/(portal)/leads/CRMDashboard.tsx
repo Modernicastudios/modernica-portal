@@ -2,8 +2,9 @@
 
 import { useState, useMemo } from 'react'
 import Link from 'next/link'
-import { Phone, Globe, Mail, Search, PhoneCall, Layout, Download, Loader2, CheckCircle, ExternalLink, ArrowRight, MapPin } from 'lucide-react'
+import { Phone, Globe, Mail, Search, PhoneCall, Layout, Download, Loader2, CheckCircle, ExternalLink, ArrowRight, MapPin, BookOpen } from 'lucide-react'
 import { PIPELINE_STAGES } from '@/types/leadmachine'
+import ScriptPanel from './bellen/ScriptPanel'
 
 interface Props {
   leads: any[]
@@ -24,6 +25,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
   const [query, setQuery] = useState('')
   const [stageFilter, setStageFilter] = useState<string | null>(null)
   const [displayLimit, setDisplayLimit] = useState(200)
+  const [showScript, setShowScript] = useState(false)
   const [importing, setImporting] = useState(false)
   const [importResult, setImportResult] = useState<any>(null)
 
@@ -87,6 +89,9 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
             <div style={{ color: 'var(--muted)', fontSize: 14 }}>Hi {userName} · {totalLeads} leads in je pool</div>
           </div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            <button onClick={() => setShowScript(true)} style={ghostBtn}>
+              <BookOpen size={14} /> Script
+            </button>
             <Link href="/leads/rapport?preset=week" style={{ ...ghostBtn, textDecoration: 'none' }}>
               📊 Download rapport
             </Link>
@@ -351,6 +356,8 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
           )}
         </div>
       )}
+
+      {showScript && <ScriptPanel onClose={() => setShowScript(false)} />}
 
       <style>{`
         .anim-spin { animation: spin 1s linear infinite; }
