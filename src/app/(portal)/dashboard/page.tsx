@@ -2,7 +2,9 @@ import { createClient } from '@/lib/supabase/server'
 import { redirect } from 'next/navigation'
 import DashboardClient from './DashboardClient'
 
-export const dynamic = 'force-dynamic'
+// Revalidate every 60 seconds — dashboard data changes, but caching for 1 min
+// is fine and makes navigating back to the dashboard instant.
+export const revalidate = 60
 
 export default async function DashboardPage() {
   const supabase = await createClient()

@@ -68,6 +68,10 @@ body {
 @keyframes spin {
   to { transform: rotate(360deg); }
 }
+@keyframes skeletonShimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
 
 .animate-fade-up { animation: fadeUp 0.3s ease; }
 .animate-fade-in { animation: fadeIn 0.2s ease; }
