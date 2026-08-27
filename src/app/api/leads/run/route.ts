@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { runCampaign } from '@/lib/leadmachine/pipeline'
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export const maxDuration = 60
 
@@ -9,6 +11,10 @@ const SUPER_ADMIN_EMAIL = 'info@modernicastudios.com'
 const MANAGER_ROLES = new Set(['admin', 'manager', 'super_admin'])
 
 export async function POST(req: NextRequest) {
+  // Max 5 campaign runs per minute per IP (heavy operation)
+  const rl = rateLimit(rateLimitKey(req, 'leads:run'), 5, 60_000)
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
@@ -56,10 +62,10 @@ export async function POST(req: NextRequest) {
 
   try {
     const summary = await runCampaign(campaignId, effectiveLimit)
+    logger.info('[leads/run] campaign completed', { campaignId, agencyId: profile.agency_id, summary })
     return NextResponse.json({ ok: true, summary })
   } catch (e) {
-    // Interne details niet naar de client lekken; wel loggen voor onszelf.
-    console.error('runCampaign-fout:', e)
+    logger.error('[leads/run] runCampaign failed', { err: String(e), campaignId, agencyId: profile.agency_id })
     return NextResponse.json({ error: 'Er ging iets mis bij het ophalen van leads. Probeer het later opnieuw.' }, { status: 500 })
   }
 }

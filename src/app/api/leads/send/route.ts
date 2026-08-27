@@ -3,6 +3,8 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { smartleadConfigured } from '@/lib/leadmachine/smartlead'
 import { pushQueuedForCampaign } from '@/lib/leadmachine/dispatch'
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export const maxDuration = 60
 
@@ -11,6 +13,9 @@ const MANAGER_ROLES = new Set(['admin', 'manager', 'super_admin'])
 
 // Duwt de goedgekeurde leads van een campagne naar de gekoppelde Smartlead-campagne.
 export async function POST(req: NextRequest) {
+  const rl = rateLimit(rateLimitKey(req, 'leads:send'), 10, 60_000)
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
@@ -39,7 +44,11 @@ export async function POST(req: NextRequest) {
     { id: campaign.id, agency_id: campaign.agency_id, client_id: campaign.client_id, settings: campaign.settings as { smartlead_campaign_id?: string } | null },
     admin,
   )
-  if (result.error) return NextResponse.json({ error: result.error }, { status: 502 })
+  if (result.error) {
+    logger.error('[leads/send] pushQueued failed', { err: result.error, campaignId, agencyId: profile.agency_id })
+    return NextResponse.json({ error: result.error }, { status: 502 })
+  }
+  logger.info('[leads/send] leads pushed', { sent: result.sent, campaignId, agencyId: profile.agency_id })
   if (result.sent === 0) return NextResponse.json({ ok: true, sent: 0, message: 'Geen goedgekeurde leads met geldig e-mailadres.' })
 
   return NextResponse.json({ ok: true, sent: result.sent })

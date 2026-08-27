@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { isOverBudget, recordAiUsage } from '@/lib/ai/usage'
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 export const maxDuration = 30
 
@@ -13,6 +15,10 @@ type Msg = { role: 'user' | 'assistant'; content: string }
 // AI-assistent in de app: helpt met schrijven (social posts, mails, teksten),
 // brainstormen en vragen. Alleen voor ingelogde gebruikers.
 export async function POST(req: NextRequest) {
+  // 10 AI requests per minute per IP
+  const rl = rateLimit(rateLimitKey(req, 'ai'), 10, 60_000)
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Niet ingelogd' }, { status: 401 })
@@ -59,19 +65,21 @@ Schrijf standaard in het Nederlands, helder en to-the-point. Vraag kort om verdu
       body: JSON.stringify({ model: ANTHROPIC_MODEL, max_tokens: 1024, system, messages }),
     })
     if (!res.ok) {
+      logger.warn('[ai/assist] Anthropic API error', { status: res.status, agencyId: profile.agency_id })
       return NextResponse.json({ error: 'De AI is even niet bereikbaar. Probeer het zo opnieuw.' }, { status: 502 })
     }
     const data = await res.json()
     const text = (data.content?.[0]?.text || '').trim()
-    // Verbruik vastleggen voor de kostenbewaking.
     await recordAiUsage(admin, {
       agencyId: profile.agency_id,
       kind: 'assist',
       inputTokens: Number(data.usage?.input_tokens) || 0,
       outputTokens: Number(data.usage?.output_tokens) || 0,
     })
+    logger.info('[ai/assist] response sent', { agencyId: profile.agency_id, tokens: data.usage?.output_tokens })
     return NextResponse.json({ ok: true, text })
-  } catch {
+  } catch (err) {
+    logger.error('[ai/assist] unexpected error', { err: String(err), agencyId: profile.agency_id })
     return NextResponse.json({ error: 'Er ging iets mis met de AI.' }, { status: 500 })
   }
 }

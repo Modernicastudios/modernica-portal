@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
+import { queue } from '@/lib/queue'
 
 export async function POST(req: NextRequest) {
+  // 20 invitations per minute per IP
+  const rl = rateLimit(rateLimitKey(req, 'invite'), 20, 60_000)
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter)
+
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -39,18 +46,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
-  // Send email via Edge Function
-  await supabase.functions.invoke('send-email', {
-    body: {
-      to: email,
-      type: 'invitation',
-      data: {
-        token: invitation.token,
-        agencyName: agency?.name || 'Modernica',
-        clientName: client?.company_name || 'uw bedrijf',
-        inviterName: profile.full_name || 'Het team',
+  // Send email asynchronously via background queue
+  const supabaseCopy = supabase
+  queue.enqueue('send-invitation-email', async () => {
+    const result = await supabaseCopy.functions.invoke('send-email', {
+      body: {
+        to: email,
+        type: 'invitation',
+        data: {
+          token: invitation.token,
+          agencyName: agency?.name || 'Modernica',
+          clientName: client?.company_name || 'uw bedrijf',
+          inviterName: profile.full_name || 'Het team',
+        },
       },
-    },
+    })
+    if (result.error) logger.error('[invitations/send] email failed', { err: String(result.error), invitationId: invitation.id })
+    else logger.info('[invitations/send] email sent', { to: email, invitationId: invitation.id })
   })
 
   return NextResponse.json({ success: true, invitationId: invitation.id })

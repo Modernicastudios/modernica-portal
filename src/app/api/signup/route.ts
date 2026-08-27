@@ -1,29 +1,16 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createAdminClient } from '@/lib/supabase/admin'
-
-// Eenvoudige rate-limit per IP (best-effort, per server-instance). Houdt
-// geautomatiseerde aanmaak-spam af zonder externe store. Max 3 pogingen / 10 min.
-const attempts = new Map<string, number[]>()
-const WINDOW_MS = 10 * 60 * 1000
-const MAX_ATTEMPTS = 3
-function rateLimited(ip: string): boolean {
-  const now = Date.now()
-  const recent = (attempts.get(ip) || []).filter(t => now - t < WINDOW_MS)
-  recent.push(now)
-  attempts.set(ip, recent)
-  if (attempts.size > 5000) attempts.clear() // geheugen niet laten groeien
-  return recent.length > MAX_ATTEMPTS
-}
+import { rateLimit, rateLimitKey, rateLimitResponse } from '@/lib/rate-limit'
+import { logger } from '@/lib/logger'
 
 // Agency-registratie volledig server-side: RLS blokkeert een directe insert in
 // `agencies` vanuit de browser, dus we maken gebruiker + agency + profiel +
 // brand kit aan met de service-role client en bevestigen de gebruiker meteen.
 export async function POST(req: NextRequest) {
   try {
-  const ip = req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'onbekend'
-  if (rateLimited(ip)) {
-    return NextResponse.json({ error: 'Te veel pogingen. Probeer het over een paar minuten opnieuw.' }, { status: 429 })
-  }
+  // Max 3 signups per 10 minutes per IP
+  const rl = rateLimit(rateLimitKey(req, 'signup'), 3, 10 * 60_000)
+  if (!rl.ok) return rateLimitResponse(rl.retryAfter)
 
   let body: Record<string, unknown> = {}
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Ongeldige aanvraag.' }, { status: 400 }) }
@@ -100,8 +87,10 @@ export async function POST(req: NextRequest) {
     powered_by_visible: true,
   })
 
+  logger.info('[signup] new agency created', { email, agencySlug })
   return NextResponse.json({ ok: true })
-  } catch {
+  } catch (err) {
+    logger.error('[signup] unexpected error', { err: String(err) })
     return NextResponse.json({ error: 'Registratie mislukt. Probeer het later opnieuw.' }, { status: 500 })
   }
 }
