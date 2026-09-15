@@ -28,7 +28,12 @@
   --sidebar-muted: #9ca3af;
   /* Neutrale, zachte schaduwen (corporate look, niet blauw-getint) */
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
-  --shadow-lg: 0 6px 22px rgba(16, 24, 40, 0.08);
+  --shadow-md: 0 4px 12px rgba(16, 24, 40, 0.08), 0 1px 3px rgba(16, 24, 40, 0.04);
+  --shadow-lg: 0 8px 28px rgba(16, 24, 40, 0.10), 0 2px 8px rgba(16, 24, 40, 0.06);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ease-smooth: cubic-bezier(0.4, 0, 0.2, 1);
+  --duration-fast: 120ms;
+  --duration-base: 180ms;
 }
 
 * {
@@ -75,8 +80,8 @@ body {
   to { background-position: -200% 0; }
 }
 
-.animate-fade-up { animation: fadeUp 0.3s ease; }
-.animate-fade-in { animation: fadeIn 0.2s ease; }
+.animate-fade-up { animation: fadeUp 0.3s ease both; }
+.animate-fade-in { animation: fadeIn 0.2s ease both; }
 .animate-spin { animation: spin 1s linear infinite; }
 
 /* ── Global page layout ──────────────────────────────────────── */
@@ -88,15 +93,17 @@ body {
   margin-bottom: 24px;
 }
 .page-title {
-  font-size: 1.6rem;
+  font-size: 1.75rem;
   font-weight: 800;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.03em;
   color: var(--text);
   margin-bottom: 4px;
+  line-height: 1.15;
 }
 .page-subtitle {
-  font-size: .88rem;
+  font-size: .875rem;
   color: var(--muted);
+  line-height: 1.5;
 }
 
 /* ── Consistent card ─────────────────────────────────────────── */
@@ -111,6 +118,16 @@ body {
   border: 1px solid var(--border);
   border-radius: var(--radius-sm);
   box-shadow: var(--shadow);
+}
+/* Hoverbare kaart — lift + shadow op hover */
+.card-hover {
+  transition: transform var(--duration-base) var(--ease-smooth),
+              box-shadow var(--duration-base) var(--ease-smooth);
+  cursor: pointer;
+}
+.card-hover:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-lg);
 }
 
 /* ── Inputs ──────────────────────────────────────────────────── */
@@ -149,13 +166,73 @@ input:focus, textarea:focus, select:focus {
   font-weight: 600;
   cursor: pointer;
   border: none;
-  transition: opacity .12s, box-shadow .12s;
+  transition: opacity var(--duration-fast) var(--ease-smooth),
+              box-shadow var(--duration-fast) var(--ease-smooth),
+              transform var(--duration-fast) var(--ease-smooth),
+              background var(--duration-fast) var(--ease-smooth);
+  user-select: none;
 }
-.btn:hover { opacity: .88; }
-.btn-primary { background: var(--accent1); color: #fff; }
+.btn:hover { opacity: .88; transform: translateY(-1px); }
+.btn:active { transform: scale(0.97); opacity: 1; }
+.btn-primary {
+  background: var(--accent1);
+  color: #fff;
+  box-shadow: 0 1px 3px rgba(26, 63, 228, 0.25);
+}
+.btn-primary:hover {
+  box-shadow: 0 4px 14px rgba(26, 63, 228, 0.30);
+  opacity: 1;
+}
 .btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
-.btn-ghost:hover { background: var(--sidebar-hover-bg); opacity: 1; }
-.btn-danger { background: var(--danger); color: #fff; }
+.btn-ghost:hover { background: var(--sidebar-hover-bg); opacity: 1; transform: translateY(-1px); }
+.btn-danger { background: var(--danger); color: #fff; box-shadow: 0 1px 3px rgba(225,29,72,.20); }
+.btn-danger:hover { box-shadow: 0 4px 14px rgba(225,29,72,.25); opacity: 1; }
+
+/* ── Empty state ─────────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 48px 24px;
+  gap: 10px;
+  text-align: center;
+  color: var(--muted);
+  animation: fadeIn 0.25s ease both;
+}
+.empty-state-icon {
+  font-size: 2rem;
+  opacity: 0.35;
+  margin-bottom: 4px;
+}
+.empty-state-title {
+  font-size: .9rem;
+  font-weight: 600;
+  color: var(--text);
+  opacity: 0.6;
+}
+.empty-state-body {
+  font-size: .8rem;
+  color: var(--muted);
+  max-width: 240px;
+  line-height: 1.5;
+}
+
+/* ── Sidebar nav link hover (via CSS, niet inline) ───────────── */
+aside nav a:not([aria-current]):hover {
+  background: var(--sidebar-hover-bg) !important;
+  color: var(--sidebar-text) !important;
+}
+
+/* ── Divider label ───────────────────────────────────────────── */
+.section-label {
+  font-size: .67rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  margin-bottom: 8px;
+}
 
 /* ── Stat chip ───────────────────────────────────────────────── */
 .stat-chip {

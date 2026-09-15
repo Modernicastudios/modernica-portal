@@ -330,8 +330,11 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
               display: 'flex', alignItems: 'center', gap: '10px',
               padding: '9px 11px', borderRadius: '9px',
               background: 'var(--sidebar-hover-bg)',
-              cursor: 'pointer', transition: 'background .15s',
+              cursor: 'pointer',
+              transition: 'background 0.15s ease, transform 0.12s ease',
             }}
+            onMouseEnter={e => { (e.currentTarget as HTMLElement).style.background = 'var(--border)' }}
+            onMouseLeave={e => { (e.currentTarget as HTMLElement).style.background = 'var(--sidebar-hover-bg)' }}
           >
             <div style={{
               width: '30px', height: '30px', borderRadius: '50%',
@@ -364,16 +367,25 @@ function NavLink({ href, label, icon, active }: { href: string; label: string; i
     <Link
       href={href}
       style={{
-        display: 'flex', alignItems: 'center', gap: '10px',
-        padding: '8px 10px', borderRadius: '8px',
-        fontSize: '.85rem',
+        display: 'flex', alignItems: 'center', gap: '9px',
+        padding: '7px 10px 7px 12px',
+        borderRadius: '9px',
+        fontSize: '.845rem',
         color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
-        background: active ? 'var(--sidebar-active-bg)' : 'transparent',
-        textDecoration: 'none', transition: 'background .12s, color .12s',
-        marginBottom: '1px', fontWeight: active ? 600 : 400,
+        background: active ? 'rgba(26,63,228,0.09)' : 'transparent',
+        textDecoration: 'none',
+        transition: 'background 0.15s ease, color 0.15s ease, transform 0.12s ease',
+        marginBottom: '1px',
+        fontWeight: active ? 600 : 400,
+        position: 'relative',
+        borderLeft: `2.5px solid ${active ? 'var(--accent1)' : 'transparent'}`,
       }}
     >
-      <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, opacity: active ? 1 : 0.65 }}>{icon}</span>
+      <span style={{
+        display: 'inline-flex', alignItems: 'center', flexShrink: 0,
+        color: active ? 'var(--accent1)' : 'var(--sidebar-muted)',
+        transition: 'color 0.15s ease',
+      }}>{icon}</span>
       {label}
     </Link>
   )
