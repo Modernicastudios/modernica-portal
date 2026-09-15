@@ -63,7 +63,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
     return (
       <div style={{ padding: '40px 24px', maxWidth: 1200, margin: '0 auto' }}>
         <h1 style={{ fontSize: 32, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 32 }}>Leads &amp; CRM</h1>
-        <div style={{ background: 'white', border: '2px dashed #E7E2F4', borderRadius: 20, padding: 60, textAlign: 'center' }}>
+        <div style={{ background: 'white', border: '2px dashed var(--border)', borderRadius: 20, padding: 60, textAlign: 'center' }}>
           <div style={{ fontSize: 64, marginBottom: 20 }}>📥</div>
           <h2 style={{ fontSize: 26, fontWeight: 800, marginBottom: 10 }}>Nog geen leads in het CRM</h2>
           <p style={{ color: 'var(--muted)', maxWidth: 480, margin: '0 auto 28px', lineHeight: 1.5, fontSize: 15 }}>
@@ -117,7 +117,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
       {/* ═══════════ VANDAAG — 3 grote actiekaarten ═══════════ */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(260px,1fr))', gap: 14, marginBottom: 40 }}>
         {/* Bel volgende lead — altijd prominent */}
-        <Link href="/leads/bellen" style={{ ...bigActionCard, background: 'linear-gradient(135deg, #3F06E3, #6D3EEB)', color: 'white', textDecoration: 'none' }}>
+        <Link href="/leads/bellen" style={{ ...bigActionCard, background: 'linear-gradient(135deg, var(--accent1), var(--accent2))', color: 'white', textDecoration: 'none' }}>
           <PhoneCall size={26} />
           <div>
             <div style={{ fontSize: 22, fontWeight: 800, letterSpacing: '-0.02em' }}>Start bellen</div>
@@ -129,8 +129,8 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
         </Link>
 
         {/* Gesprekken vandaag */}
-        <div style={{ ...bigActionCard, background: 'white', border: '1px solid #E7E2F4' }}>
-          <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F1ECFF', color: '#3F06E3', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ ...bigActionCard, background: 'white', border: '1px solid var(--border)' }}>
+          <div style={{ width: 44, height: 44, borderRadius: 12, background: 'var(--sidebar-active-bg)', color: 'var(--accent1)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <span style={{ fontSize: 22, fontWeight: 800 }}>{callsToday}</span>
           </div>
           <div>
@@ -140,7 +140,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
         </div>
 
         {/* Pipeline */}
-        <Link href="/leads/pipeline" style={{ ...bigActionCard, background: 'white', border: '1px solid #E7E2F4', textDecoration: 'none', color: 'inherit' }}>
+        <Link href="/leads/pipeline" style={{ ...bigActionCard, background: 'white', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
           <div style={{ width: 44, height: 44, borderRadius: 12, background: '#F5F0FF', color: '#8B5CF6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             <Layout size={22} />
           </div>
@@ -159,22 +159,22 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(280px,1fr))', gap: 14, marginBottom: 20 }}>
             {/* Vandaag */}
-            <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Vandaag</div>
-              <div style={{ fontSize: 32, fontWeight: 800, color: '#3F06E3', marginBottom: 8 }}>{callsToday}</div>
+            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 14, padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Vandaag</div>
+              <div style={{ fontSize: 32, fontWeight: 800, color: 'var(--accent1)', marginBottom: 8 }}>{callsToday}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>gesprekken gelogd</div>
               {Object.keys(outcomeToday).length > 0 && (
                 <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4 }}>
                   {Object.entries(outcomeToday).map(([k, v]) => (
-                    <span key={k} style={{ fontSize: 10, padding: '2px 8px', background: '#F1ECFF', color: '#3F06E3', borderRadius: 100, fontWeight: 600 }}>{k}: {v}</span>
+                    <span key={k} style={{ fontSize: 10, padding: '2px 8px', background: 'var(--sidebar-active-bg)', color: 'var(--accent1)', borderRadius: 100, fontWeight: 600 }}>{k}: {v}</span>
                   ))}
                 </div>
               )}
             </div>
 
             {/* Deze week */}
-            <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18 }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deze week</div>
+            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 14, padding: 18 }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Deze week</div>
               <div style={{ fontSize: 32, fontWeight: 800, color: '#8B5CF6', marginBottom: 8 }}>{callsWeek}</div>
               <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 12 }}>totaal gesprekken</div>
               <div style={{ fontSize: 12, color: '#059669' }}>
@@ -185,8 +185,8 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
 
             {/* Aankomend */}
             {upcomingMeetings.length > 0 && (
-              <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18 }}>
-                <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Aankomend</div>
+              <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 14, padding: 18 }}>
+                <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 10 }}>Aankomend</div>
                 <div style={{ fontSize: 32, fontWeight: 800, color: '#22C55E', marginBottom: 8 }}>{upcomingMeetings.length}</div>
                 <div style={{ fontSize: 12, color: 'var(--muted)' }}>meetings ingepland</div>
                 <div style={{ marginTop: 8, fontSize: 11 }}>
@@ -202,11 +202,11 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
 
           {/* Recent activity */}
           {recentActivities.length > 0 && (
-            <div style={{ background: 'white', border: '1px solid #E7E2F4', borderRadius: 14, padding: 18, marginBottom: 20 }}>
+            <div style={{ background: 'white', border: '1px solid var(--border)', borderRadius: 14, padding: 18, marginBottom: 20 }}>
               <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 12 }}>Laatste activiteit</div>
               <div style={{ maxHeight: 300, overflowY: 'auto' }}>
                 {recentActivities.slice(0, 15).map((a: any) => (
-                  <div key={a.id} style={{ padding: '8px 0', borderBottom: '1px solid #F6F3FF', display: 'flex', gap: 10, alignItems: 'baseline' }}>
+                  <div key={a.id} style={{ padding: '8px 0', borderBottom: '1px solid var(--bg)', display: 'flex', gap: 10, alignItems: 'baseline' }}>
                     <span style={{ fontSize: 16 }}>{activityIcon(a.type)}</span>
                     <div style={{ flex: 1, fontSize: 13 }}>
                       <div>{a.summary}</div>
@@ -235,7 +235,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
 
         {/* Filter chips per stage */}
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginBottom: 16 }}>
-          <StageChip label={`Alle · ${totalLeads}`} active={!stageFilter} color="#3F06E3" onClick={() => setStageFilter(null)} />
+          <StageChip label={`Alle · ${totalLeads}`} active={!stageFilter} color="var(--accent1)" onClick={() => setStageFilter(null)} />
           {PIPELINE_STAGES.map(s => {
             const count = stageStats[s.key] || 0
             if (count === 0) return null
@@ -258,7 +258,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
             <div key={l.id} style={leadCard}>
               {/* Top: bedrijfsnaam + stage */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 8 }}>
-                <Link href={`/leads/${l.id}`} style={{ textDecoration: 'none', color: '#1A1730' }}>
+                <Link href={`/leads/${l.id}`} style={{ textDecoration: 'none', color: 'var(--text)' }}>
                   <div style={{ fontSize: 16, fontWeight: 700, lineHeight: 1.2 }}>{co?.name || '?'}</div>
                 </Link>
                 <span style={{ padding: '2px 8px', borderRadius: 100, fontSize: 10, fontWeight: 700, background: stage.color + '20', color: stage.color, whiteSpace: 'nowrap' }}>
@@ -270,7 +270,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
               {co?.industry && (
                 <div style={{
                   display: 'inline-block', padding: '3px 10px', borderRadius: 100,
-                  background: '#F1ECFF', color: '#3F06E3',
+                  background: 'var(--sidebar-active-bg)', color: 'var(--accent1)',
                   fontSize: 11, fontWeight: 700, marginBottom: 8,
                 }}>
                   🏢 {co.industry}
@@ -279,7 +279,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
 
               {/* Contact */}
               {ct?.full_name && (
-                <div style={{ fontSize: 13, color: '#5F5A72', marginBottom: 8 }}>
+                <div style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 8 }}>
                   👤 {ct.full_name}{ct.role ? ` · ${ct.role}` : ''}
                 </div>
               )}
@@ -312,7 +312,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
 
               {/* Volgende actie */}
               {l.next_action_at && (
-                <div style={{ marginTop: 10, padding: '6px 10px', background: '#F1ECFF', borderRadius: 8, fontSize: 12, color: '#3F06E3', fontWeight: 600 }}>
+                <div style={{ marginTop: 10, padding: '6px 10px', background: 'var(--sidebar-active-bg)', borderRadius: 8, fontSize: 12, color: 'var(--accent1)', fontWeight: 600 }}>
                   → {new Date(l.next_action_at).toLocaleDateString('nl-NL', { weekday: 'short', day: 'numeric', month: 'short' })}
                 </div>
               )}
@@ -320,7 +320,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
               {/* Open lead */}
               <Link href={`/leads/${l.id}`} style={{
                 display: 'block', textAlign: 'center', marginTop: 10, padding: '8px', background: 'transparent',
-                border: '1px solid #E7E2F4', borderRadius: 8, color: '#5F5A72', textDecoration: 'none',
+                border: '1px solid var(--border)', borderRadius: 8, color: 'var(--muted)', textDecoration: 'none',
                 fontSize: 12, fontWeight: 600,
               }}>
                 Open lead detail →
@@ -331,7 +331,7 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
       </div>
 
       {filtered.length === 0 && (
-        <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', background: 'white', borderRadius: 12, border: '1px solid #E7E2F4' }}>
+        <div style={{ padding: 40, textAlign: 'center', color: 'var(--muted)', background: 'white', borderRadius: 12, border: '1px solid var(--border)' }}>
           Geen leads matchen deze filter
         </div>
       )}
@@ -339,16 +339,16 @@ export default function CRMDashboard({ leads, stageStats, totalLeads, callbacksD
       {filtered.length > displayLimit && (
         <div style={{ textAlign: 'center', marginTop: 24 }}>
           <button onClick={() => setDisplayLimit(displayLimit + 200)} style={{
-            padding: '12px 24px', background: 'white', color: '#3F06E3',
-            border: '1px solid #3F06E3', borderRadius: 12, cursor: 'pointer',
+            padding: '12px 24px', background: 'white', color: 'var(--accent1)',
+            border: '1px solid var(--accent1)', borderRadius: 12, cursor: 'pointer',
             fontWeight: 700, fontSize: 14,
           }}>
             Toon volgende 200 ({filtered.length - displayLimit} over)
           </button>
           {filtered.length - displayLimit > 200 && (
             <button onClick={() => setDisplayLimit(filtered.length)} style={{
-              marginLeft: 8, padding: '12px 24px', background: 'transparent', color: '#5F5A72',
-              border: '1px solid #E7E2F4', borderRadius: 12, cursor: 'pointer',
+              marginLeft: 8, padding: '12px 24px', background: 'transparent', color: 'var(--muted)',
+              border: '1px solid var(--border)', borderRadius: 12, cursor: 'pointer',
               fontWeight: 600, fontSize: 14,
             }}>
               Toon alles ({filtered.length - displayLimit} extra)
@@ -386,31 +386,31 @@ const bigActionCard: React.CSSProperties = {
 
 const leadCard: React.CSSProperties = {
   background: 'white', padding: 16, borderRadius: 14,
-  border: '1px solid #E7E2F4', boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+  border: '1px solid var(--border)', boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
 }
 
 const rowBtnPrimary: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8, padding: '10px 12px',
-  background: '#3F06E3', color: 'white', borderRadius: 8,
+  background: 'var(--accent1)', color: 'white', borderRadius: 8,
   fontSize: 13, fontWeight: 700, textDecoration: 'none',
 }
 const rowBtnGhost: React.CSSProperties = {
   display: 'flex', alignItems: 'center', gap: 8, padding: '8px 12px',
-  background: '#F6F3FF', color: '#3F06E3', borderRadius: 8,
+  background: 'var(--bg)', color: 'var(--accent1)', borderRadius: 8,
   fontSize: 12, fontWeight: 600, textDecoration: 'none',
 }
 const bigBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 10, padding: '16px 26px',
-  background: '#3F06E3', color: 'white', border: 'none', borderRadius: 12,
+  background: 'var(--accent1)', color: 'white', border: 'none', borderRadius: 12,
   fontWeight: 700, fontSize: 16, cursor: 'pointer',
 }
 const ghostBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 8, padding: '10px 14px',
-  background: 'white', color: '#3F06E3', border: '1px solid #E7E2F4', borderRadius: 10,
+  background: 'white', color: 'var(--accent1)', border: '1px solid var(--border)', borderRadius: 10,
   fontWeight: 600, fontSize: 13, cursor: 'pointer',
 }
 const inputStyle: React.CSSProperties = {
-  padding: '10px 14px', border: '1px solid #E7E2F4', borderRadius: 10, fontSize: 14, outline: 'none',
+  padding: '10px 14px', border: '1px solid var(--border)', borderRadius: 10, fontSize: 14, outline: 'none',
 }
 
 function activityIcon(type: string): string {

@@ -365,7 +365,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
                 )}
               </div>
               <button onClick={() => setShowEditContact(true)} style={{
-                background: 'transparent', border: '1px solid #E7E2F4', padding: '6px 10px',
+                background: 'transparent', border: '1px solid var(--border)', padding: '6px 10px',
                 borderRadius: 8, fontSize: 12, cursor: 'pointer', color: 'var(--muted)',
               }}>Bewerk</button>
             </div>
@@ -481,7 +481,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
               </div>
 
               <button onClick={startCall} style={{
-                width: '100%', padding: '12px', background: 'white', color: '#3F06E3',
+                width: '100%', padding: '12px', background: 'white', color: 'var(--accent1)',
                 border: 'none', borderRadius: 12, fontSize: 14, fontWeight: 700, cursor: 'pointer',
               }}>
                 ✓ Ik heb gebeld → log gesprek
@@ -601,7 +601,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
               <button onClick={() => setShowExtraFields(!showExtraFields)}
                 style={{
                   background: 'transparent', border: 'none', padding: '10px 0',
-                  color: '#5F5A72', fontSize: 13, fontWeight: 600, cursor: 'pointer',
+                  color: 'var(--muted)', fontSize: 13, fontWeight: 600, cursor: 'pointer',
                   display: 'flex', alignItems: 'center', gap: 4,
                 }}>
                 <ChevronDown size={14} style={{ transform: showExtraFields ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
@@ -730,7 +730,7 @@ function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () =
           <button onClick={onClose} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X size={22} /></button>
         </div>
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#3F06E3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Bedrijf</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent1)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>Bedrijf</div>
         {[
           { k: 'name', label: 'Bedrijfsnaam' },
           { k: 'phone', label: 'Telefoon', type: 'tel' },
@@ -751,7 +751,7 @@ function EditContactModal({ lead, onClose, onSave }: { lead: Lead, onClose: () =
           </div>
         ))}
 
-        <div style={{ fontSize: 12, fontWeight: 700, color: '#3F06E3', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '18px 0 8px' }}>Contactpersoon</div>
+        <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent1)', textTransform: 'uppercase', letterSpacing: '0.06em', margin: '18px 0 8px' }}>Contactpersoon</div>
         {[
           { k: 'c_first_name', label: 'Voornaam' },
           { k: 'c_last_name', label: 'Achternaam' },

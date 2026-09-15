@@ -129,7 +129,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
             <div style={cardStyle}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: '#F1ECFF', color: '#3F06E3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700 }}>
+                  <div style={{ width: 48, height: 48, borderRadius: '50%', background: 'var(--sidebar-active-bg)', color: 'var(--accent1)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, fontWeight: 700 }}>
                     {(ct.first_name?.[0] || ct.full_name?.[0] || 'C').toUpperCase()}
                   </div>
                   <div>
@@ -170,12 +170,12 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
 
           {/* Tabs */}
           <div style={cardStyle}>
-            <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid #E7E2F4' }}>
+            <div style={{ display: 'flex', gap: 4, marginBottom: 20, borderBottom: '1px solid var(--border)' }}>
               {(['overview','timeline','calls','notes','meetings'] as Tab[]).map(t => (
                 <button key={t} onClick={() => setTab(t)} style={{
                   padding: '10px 16px', background: 'transparent', border: 'none',
-                  borderBottom: `2px solid ${tab === t ? '#3F06E3' : 'transparent'}`,
-                  color: tab === t ? '#3F06E3' : '#5F5A72', fontWeight: 600, cursor: 'pointer',
+                  borderBottom: `2px solid ${tab === t ? 'var(--accent1)' : 'transparent'}`,
+                  color: tab === t ? 'var(--accent1)' : 'var(--muted)', fontWeight: 600, cursor: 'pointer',
                   fontSize: 14, textTransform: 'capitalize',
                 }}>{t === 'overview' ? 'Overzicht' : t}</button>
               ))}
@@ -203,7 +203,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
                 {calls.map(c => {
                   const outc = CALL_OUTCOMES.find(o => o.key === c.outcome)
                   return (
-                    <div key={c.id} style={{ padding: 14, border: '1px solid #E7E2F4', borderRadius: 12, marginBottom: 10 }}>
+                    <div key={c.id} style={{ padding: 14, border: '1px solid var(--border)', borderRadius: 12, marginBottom: 10 }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 6 }}>
                         <span style={{ fontWeight: 700 }}>{outc?.emoji} {outc?.label}</span>
                         <span style={{ fontSize: 12, color: 'var(--muted)' }}>{formatDate(c.called_at)}</span>
@@ -211,7 +211,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
                       {c.duration_seconds && <div style={{ fontSize: 12, color: 'var(--muted)', marginBottom: 6 }}>Duur: {Math.floor(c.duration_seconds/60)}:{(c.duration_seconds%60).toString().padStart(2,'0')}</div>}
                       {c.notes && <div style={{ fontSize: 14, color: 'var(--foreground)', lineHeight: 1.5 }}>{c.notes}</div>}
                       {c.callback_at && (
-                        <div style={{ fontSize: 12, color: '#3F06E3', marginTop: 6, fontWeight: 600 }}>
+                        <div style={{ fontSize: 12, color: 'var(--accent1)', marginTop: 6, fontWeight: 600 }}>
                           📞 Terugbellen: {formatDate(c.callback_at)}
                         </div>
                       )}
@@ -233,7 +233,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
                 </div>
                 {notes.length === 0 && <EmptyState text="Nog geen notities" />}
                 {notes.map(n => (
-                  <div key={n.id} style={{ padding: 14, background: '#F6F3FF', borderRadius: 12, marginBottom: 10 }}>
+                  <div key={n.id} style={{ padding: 14, background: 'var(--bg)', borderRadius: 12, marginBottom: 10 }}>
                     <div style={{ fontSize: 14, lineHeight: 1.5, whiteSpace: 'pre-wrap' }}>{n.body}</div>
                     <div style={{ fontSize: 11, color: 'var(--muted)', marginTop: 6 }}>{formatDate(n.created_at)}</div>
                   </div>
@@ -245,7 +245,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
               <div>
                 {meetings.length === 0 && <EmptyState text="Nog geen afspraken" />}
                 {meetings.map(m => (
-                  <div key={m.id} style={{ padding: 14, border: '1px solid #E7E2F4', borderRadius: 12, marginBottom: 10 }}>
+                  <div key={m.id} style={{ padding: 14, border: '1px solid var(--border)', borderRadius: 12, marginBottom: 10 }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                       <span style={{ fontWeight: 700 }}>📅 {m.meeting_type}</span>
                       <span style={{ fontSize: 12, color: 'var(--muted)' }}>{formatDate(m.scheduled_at)}</span>
@@ -262,14 +262,14 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
         <div>
           {/* Stage picker */}
           <div style={cardStyle}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.06em' }}>Stage</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.06em' }}>Stage</div>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
               {PIPELINE_STAGES.map(s => (
                 <button key={s.key} onClick={() => changeStage(s.key)} style={{
                   padding: '8px 12px', borderRadius: 8, textAlign: 'left',
-                  border: `1px solid ${outreach.pipeline_stage === s.key ? s.color : '#E7E2F4'}`,
+                  border: `1px solid ${outreach.pipeline_stage === s.key ? s.color : 'var(--border)'}`,
                   background: outreach.pipeline_stage === s.key ? s.color + '15' : 'transparent',
-                  color: outreach.pipeline_stage === s.key ? s.color : '#1A1730',
+                  color: outreach.pipeline_stage === s.key ? s.color : 'var(--text)',
                   fontWeight: outreach.pipeline_stage === s.key ? 700 : 500,
                   fontSize: 13, cursor: 'pointer', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
                 }}>
@@ -282,7 +282,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
 
           {/* Assignment */}
           <div style={cardStyle}>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.06em' }}>Toegewezen aan</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', marginBottom: 10, letterSpacing: '0.06em' }}>Toegewezen aan</div>
             <select value={outreach.assigned_to || ''} onChange={e => assignTo(e.target.value || null)} style={{ ...inputStyle, width: '100%' }}>
               <option value="">Niemand</option>
               {users.map(u => <option key={u.id} value={u.id}>{u.full_name || u.id.slice(0, 6)}</option>)}
@@ -291,10 +291,10 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
 
           {/* Next action */}
           {outreach.next_action_at && (
-            <div style={{ ...cardStyle, background: '#F1ECFF', border: '1px solid #3F06E3' }}>
-              <div style={{ fontSize: 11, fontWeight: 700, color: '#3F06E3', textTransform: 'uppercase', marginBottom: 6 }}>Volgende actie</div>
+            <div style={{ ...cardStyle, background: 'var(--sidebar-active-bg)', border: '1px solid var(--accent1)' }}>
+              <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--accent1)', textTransform: 'uppercase', marginBottom: 6 }}>Volgende actie</div>
               <div style={{ fontSize: 14, fontWeight: 700 }}>{formatDate(outreach.next_action_at)}</div>
-              {outreach.next_action_note && <div style={{ fontSize: 12, color: '#5F5A72', marginTop: 4 }}>{outreach.next_action_note}</div>}
+              {outreach.next_action_note && <div style={{ fontSize: 12, color: 'var(--muted)', marginTop: 4 }}>{outreach.next_action_note}</div>}
             </div>
           )}
         </div>
@@ -306,7 +306,7 @@ export default function LeadDetailClient({ outreach: initial, calls: initCalls, 
 function InfoLine({ icon, label, value, href }: any) {
   const inner = (
     <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-      <span style={{ color: '#3F06E3' }}>{icon}</span>
+      <span style={{ color: 'var(--accent1)' }}>{icon}</span>
       <div>
         <div style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>{label}</div>
         <div style={{ fontSize: 14, fontWeight: 600 }}>{value}</div>
@@ -318,8 +318,8 @@ function InfoLine({ icon, label, value, href }: any) {
 
 function StatCard({ label, value, icon }: any) {
   return (
-    <div style={{ padding: 16, background: '#F6F3FF', borderRadius: 12 }}>
-      <div style={{ color: '#3F06E3', marginBottom: 6 }}>{icon}</div>
+    <div style={{ padding: 16, background: 'var(--bg)', borderRadius: 12 }}>
+      <div style={{ color: 'var(--accent1)', marginBottom: 6 }}>{icon}</div>
       <div style={{ fontSize: 28, fontWeight: 800 }}>{value}</div>
       <div style={{ fontSize: 12, color: 'var(--muted)' }}>{label}</div>
     </div>
@@ -338,7 +338,7 @@ function ActivityItem({ act, users }: any) {
     contact_updated: '✏️', company_updated: '✏️',
   }
   return (
-    <div style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid #F6F3FF' }}>
+    <div style={{ display: 'flex', gap: 12, padding: '10px 0', borderBottom: '1px solid var(--border)' }}>
       <div style={{ fontSize: 20 }}>{icons[act.type] || '•'}</div>
       <div style={{ flex: 1 }}>
         <div style={{ fontSize: 14, fontWeight: 500 }}>{act.summary}</div>
@@ -353,7 +353,7 @@ function ActivityItem({ act, users }: any) {
 function EditForm({ item, fields, onSave, onCancel }: any) {
   const [form, setForm] = useState<any>(fields.reduce((a: any, f: any) => ({ ...a, [f.k]: item?.[f.k] || '' }), {}))
   return (
-    <div style={{ padding: 16, background: '#FAFAFF', borderRadius: 10, marginTop: 14 }}>
+    <div style={{ padding: 16, background: 'var(--bg)', borderRadius: 10, marginTop: 14 }}>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 10 }}>
         {fields.map((f: any) => (
           <div key={f.k}>
@@ -386,24 +386,25 @@ function formatDate(iso: string): string {
 }
 
 const cardStyle: React.CSSProperties = {
-  background: 'white', border: '1px solid #E7E2F4', borderRadius: 16,
-  padding: 20, marginBottom: 16, boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+  background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 'var(--radius)',
+  padding: 20, marginBottom: 16, boxShadow: 'var(--shadow)',
 }
 const inputStyle: React.CSSProperties = {
-  padding: '8px 12px', border: '1px solid #E7E2F4', borderRadius: 8, fontSize: 14, outline: 'none',
+  padding: '8px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
+  fontSize: 14, outline: 'none', background: 'var(--card)', color: 'var(--text)',
 }
 const primaryBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-  background: '#3F06E3', color: 'white', border: 'none', borderRadius: 8,
+  background: 'var(--accent1)', color: 'white', border: 'none', borderRadius: 'var(--radius-sm)',
   fontWeight: 600, fontSize: 13, cursor: 'pointer',
 }
 const ghostBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '6px 12px',
-  background: 'transparent', color: '#5F5A72', border: '1px solid #E7E2F4', borderRadius: 8,
+  background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
   fontSize: 12, cursor: 'pointer',
 }
 const backBtn: React.CSSProperties = {
   display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
-  background: 'transparent', color: '#5F5A72', border: '1px solid #E7E2F4', borderRadius: 8,
+  background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)',
   fontSize: 13, cursor: 'pointer',
 }

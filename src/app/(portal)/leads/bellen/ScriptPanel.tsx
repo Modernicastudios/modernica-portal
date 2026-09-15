@@ -29,25 +29,25 @@ export default function ScriptPanel({ onClose }: { onClose: () => void }) {
         display: 'flex', flexDirection: 'column', boxShadow: '-8px 0 40px rgba(0,0,0,0.15)',
       }} onClick={e => e.stopPropagation()}>
         {/* Header */}
-        <div style={{ padding: '16px 20px', borderBottom: '1px solid #E7E2F4', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '16px 20px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
-            <div style={{ fontSize: 11, fontWeight: 700, color: '#5F5A72', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cold Call Script</div>
+            <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>Cold Call Script</div>
             <h2 style={{ fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em' }}>Modernica Studios</h2>
           </div>
-          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, color: '#5F5A72' }}>
+          <button onClick={onClose} style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 6, color: 'var(--muted)' }}>
             <X size={22} />
           </button>
         </div>
 
         {/* Tabs — horizontal scroll */}
-        <div style={{ padding: '10px 16px', borderBottom: '1px solid #E7E2F4', overflowX: 'auto', whiteSpace: 'nowrap' }}>
+        <div style={{ padding: '10px 16px', borderBottom: '1px solid var(--border)', overflowX: 'auto', whiteSpace: 'nowrap' }}>
           {tabs.map(t => (
             <button key={t.key} onClick={() => setTab(t.key)} style={{
               display: 'inline-flex', alignItems: 'center', gap: 6, padding: '8px 14px',
               marginRight: 6, borderRadius: 100, fontSize: 12, fontWeight: 600,
               border: 'none', cursor: 'pointer',
-              background: tab === t.key ? '#3F06E3' : '#F6F3FF',
-              color: tab === t.key ? 'white' : '#3F06E3',
+              background: tab === t.key ? 'var(--accent1)' : 'var(--bg)',
+              color: tab === t.key ? 'white' : 'var(--accent1)',
             }}>
               {t.icon} {t.label}
             </button>
@@ -85,36 +85,36 @@ function SectionWie() {
       </Card>
 
       <h4 style={subHeaderStyle}>Waarom klanten voor ons kiezen (USP&apos;s)</h4>
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
-        <strong style={{ color: '#3F06E3' }}>1. Volledige code bouw = volledig ontzorgen</strong>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--accent1)' }}>1. Volledige code bouw = volledig ontzorgen</strong>
         <p style={{ marginTop: 6 }}>
           Wij bouwen sites in eigen code, geen Squarespace of Wix. Dat betekent: alles kan, geen beperkingen, geen zorgen over onderhoud. Klanten die zelf bouwen lopen vaak vast bij updates of beveiliging.
         </p>
       </div>
 
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
-        <strong style={{ color: '#3F06E3' }}>2. Kwartaal-hosting = elk kwartaal check-in</strong>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--accent1)' }}>2. Kwartaal-hosting = elk kwartaal check-in</strong>
         <p style={{ marginTop: 6 }}>
           Hosting wordt per kwartaal gefactureerd. Bij elke factuur sturen wij ook een berichtje: &quot;Zijn er veranderingen? Missen we iets?&quot; Zo blijft je site altijd up-to-date zonder dat je het hoeft te onthouden.
         </p>
       </div>
 
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
-        <strong style={{ color: '#3F06E3' }}>3. Persoonlijk contact, één team</strong>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--accent1)' }}>3. Persoonlijk contact, één team</strong>
         <p style={{ marginTop: 6 }}>
           Geen bureau met accountmanager + designer + developer + copywriter. Sjoerd en Maartje zijn je vaste contact. Kort lijntje, snel schakelen.
         </p>
       </div>
 
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
-        <strong style={{ color: '#3F06E3' }}>4. Geen 12-maanden contracten</strong>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 12, marginBottom: 12, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--accent1)' }}>4. Geen 12-maanden contracten</strong>
         <p style={{ marginTop: 6 }}>
           Kort proberen, verlengen als het werkt. Dat maakt drempel om te starten laag.
         </p>
       </div>
 
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 12, marginBottom: 16, fontSize: 13, lineHeight: 1.6 }}>
-        <strong style={{ color: '#3F06E3' }}>5. Alles onder één dak</strong>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 12, marginBottom: 16, fontSize: 13, lineHeight: 1.6 }}>
+        <strong style={{ color: 'var(--accent1)' }}>5. Alles onder één dak</strong>
         <p style={{ marginTop: 6 }}>
           Design, code, tekst, foto, video, ads. Geen doorverwijzen. Als er iets bij komt kunnen we het intern oppakken.
         </p>
@@ -165,7 +165,7 @@ function SectionWie() {
       </div>
 
       <h4 style={subHeaderStyle}>🎬 Hoe wij denken over een website</h4>
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
         <p><strong>Een goede website is geen visitekaartje.</strong> Het is jullie 24/7 verkoper.
         Terwijl jullie werken, koken, opereren of installeren, moet de site het verhaal doen: wie zijn we,
         waarom moet je ons kiezen, en hoe krijg ik nu contact.</p>
@@ -175,7 +175,7 @@ function SectionWie() {
       </div>
 
       <h4 style={subHeaderStyle}>❤️ Waarom wij dit doen</h4>
-      <div style={{ padding: 14, background: '#F6F3FF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+      <div style={{ padding: 14, background: 'var(--bg)', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
         <p>Sjoerd en Maartje zijn beiden opgeleid in design en marketing. Ze zagen te vaak dat MKB-ondernemers
         pas laat bij een bureau kwamen — als het al te laat was, of als ze veel geld hadden verspild aan
         losse verhalen (webbouwer, foto, tekstschrijver, ads-guy, allemaal apart).</p>
@@ -189,9 +189,9 @@ function SectionWie() {
 
 function ValueCard({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: 12, background: 'white', border: '1px solid #E7E2F4', borderLeft: '3px solid #3F06E3', borderRadius: 8 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, color: '#3F06E3', marginBottom: 4 }}>{title}</div>
-      <div style={{ fontSize: 13, color: '#1A1730', lineHeight: 1.5 }}>{children}</div>
+    <div style={{ padding: 12, background: 'white', border: '1px solid var(--border)', borderLeft: '3px solid var(--accent1)', borderRadius: 8 }}>
+      <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--accent1)', marginBottom: 4 }}>{title}</div>
+      <div style={{ fontSize: 13, color: 'var(--text)', lineHeight: 1.5 }}>{children}</div>
     </div>
   )
 }
@@ -200,7 +200,7 @@ function SectionWat() {
   return (
     <div>
       <h3 style={headerStyle}>Wat we bieden</h3>
-      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Alles onder één dak — één team, korte lijnen. Wat we doen en waarom:
       </p>
 
@@ -250,13 +250,13 @@ function SectionWat() {
       </ServiceExpanded>
 
       <h4 style={subHeaderStyle}>Onderhoud &amp; updates na livegang</h4>
-      <div style={{ padding: 14, background: '#F6F3FF', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
+      <div style={{ padding: 14, background: 'var(--bg)', borderRadius: 10, fontSize: 13, lineHeight: 1.6 }}>
         <p style={{ marginBottom: 8 }}>Er zijn 2 opties voor updates na livegang:</p>
         <ul style={{ paddingLeft: 20 }}>
           <li><strong>Standaard:</strong> updates op verzoek tegen <strong>€65 per uur</strong>. Voor kleine tweaks meestal 15–30 min = weinig kost.</li>
           <li><strong>Service in hosting:</strong> updates zitten inbegrepen in een iets hogere hosting-prijs. Handig als je regelmatig aanpassingen wil.</li>
         </ul>
-        <p style={{ marginTop: 8, color: '#3F06E3', fontWeight: 600 }}>
+        <p style={{ marginTop: 8, color: 'var(--accent1)', fontWeight: 600 }}>
           Voor beide opties: bij elke kwartaal-factuur sturen we een berichtje &quot;zijn er veranderingen nodig?&quot; — zo blijft niks liggen.
         </p>
       </div>
@@ -276,12 +276,12 @@ function SectionWat() {
 
 function ServiceExpanded({ title, tag, children }: { title: string; tag: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: 16, background: 'white', border: '1px solid #E7E2F4', borderRadius: 12, marginBottom: 12 }}>
+    <div style={{ padding: 16, background: 'white', border: '1px solid var(--border)', borderRadius: 12, marginBottom: 12 }}>
       <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', marginBottom: 8 }}>
         <div style={{ fontSize: 15, fontWeight: 800 }}>{title}</div>
-        <span style={{ fontSize: 10, padding: '2px 8px', background: '#F1ECFF', color: '#3F06E3', borderRadius: 100, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{tag}</span>
+        <span style={{ fontSize: 10, padding: '2px 8px', background: 'var(--sidebar-active-bg)', color: 'var(--accent1)', borderRadius: 100, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{tag}</span>
       </div>
-      <div style={{ fontSize: 13, color: '#5F5A72', lineHeight: 1.55 }}>{children}</div>
+      <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.55 }}>{children}</div>
     </div>
   )
 }
@@ -290,7 +290,7 @@ function SectionPrijzen() {
   return (
     <div>
       <h3 style={headerStyle}>Prijzen (echt — eerlijk noemen wanneer gevraagd)</h3>
-      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Noem prijzen als de klant er expliciet naar vraagt. Anders eerst doorvragen naar behoefte en aanbieden om vrijblijvend voorstel te maken. Bijna alles is uiteindelijk maatwerk.
       </p>
 
@@ -342,8 +342,8 @@ function SectionPrijzen() {
         </ul>
       </div>
 
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 10, marginTop: 14, fontSize: 13 }}>
-        <strong style={{ color: '#3F06E3' }}>💡 Waarom SEO abonnement handig is (te zeggen tijdens gesprek):</strong>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 10, marginTop: 14, fontSize: 13 }}>
+        <strong style={{ color: 'var(--accent1)' }}>💡 Waarom SEO abonnement handig is (te zeggen tijdens gesprek):</strong>
         <p style={{ marginTop: 8, lineHeight: 1.5 }}>
           &quot;Google verandert continu z&apos;n regels. Eén keer optimaliseren is prima voor start, maar zonder onderhoud zak je binnen 6 maanden weer. Voor €150–€200 per kwartaal houden we je pagina&apos;s bovenaan: nieuwe keywords, content updates, technische checks. Bedrijven die dit wel doen groeien vaak 2–3× meer aanvragen per jaar dan die het niet doen.&quot;
         </p>
@@ -356,7 +356,7 @@ function SectionCases() {
   return (
     <div>
       <h3 style={headerStyle}>Cases &amp; resultaten (echte cijfers, echte klanten)</h3>
-      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Gebruik de case die past bij de branche van de lead. Alleen echt gebeurde cijfers noemen. Blijf eerlijk.
       </p>
 
@@ -364,35 +364,35 @@ function SectionCases() {
         <p><strong>Voor:</strong> geen aanvragen via de site, klanten kwamen alleen via bestaande relaties.</p>
         <p><strong>Wat we deden:</strong> hele website vernieuwd, duidelijker propositie en aanvraagformulier.</p>
         <p><strong>Resultaat:</strong> van <strong>0 aanvragen/mnd</strong> naar <strong>7+ aanvragen/mnd</strong> in de eerste 2 maanden na livegang. Dat blijft groeien.</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 6 }}>Gebruik bij: bouwbedrijven, industrieel, groothandel, aannemers, fabrikanten.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Gebruik bij: bouwbedrijven, industrieel, groothandel, aannemers, fabrikanten.</p>
       </CaseBlock>
 
       <CaseBlock name="Bierbrasserie Koster" branche="Horeca" color="#EF4444">
         <p><strong>Voor:</strong> geen digitale zichtbaarheid, geen reserveringen via de site voor groepen.</p>
         <p><strong>Wat we deden:</strong> betere online presentatie + reserverings-integratie voor groepsaanvragen.</p>
         <p><strong>Resultaat:</strong> van vrijwel <strong>0 groepsreserveringen via de site</strong> naar <strong>1–3 grote groepen (20+ personen) per maand</strong>. Groeit door.</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 6 }}>Gebruik bij: restaurants, cafés, hotels, brasserieën, event-locaties.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Gebruik bij: restaurants, cafés, hotels, brasserieën, event-locaties.</p>
       </CaseBlock>
 
-      <CaseBlock name="StudyBridge.nl" branche="Recruitment / detachering" color="#3F06E3">
+      <CaseBlock name="StudyBridge.nl" branche="Recruitment / detachering" color="var(--accent1)">
         <p><strong>Voor:</strong> traditionele wervingsaanpak liep vast bij snelle groei.</p>
         <p><strong>Wat we deden:</strong> volledig recruitment-marketing pakket — nieuwe site + personeelswerving-ads bedacht, geplaatst en beheerd.</p>
         <p><strong>Resultaat:</strong> <strong>400+ kwalitatieve leads en 60 plaatsingen in 6 maanden</strong>. Kosten per hire ongeveer gehalveerd.</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 6 }}>Belangrijk: dit was met ads + volledige campagne, niet alleen een website. Gebruik bij: recruitment, HR, uitzendbureaus.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Belangrijk: dit was met ads + volledige campagne, niet alleen een website. Gebruik bij: recruitment, HR, uitzendbureaus.</p>
       </CaseBlock>
 
       <CaseBlock name="Stut Productions" branche="Fotografie" color="#8B5CF6">
         <p><strong>Voor:</strong> onoverzichtelijke portfolio-site, foto-kwaliteit kwam niet tot z&apos;n recht.</p>
         <p><strong>Wat we deden:</strong> volledige nieuwe website met behoud van foto-kwaliteit, contactformulieren en een <strong>prijs-calculator</strong> zodat mensen meteen kunnen inzien wat een shoot kost.</p>
         <p><strong>Resultaat:</strong> oplopende aanvragen + meer lokale bezoekers dankzij goede SEO.</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 6 }}>Gebruik bij: creative studios, fotografen, coaches, dienstverleners met visueel werk.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Gebruik bij: creative studios, fotografen, coaches, dienstverleners met visueel werk.</p>
       </CaseBlock>
 
       <CaseBlock name="Lumi's" branche="Restaurant (nieuw)" color="#EC4899">
         <p><strong>Voor:</strong> net begonnen, geen enkele online aanwezigheid.</p>
         <p><strong>Wat we deden:</strong> volledige website vanaf nul opgebouwd. Eigen foto&apos;s komen er nog aan.</p>
         <p><strong>Resultaat:</strong> live, cijfers volgen nog. Eerste maanden zichtbaarheid vergroten is prioriteit.</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 6 }}>Gebruik bij: nieuwe ondernemers, starters, restaurants in opstartfase.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>Gebruik bij: nieuwe ondernemers, starters, restaurants in opstartfase.</p>
       </CaseBlock>
 
       <div style={{ padding: 14, background: '#F0FDF4', borderRadius: 10, marginTop: 14, fontSize: 13, color: '#065F46' }}>
@@ -406,7 +406,7 @@ function SectionOpeners() {
   return (
     <div>
       <h3 style={headerStyle}>Openings-scripts</h3>
-      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Kies opener op basis van context (mail al gehad, verouderde site, receptie, doorverbonden, etc).
         Elke opener heeft 2 varianten — pak wat past bij je toon.
       </p>
@@ -414,7 +414,7 @@ function SectionOpeners() {
       <OpenerBlock title="✉️ Wanneer ze WEL onze mail hebben gehad (staat in lead)">
         <p><strong>Variant A (warm):</strong> &quot;Hoi, met [Naam] van Modernica Studios. Ik bel je omdat we je een tijdje terug een mailtje hebben gestuurd over jullie online zichtbaarheid — heb je dat gezien?&quot;</p>
         <p style={{ marginTop: 8 }}><strong>Variant B (direct):</strong> &quot;Hoi, met [Naam] van Modernica. We hebben je vorige maand gemaild over jullie website — ik bel omdat ik denk dat er echt iets zit voor jullie. Heb je 2 minuten?&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 10 }}>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 10 }}>
           <em>Als ja:</em> &quot;Mooi, ik was benieuwd of er iets in speelde — willen jullie iets doen aan de website of social?&quot;<br />
           <em>Als nee:</em> &quot;Geen probleem, sowieso even in het kort: wij helpen [branche] met [waarde]. Speelt er iets rondom [pijnpunt]?&quot;
         </p>
@@ -438,14 +438,14 @@ function SectionOpeners() {
       <OpenerBlock title="📞 Als je een receptioniste of collega krijgt">
         <p><strong>Variant A:</strong> &quot;Hallo, met [Naam] van Modernica Studios. Wie is bij jullie verantwoordelijk voor de website en marketing? Ik heb daar even 5 minuten mee nodig.&quot;</p>
         <p style={{ marginTop: 8 }}><strong>Variant B:</strong> &quot;Hoi, ik heb een korte vraag over jullie website — met wie kan ik daar het beste over spreken? Zonder verkooppraatje, gewoon inhoudelijk.&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 8 }}>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
           <em>Tip:</em> vraag ook naam + wanneer die persoon bereikbaar is als het niet nu kan.
         </p>
       </OpenerBlock>
 
       <OpenerBlock title="📧 Als je voicemail krijgt">
         <p>&quot;Hoi, met [Naam] van Modernica Studios. We hebben [bedrijfsnaam] vorige week gemaild over jullie online zichtbaarheid — ik wilde even kort persoonlijk terugkoppelen. Ik bel later opnieuw, of stuur even een berichtje naar [nummer]. Fijne dag.&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 8 }}>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 8 }}>
           <em>Kort houden.</em> Geen prijs of pitch noemen. Doel: herkenning + terugbellen.
         </p>
       </OpenerBlock>
@@ -465,7 +465,7 @@ function SectionOpeners() {
       </div>
 
       <h4 style={subHeaderStyle}>🎯 Wat te noemen om vertrouwen te bouwen</h4>
-      <div style={{ padding: 14, background: '#F1ECFF', borderRadius: 10, fontSize: 13, lineHeight: 1.7 }}>
+      <div style={{ padding: 14, background: 'var(--sidebar-active-bg)', borderRadius: 10, fontSize: 13, lineHeight: 1.7 }}>
         <ul style={{ paddingLeft: 20 }}>
           <li>Modernica bestaat al X jaar, gevestigd in Santpoort-Noord</li>
           <li>Sjoerd en Maartje — 2 vaste contactpersonen, geen accountmanagers</li>
@@ -491,14 +491,14 @@ function SectionBezwaren() {
 
       <Objection q="&quot;We hebben geen budget&quot;">
         <p><strong>Reactie:</strong> &quot;Snap ik. Wat had je in gedachten qua budget? We hebben ook simpele onepagers vanaf €750 — betere dan wat je zelf in elkaar zou zetten met Wix. Als we weten wat je budget is, kunnen we kijken wat we WEL kunnen doen — misschien een simpelere maar sterke site die past bij wat er nu nodig is.&quot;</p>
-        <p style={{ marginTop: 6, fontSize: 12, color: '#5F5A72' }}>
+        <p style={{ marginTop: 6, fontSize: 12, color: 'var(--muted)' }}>
           🚩 <em>Pas op:</em> als het budget rond &quot;zo laag mogelijk&quot; zit zonder concrete indicatie — dat is meestal budget-shopper. Vriendelijk afronden.
         </p>
       </Objection>
 
       <Objection q="&quot;Niet geïnteresseerd&quot;">
         <p><strong>Reactie:</strong> &quot;Geen probleem. Mag ik heel kort vragen: is dat omdat het nu niet speelt, of hebben jullie hier iemand voor?&quot;</p>
-        <p style={{ fontSize: 12, color: '#5F5A72', marginTop: 6 }}>→ Als iemand voor: check op switch (nieuwe niche). Als niet speelt: over een paar maanden opnieuw contact.</p>
+        <p style={{ fontSize: 12, color: 'var(--muted)', marginTop: 6 }}>→ Als iemand voor: check op switch (nieuwe niche). Als niet speelt: over een paar maanden opnieuw contact.</p>
       </Objection>
 
       <Objection q="&quot;Stuur maar informatie op&quot;">
@@ -520,7 +520,7 @@ function SectionNiche() {
   return (
     <div>
       <h3 style={headerStyle}>Tegen-antwoorden per branche</h3>
-      <p style={{ fontSize: 13, color: '#5F5A72', marginBottom: 16 }}>
+      <p style={{ fontSize: 13, color: 'var(--muted)', marginBottom: 16 }}>
         Elke branche heeft z&apos;n eigen bezwaren. Per bezwaar 3 antwoord-varianten:
         <strong> zacht</strong> (voorzichtig openen), <strong>direct</strong> (helder confronteren),
         <strong> data</strong> (case-based). Kies wat past bij de toon van het gesprek.
@@ -697,9 +697,9 @@ function SectionNiche() {
       </NicheBlock>
 
       {/* UNIVERSELE GOUDEN LIJNEN */}
-      <div style={{ marginTop: 20, padding: 16, background: '#F1ECFF', borderRadius: 12 }}>
-        <strong style={{ color: '#3F06E3', fontSize: 14 }}>💎 Universele sterke lijnen (voor elke niche bruikbaar)</strong>
-        <ul style={{ paddingLeft: 20, marginTop: 8, fontSize: 13, lineHeight: 1.7, color: '#1A1730' }}>
+      <div style={{ marginTop: 20, padding: 16, background: 'var(--sidebar-active-bg)', borderRadius: 12 }}>
+        <strong style={{ color: 'var(--accent1)', fontSize: 14 }}>💎 Universele sterke lijnen (voor elke niche bruikbaar)</strong>
+        <ul style={{ paddingLeft: 20, marginTop: 8, fontSize: 13, lineHeight: 1.7, color: 'var(--text)' }}>
           <li>&quot;Jullie site is het visitekaartje — nu spreekt &apos;ie niet de taal van jullie kwaliteit.&quot;</li>
           <li>&quot;In 5 seconden beslissen bezoekers of ze blijven of weggaan. Wat zegt jullie site in 5 seconden?&quot;</li>
           <li>&quot;Wij lossen dit vaak op door een preview te maken — dan zie je meteen of onze aanpak past. Kost jullie niks.&quot;</li>
@@ -714,7 +714,7 @@ function SectionNiche() {
 
 function NicheBlock({ icon, title, color, children }: any) {
   return (
-    <div style={{ marginBottom: 24, padding: 16, background: 'white', borderRadius: 12, borderLeft: `4px solid ${color}`, border: '1px solid #E7E2F4' }}>
+    <div style={{ marginBottom: 24, padding: 16, background: 'white', borderRadius: 12, borderLeft: `4px solid ${color}`, border: '1px solid var(--border)' }}>
       <div style={{ fontSize: 16, fontWeight: 800, marginBottom: 12, color }}>{icon} {title}</div>
       {children}
     </div>
@@ -730,14 +730,14 @@ const toneColors: Record<string, { bg: string; text: string }> = {
 function NRebut({ q, variants }: { q: string; variants: Array<{ tone: string; text: string }> }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: '#1A1730' }}>{q}</div>
+      <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8, color: 'var(--text)' }}>{q}</div>
       <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
         {variants.map((v, i) => {
-          const c = toneColors[v.tone] || { bg: '#F6F3FF', text: '#5F5A72' }
+          const c = toneColors[v.tone] || { bg: 'var(--bg)', text: 'var(--muted)' }
           return (
             <div key={i} style={{ padding: 10, background: c.bg, borderRadius: 8, borderLeft: `3px solid ${c.text}` }}>
               <div style={{ fontSize: 10, fontWeight: 700, color: c.text, textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: 4 }}>{v.tone}</div>
-              <div style={{ fontSize: 13, lineHeight: 1.55, color: '#1A1730' }}>{v.text}</div>
+              <div style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--text)' }}>{v.text}</div>
             </div>
           )
         })}
@@ -751,8 +751,8 @@ function SectionAfsluiter() {
     <div>
       <h3 style={headerStyle}>Afsluiten — wat vragen, wat plannen</h3>
 
-      <div style={{ padding: 16, background: '#F1ECFF', borderRadius: 12, marginBottom: 16 }}>
-        <strong style={{ color: '#3F06E3', fontSize: 14 }}>🎯 Best case: kennismakingsgesprek plannen (30 min video)</strong>
+      <div style={{ padding: 16, background: 'var(--sidebar-active-bg)', borderRadius: 12, marginBottom: 16 }}>
+        <strong style={{ color: 'var(--accent1)', fontSize: 14 }}>🎯 Best case: kennismakingsgesprek plannen (30 min video)</strong>
         <p style={{ marginTop: 8, fontSize: 13, lineHeight: 1.5 }}>
           &quot;Klinkt goed. Dan plan ik een half uurtje met Sjoerd of Maartje in — zij nemen samen met jou de aanpak door en maken daarna een echt voorstel op maat. Past dinsdag 10:00 of donderdag 14:00 beter?&quot;
         </p>
@@ -787,9 +787,9 @@ function SectionAfsluiter() {
         <p style={{ marginTop: 6, fontSize: 12, color: '#991B1B' }}>→ Log <em>niet_geinteresseerd</em>. Blijft altijd vriendelijk — je weet nooit later.</p>
       </div>
 
-      <div style={{ padding: 16, background: '#F6F3FF', borderRadius: 12, marginTop: 20 }}>
-        <strong style={{ color: '#3F06E3', fontSize: 14 }}>⚡ Wat gebeurt er nu als de klant JA zegt — onze werkwijze</strong>
-        <p style={{ marginTop: 8, fontSize: 12, color: '#5F5A72', fontStyle: 'italic' }}>
+      <div style={{ padding: 16, background: 'var(--bg)', borderRadius: 12, marginTop: 20 }}>
+        <strong style={{ color: 'var(--accent1)', fontSize: 14 }}>⚡ Wat gebeurt er nu als de klant JA zegt — onze werkwijze</strong>
+        <p style={{ marginTop: 8, fontSize: 12, color: 'var(--muted)', fontStyle: 'italic' }}>
           Belangrijk: wij maken de preview VOOR het kennismakingsgesprek, zodat hun eerste reactie meteen zichtbaar is en het gesprek concreter wordt.
         </p>
         <ol style={{ marginTop: 10, paddingLeft: 20, fontSize: 13, lineHeight: 1.7 }}>
@@ -802,7 +802,7 @@ function SectionAfsluiter() {
           <li><strong>Livegang + oplevering</strong> — laatste 50% betaling</li>
           <li><strong>3 maanden nazorg standaard (eerste kwartaal)</strong> — bugs, kleine tweaks, we kijken hoe alles loopt</li>
         </ol>
-        <p style={{ marginTop: 10, fontSize: 12, color: '#5F5A72' }}>
+        <p style={{ marginTop: 10, fontSize: 12, color: 'var(--muted)' }}>
           <strong>Doorlooptijd:</strong> simpele site ~2 weken vanaf contract tot live. Gemiddeld project 2–4 weken, afhankelijk van acceptatie en moeilijkheidsgraad.
         </p>
       </div>
@@ -828,12 +828,12 @@ const headerStyle: React.CSSProperties = {
   fontSize: 20, fontWeight: 800, letterSpacing: '-0.02em', marginBottom: 12,
 }
 const subHeaderStyle: React.CSSProperties = {
-  fontSize: 13, fontWeight: 700, color: '#3F06E3', textTransform: 'uppercase',
+  fontSize: 13, fontWeight: 700, color: 'var(--accent1)', textTransform: 'uppercase',
   letterSpacing: '0.06em', marginTop: 18, marginBottom: 8,
 }
 
 function Card({ children }: { children: React.ReactNode }) {
-  return <div style={{ background: '#F6F3FF', borderRadius: 12, padding: 16, fontSize: 14, lineHeight: 1.6 }}>{children}</div>
+  return <div style={{ background: 'var(--bg)', borderRadius: 12, padding: 16, fontSize: 14, lineHeight: 1.6 }}>{children}</div>
 }
 
 function Bullets({ items }: { items: string[] }) {
@@ -846,9 +846,9 @@ function Bullets({ items }: { items: string[] }) {
 
 function Service({ title, desc }: { title: string; desc: string }) {
   return (
-    <div style={{ padding: 14, border: '1px solid #E7E2F4', borderRadius: 10, marginBottom: 10 }}>
+    <div style={{ padding: 14, border: '1px solid var(--border)', borderRadius: 10, marginBottom: 10 }}>
       <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 4 }}>{title}</div>
-      <div style={{ fontSize: 13, color: '#5F5A72', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: desc }} />
+      <div style={{ fontSize: 13, color: 'var(--muted)', lineHeight: 1.5 }} dangerouslySetInnerHTML={{ __html: desc }} />
     </div>
   )
 }
@@ -856,7 +856,7 @@ function Service({ title, desc }: { title: string; desc: string }) {
 function PriceBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div style={{ marginBottom: 14 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#3F06E3', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{title}</div>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent1)', textTransform: 'uppercase', letterSpacing: '0.06em', marginBottom: 8 }}>{title}</div>
       <ul style={{ paddingLeft: 20, fontSize: 13, lineHeight: 1.7 }}>{children}</ul>
     </div>
   )
@@ -864,20 +864,20 @@ function PriceBlock({ title, children }: { title: string; children: React.ReactN
 
 function CaseBlock({ name, branche, color, children }: any) {
   return (
-    <div style={{ padding: 14, borderRadius: 12, marginBottom: 12, borderLeft: `4px solid ${color}`, background: 'white', border: '1px solid #E7E2F4' }}>
+    <div style={{ padding: 14, borderRadius: 12, marginBottom: 12, borderLeft: `4px solid ${color}`, background: 'white', border: '1px solid var(--border)' }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: 6 }}>
         <strong style={{ fontSize: 15 }}>{name}</strong>
-        <span style={{ fontSize: 11, color: '#5F5A72', fontWeight: 600 }}>{branche}</span>
+        <span style={{ fontSize: 11, color: 'var(--muted)', fontWeight: 600 }}>{branche}</span>
       </div>
-      <div style={{ fontSize: 13, lineHeight: 1.5, color: '#1A1730' }}>{children}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.5, color: 'var(--text)' }}>{children}</div>
     </div>
   )
 }
 
 function OpenerBlock({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: 14, background: '#F6F3FF', borderRadius: 10, marginBottom: 12 }}>
-      <div style={{ fontSize: 12, fontWeight: 700, color: '#3F06E3', marginBottom: 8 }}>{title}</div>
+    <div style={{ padding: 14, background: 'var(--bg)', borderRadius: 10, marginBottom: 12 }}>
+      <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--accent1)', marginBottom: 8 }}>{title}</div>
       <div style={{ fontSize: 13, lineHeight: 1.55 }}>{children}</div>
     </div>
   )
@@ -885,9 +885,9 @@ function OpenerBlock({ title, children }: { title: string; children: React.React
 
 function Objection({ q, children }: { q: string; children: React.ReactNode }) {
   return (
-    <div style={{ padding: 14, background: 'white', border: '1px solid #E7E2F4', borderRadius: 10, marginBottom: 10 }}>
+    <div style={{ padding: 14, background: 'white', border: '1px solid var(--border)', borderRadius: 10, marginBottom: 10 }}>
       <div style={{ fontSize: 13, fontWeight: 700, marginBottom: 8 }} dangerouslySetInnerHTML={{ __html: q }} />
-      <div style={{ fontSize: 13, lineHeight: 1.55, color: '#5F5A72' }}>{children}</div>
+      <div style={{ fontSize: 13, lineHeight: 1.55, color: 'var(--muted)' }}>{children}</div>
     </div>
   )
 }

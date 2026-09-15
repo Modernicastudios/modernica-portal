@@ -48,8 +48,12 @@ export interface LeadContact {
   client_id: string | null
   company_id: string
   full_name: string | null
+  first_name: string | null
+  last_name: string | null
   role: string | null
   email: string | null
+  phone: string | null
+  linkedin_url: string | null
   found_via: 'apollo' | 'site_scrape' | 'pattern' | null
   confidence: number | null
   email_verified: 'valid' | 'risky' | 'invalid' | null
