@@ -276,26 +276,26 @@ export default function BellenClient({ userName }: { userName: string; userId: s
     <div style={{ maxWidth: 520, margin: '0 auto', padding: '0 12px 100px', minHeight: '100vh' }}>
       {/* STICKY TOP BAR met terug knop */}
       <div style={{
-        position: 'sticky', top: 0, background: 'var(--bg, #FCFBFF)', zIndex: 10,
-        padding: '12px 0', borderBottom: '1px solid #E7E2F4', marginBottom: 12,
+        position: 'sticky', top: 0, background: 'var(--bg)', zIndex: 10,
+        padding: '12px 0', borderBottom: '1px solid var(--border)', marginBottom: 12,
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
           <Link href="/leads" style={{
             display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px',
-            background: 'white', border: '1px solid #E7E2F4', borderRadius: 8,
-            fontSize: 13, color: '#5F5A72', textDecoration: 'none', fontWeight: 600,
+            background: 'var(--card)', border: '1px solid var(--border)', borderRadius: 8,
+            fontSize: 13, color: 'var(--muted)', textDecoration: 'none', fontWeight: 600,
           }}>
             <ChevronLeft size={16} /> Overzicht
           </Link>
           <div style={{ fontSize: 12, color: 'var(--muted)' }}>
             <strong>{userName}</strong>
-            {stats && stats.callbacks_due > 0 && <> · <span style={{ color: '#3F06E3', fontWeight: 700 }}>{stats.callbacks_due} callbacks</span></>}
+            {stats && stats.callbacks_due > 0 && <> · <span style={{ color: 'var(--accent1)', fontWeight: 700 }}>{stats.callbacks_due} callbacks</span></>}
           </div>
           <div style={{ display: 'flex', gap: 6 }}>
             <button onClick={() => setShowScript(true)} style={{
               display: 'inline-flex', alignItems: 'center', gap: 4, padding: '6px 10px',
-              background: '#F1ECFF', border: '1px solid #3F06E3', borderRadius: 8,
-              fontSize: 12, color: '#3F06E3', cursor: 'pointer', fontWeight: 700,
+              background: 'var(--sidebar-active-bg)', border: '1px solid var(--accent1)', borderRadius: 8,
+              fontSize: 12, color: 'var(--accent1)', cursor: 'pointer', fontWeight: 700,
             }}>
               <BookOpen size={14} /> Script
             </button>
@@ -310,8 +310,8 @@ export default function BellenClient({ userName }: { userName: string; userId: s
       {/* Reason badge */}
       <div style={{ marginBottom: 8 }}>
         <span style={{
-          background: reason === 'callback_due' ? '#3F06E3' : '#F1ECFF',
-          color: reason === 'callback_due' ? 'white' : '#3F06E3',
+          background: reason === 'callback_due' ? 'var(--accent1)' : 'var(--sidebar-active-bg)',
+          color: reason === 'callback_due' ? 'white' : 'var(--accent1)',
           fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 100,
         }}>
           {reason === 'callback_due' && '📞 CALLBACK TIJD'}
@@ -322,8 +322,8 @@ export default function BellenClient({ userName }: { userName: string; userId: s
 
       {/* LEAD CARD */}
       <div style={{
-        background: 'white', borderRadius: 20, padding: 20, marginBottom: 16,
-        boxShadow: '0 4px 20px rgba(0,0,0,0.06)', border: '1px solid #E7E2F4',
+        background: 'var(--card)', borderRadius: 'var(--radius)', padding: 20, marginBottom: 16,
+        boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
       }}>
         <div style={{ marginBottom: 4 }}>
           <span style={{
@@ -339,7 +339,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
         {lead.lead_companies?.industry && (
           <div style={{
             display: 'inline-flex', alignItems: 'center', gap: 6,
-            padding: '6px 12px', background: '#F1ECFF', color: '#3F06E3',
+            padding: '6px 12px', background: 'var(--sidebar-active-bg)', color: 'var(--accent1)',
             borderRadius: 100, fontSize: 13, fontWeight: 700, marginBottom: 10,
           }}>
             🏢 {lead.lead_companies.industry}
@@ -354,7 +354,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
 
         {/* Contact info */}
         {lead.lead_contacts && (
-          <div style={{ padding: '12px 14px', background: '#F6F3FF', borderRadius: 12, marginBottom: 14 }}>
+          <div style={{ padding: '12px 14px', background: 'var(--bg)', borderRadius: 'var(--radius-sm)', marginBottom: 14, border: '1px solid var(--border)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
               <div>
                 <div style={{ fontSize: 15, fontWeight: 700, marginBottom: 2 }}>
@@ -377,8 +377,8 @@ export default function BellenClient({ userName }: { userName: string; userId: s
           <>
             <a href={lead.lead_companies.website_url} target="_blank" rel="noopener"
               style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 8,
-                padding: '14px 16px', background: 'white', border: '2px solid #E7E2F4',
-                borderRadius: 12, fontSize: 14, color: '#3F06E3', textDecoration: 'none',
+                padding: '14px 16px', background: 'var(--card)', border: '1px solid var(--border)',
+                borderRadius: 'var(--radius-sm)', fontSize: 14, color: 'var(--accent1)', textDecoration: 'none',
                 marginBottom: 8, fontWeight: 600 }}>
               <span style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
                 <Globe size={16} /> Check website — is deze verouderd?
@@ -417,8 +417,8 @@ export default function BellenClient({ userName }: { userName: string; userId: s
         )}
         {lead.lead_contacts?.email && (
           <a href={`mailto:${lead.lead_contacts.email}`}
-            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: '#F8F7FF',
-              borderRadius: 10, fontSize: 13, color: '#3F06E3', textDecoration: 'none', marginBottom: 8 }}>
+            style={{ display: 'flex', alignItems: 'center', gap: 8, padding: '10px 14px', background: 'var(--sidebar-active-bg)',
+              borderRadius: 'var(--radius-sm)', fontSize: 13, color: 'var(--accent1)', textDecoration: 'none', marginBottom: 8 }}>
             <Mail size={14} /> {lead.lead_contacts.email}
           </a>
         )}
@@ -457,7 +457,7 @@ export default function BellenClient({ userName }: { userName: string; userId: s
         <>
           {lead.lead_companies?.phone ? (
             <div style={{
-              background: 'linear-gradient(135deg, #3F06E3, #6D3EEB)', color: 'white',
+              background: 'linear-gradient(135deg, var(--accent1), var(--accent2))', color: 'white',
               padding: 20, borderRadius: 20,
               boxShadow: '0 8px 30px rgba(63, 6, 227, 0.35)',
             }}>
@@ -517,8 +517,8 @@ export default function BellenClient({ userName }: { userName: string; userId: s
       {/* OUTCOME FLOW */}
       {showOutcome && (
         <div style={{
-          background: 'white', borderRadius: 20, padding: 20, marginTop: 16,
-          boxShadow: '0 4px 20px rgba(0,0,0,0.08)', border: '1px solid #E7E2F4',
+          background: 'var(--card)', borderRadius: 'var(--radius)', padding: 20, marginTop: 16,
+          boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border)',
         }}>
           {/* Header met annuleer knop */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
@@ -545,9 +545,9 @@ export default function BellenClient({ userName }: { userName: string; userId: s
                 onClick={() => setSelectedOutcome(o.key)}
                 style={{
                   padding: '14px 10px', borderRadius: 12, textAlign: 'left', fontSize: 13, fontWeight: 600,
-                  border: `2px solid ${selectedOutcome === o.key ? '#3F06E3' : '#E7E2F4'}`,
-                  background: selectedOutcome === o.key ? '#F1ECFF' : 'white',
-                  color: selectedOutcome === o.key ? '#3F06E3' : '#1A1730',
+                  border: `2px solid ${selectedOutcome === o.key ? 'var(--accent1)' : 'var(--border)'}`,
+                  background: selectedOutcome === o.key ? 'var(--sidebar-active-bg)' : 'var(--card)',
+                  color: selectedOutcome === o.key ? 'var(--accent1)' : 'var(--text)',
                   cursor: 'pointer',
                 }}>
                 <div style={{ fontSize: 20, marginBottom: 4 }}>{o.emoji}</div>
@@ -687,19 +687,20 @@ function formatDuration(sec: number): string {
 }
 
 const btnPrimary: React.CSSProperties = {
-  background: '#3F06E3', color: 'white', border: 'none', padding: '14px 20px',
-  borderRadius: 12, fontWeight: 700, fontSize: 15, cursor: 'pointer',
+  background: 'var(--accent1)', color: 'white', border: 'none', padding: '14px 20px',
+  borderRadius: 'var(--radius-sm)', fontWeight: 700, fontSize: 15, cursor: 'pointer',
 }
 const btnSecondary: React.CSSProperties = {
-  background: 'white', color: '#3F06E3', border: '1px solid #3F06E3', padding: '12px 16px',
-  borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: 'pointer',
+  background: 'var(--card)', color: 'var(--accent1)', border: '1px solid var(--accent1)', padding: '12px 16px',
+  borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
 }
 const btnGhost: React.CSSProperties = {
-  background: 'transparent', color: '#5F5A72', border: '1px solid #E7E2F4', padding: '12px 16px',
-  borderRadius: 12, fontWeight: 600, fontSize: 14, cursor: 'pointer',
+  background: 'transparent', color: 'var(--muted)', border: '1px solid var(--border)', padding: '12px 16px',
+  borderRadius: 'var(--radius-sm)', fontWeight: 600, fontSize: 14, cursor: 'pointer',
 }
 const inputStyle: React.CSSProperties = {
-  padding: '10px 12px', border: '1px solid #E7E2F4', borderRadius: 10, fontSize: 14, outline: 'none',
+  padding: '10px 12px', border: '1px solid var(--border)', borderRadius: 'var(--radius-sm)', fontSize: 14, outline: 'none',
+  background: 'var(--card)', color: 'var(--text)',
 }
 const switchBtn: React.CSSProperties = {
   padding: '6px 10px', background: 'white', border: '1px solid #F59E0B',

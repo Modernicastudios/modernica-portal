@@ -45,6 +45,8 @@ export default async function DashboardPage() {
     { data: brandKitRow },
     { data: roiEntries },
     { data: platformPostsRaw },
+    { data: callbacksDueRaw },
+    { count: totalQueueCount },
   ] = await Promise.all([
     // Pending approvals — fetch records so we can filter by client_id client-side
     (() => {
@@ -140,6 +142,23 @@ export default async function DashboardPage() {
       .eq('agency_id', agencyId)
       .eq('status', 'published')
       .gte('scheduled_at', thirtyDaysAgo.toISOString()),
+
+    // Callbacks due (vandaag of eerder)
+    supabase
+      .from('lead_outreach')
+      .select('id, next_action_at, next_action_note, lead_companies(name, phone)')
+      .eq('agency_id', agencyId)
+      .eq('pipeline_stage', 'callback')
+      .lte('next_action_at', todayEnd.toISOString())
+      .order('next_action_at', { ascending: true })
+      .limit(5),
+
+    // Totale bel-queue
+    supabase
+      .from('lead_outreach')
+      .select('id', { count: 'exact', head: true })
+      .eq('agency_id', agencyId)
+      .in('pipeline_stage', ['nieuw', 'gebeld_geen_gehoor', 'callback']),
   ])
 
   const showSetupBanner = isAdmin && !brandKitRow?.logo_url
@@ -164,6 +183,8 @@ export default async function DashboardPage() {
       platformPostsRaw={(platformPostsRaw || []) as any[]}
       currentMonth={currentMonth}
       currentYear={currentYear}
+      callbacksDue={(callbacksDueRaw || []) as any[]}
+      totalQueueCount={totalQueueCount || 0}
     />
   )
 }

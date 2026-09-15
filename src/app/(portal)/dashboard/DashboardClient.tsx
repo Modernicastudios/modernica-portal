@@ -2,7 +2,7 @@
 
 import { useMemo } from 'react'
 import Link from 'next/link'
-import { Plus, CalendarDays, Sparkles, TrendingUp } from 'lucide-react'
+import { Plus, CalendarDays, Sparkles, TrendingUp, Phone, PhoneCall } from 'lucide-react'
 import { PlatformIcon, PLATFORM_COLORS, PLATFORM_LABELS } from '@/components/ui/PlatformIcon'
 import { useClientFilter } from '@/components/layout/ClientFilter'
 
@@ -32,12 +32,15 @@ interface Props {
   platformPostsRaw: any[]
   currentMonth: number
   currentYear: number
+  callbacksDue: any[]
+  totalQueueCount: number
 }
 
 export default function DashboardClient({
   firstName, dayName, dateStr, isAdmin, showSetupBanner,
   pendingPosts, todayPosts, upcomingPosts, activeProjects, openTasks,
   todayMeetings, roiEntries, platformPostsRaw, currentMonth, currentYear,
+  callbacksDue, totalQueueCount,
 }: Props) {
   const { selectedClientId } = useClientFilter()
 
@@ -169,6 +172,76 @@ export default function DashboardClient({
             <span style={{ color: 'var(--accent1)', fontWeight: 700, fontSize: '.85rem' }}>Bekijken →</span>
           </div>
         </Link>
+      )}
+
+      {/* CRM BEL-WIDGET */}
+      {(callbacksDue.length > 0 || totalQueueCount > 0) && (
+        <div style={{
+          background: 'var(--card)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)', marginBottom: '20px', overflow: 'hidden',
+        }}>
+          <div style={{
+            padding: '14px 20px', borderBottom: '1px solid var(--border)',
+            display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <Phone size={16} style={{ color: 'var(--accent1)' }} />
+              <span style={{ fontWeight: 700, fontSize: '.95rem' }}>Bellen</span>
+              {callbacksDue.length > 0 && (
+                <span style={{
+                  background: 'var(--danger)', color: 'white',
+                  borderRadius: 50, padding: '2px 8px', fontSize: '.72rem', fontWeight: 700,
+                }}>
+                  {callbacksDue.length} callback{callbacksDue.length > 1 ? 's' : ''} vervallen
+                </span>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+              <span style={{ fontSize: '.8rem', color: 'var(--muted)' }}>{totalQueueCount} in wachtrij</span>
+              <Link href="/leads/bellen" style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '7px 14px', background: 'var(--accent1)', color: 'white',
+                borderRadius: 'var(--radius-sm)', fontSize: '.8rem', fontWeight: 600, textDecoration: 'none',
+              }}>
+                <PhoneCall size={13} /> Start bellen
+              </Link>
+            </div>
+          </div>
+          {callbacksDue.slice(0, 3).map((cb: any) => (
+            <Link key={cb.id} href="/leads/bellen" style={{
+              display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+              padding: '12px 20px', borderBottom: '1px solid var(--border)',
+              textDecoration: 'none', color: 'inherit',
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <div style={{
+                  width: 36, height: 36, borderRadius: 'var(--radius-sm)',
+                  background: 'var(--danger-bg)', color: 'var(--danger)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
+                }}>
+                  <Phone size={16} />
+                </div>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: '.88rem' }}>
+                    {(cb.lead_companies as any)?.name || 'Onbekend'}
+                  </div>
+                  <div style={{ fontSize: '.75rem', color: 'var(--muted)', marginTop: 2 }}>
+                    Callback gepland · {cb.next_action_at
+                      ? new Date(cb.next_action_at).toLocaleTimeString('nl-NL', { hour: '2-digit', minute: '2-digit' })
+                      : '—'}
+                    {cb.next_action_note ? ` · ${cb.next_action_note}` : ''}
+                  </div>
+                </div>
+              </div>
+              <span style={{ fontSize: '.75rem', color: 'var(--accent1)', fontWeight: 600 }}>Bellen →</span>
+            </Link>
+          ))}
+          {callbacksDue.length === 0 && totalQueueCount > 0 && (
+            <div style={{ padding: '14px 20px', fontSize: '.85rem', color: 'var(--muted)' }}>
+              {totalQueueCount} leads wachten in de bel-queue — geen callbacks vervallen.
+            </div>
+          )}
+        </div>
       )}
 
       {/* MAIN GRID */}
