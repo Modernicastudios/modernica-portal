@@ -31,9 +31,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   const [isMobile, setIsMobile] = useState(false)
 
   useEffect(() => {
-    function checkMobile() {
-      setIsMobile(window.innerWidth < 768)
-    }
+    function checkMobile() { setIsMobile(window.innerWidth < 768) }
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -41,15 +39,12 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
 
   const isAdmin = profile.role === 'admin' || profile.role === 'manager' || profile.role === 'super_admin'
   const isSuperAdmin = profile.role === 'super_admin' || (profile.email || '').toLowerCase() === SUPER_ADMIN_EMAIL
-  const isClient = !!profile.client_id
   const leadMachineOn = Boolean((agency as { features?: Record<string, boolean> } | null)?.features?.lead_machine)
 
   const { selectedClientId, setSelectedClientId, filterClients, filterLoaded } = useClientFilter()
   const [clientDropOpen, setClientDropOpen] = useState(false)
   const selectedClient = filterClients.find(c => c.id === selectedClientId) || null
 
-  // Zoeken + inklapbare groepen in de navigatie.
-  // Secundaire groepen staan standaard dichtgeklapt → rustig, kort menu.
   const DEFAULT_COLLAPSED = ['Werk', 'Analyse', 'Beheer', 'Super Admin']
   const [navQuery, setNavQuery] = useState('')
   const [collapsed, setCollapsed] = useState<Set<string>>(new Set(DEFAULT_COLLAPSED))
@@ -57,7 +52,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
     try {
       const raw = localStorage.getItem('nav_collapsed')
       if (raw) setCollapsed(new Set(JSON.parse(raw)))
-    } catch { /* localStorage niet beschikbaar */ }
+    } catch { /* noop */ }
   }, [])
   function toggleSection(label: string) {
     setCollapsed(prev => {
@@ -79,11 +74,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   }
 
   const initials = profile.full_name
-    ?.split(' ')
-    .map(n => n[0])
-    .join('')
-    .toUpperCase()
-    .slice(0, 2) || '?'
+    ?.split(' ').map(n => n[0]).join('').toUpperCase().slice(0, 2) || '?'
 
   const sidebarOpen = isOpen ?? true
 
@@ -91,14 +82,13 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
   type NavGroup = { label: string; items: NavEntry[] }
 
   const adminGroups: NavGroup[] = [
-    // Dagelijks gebruik — altijd open, geen kopje. Klant staat centraal.
     { label: '', items: [
       { href: '/dashboard', label: 'Dashboard', icon: <LayoutDashboard size={16} />, exact: true },
       { href: '/clients', label: 'Klanten', icon: <Users size={16} /> },
       { href: '/content', label: 'Contentkalender', icon: <CalendarDays size={16} /> },
       { href: '/approve', label: 'Goedkeuringen', icon: <ThumbsUp size={16} /> },
       { href: '/chat', label: 'Berichten', icon: <MessageSquare size={16} /> },
-      ...(leadMachineOn ? [{ href: '/leads', label: 'Leads & E-mail', icon: <Target size={16} /> }] : []),
+      ...(leadMachineOn ? [{ href: '/leads', label: 'Leads', icon: <Target size={16} /> }] : []),
     ] },
     { label: 'Eigen marketing', items: [
       { href: '/eigen-marketing', label: 'Voor jezelf', icon: <Rocket size={16} /> },
@@ -120,7 +110,7 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
     ] },
     { label: 'Beheer', items: [
       { href: '/settings/integrations', label: 'Koppelingen', icon: <Link2 size={16} /> },
-      { href: '/settings/agency', label: 'Agency-instellingen', icon: <Settings size={16} /> },
+      { href: '/settings/agency', label: 'Instellingen', icon: <Settings size={16} /> },
       { href: '/settings/billing', label: 'Abonnement', icon: <CreditCard size={16} /> },
       { href: '/settings/status', label: 'Systeemstatus', icon: <Activity size={16} /> },
       { href: '/settings/profile', label: 'Mijn profiel', icon: <User size={16} /> },
@@ -164,250 +154,207 @@ export default function Sidebar({ profile, agency, brandKit, clients: _clientsPr
 
   return (
     <>
-      {/* Backdrop on mobile */}
       {isMobile && sidebarOpen && (
-        <div
-          onClick={onClose}
-          style={{
-            position: 'fixed',
-            inset: 0,
-            background: 'rgba(0,0,0,0.45)',
-            zIndex: 99,
-          }}
-        />
+        <div onClick={onClose} style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.3)', zIndex: 99, backdropFilter: 'blur(2px)' }} />
       )}
-    <aside style={{
-      width: 'var(--sidebar-width)',
-      minHeight: '100vh',
-      background: 'var(--sidebar-bg)',
-      display: 'flex',
-      flexDirection: 'column',
-      position: 'fixed',
-      left: 0,
-      top: 0,
-      bottom: 0,
-      zIndex: 100,
-      borderRight: '1px solid var(--sidebar-border)',
-      boxShadow: '1px 0 0 rgba(255,255,255,0.03)',
-      transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
-      transition: 'transform 0.28s cubic-bezier(0.4,0,0.2,1)',
-    }}>
-      {/* Logo */}
-      <div style={{
-        padding: '28px 24px 20px',
-        borderBottom: '1px solid rgba(255,255,255,.15)',
-        position: 'relative',
+      <aside style={{
+        width: 'var(--sidebar-width)',
+        minHeight: '100vh',
+        background: 'var(--sidebar-bg)',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'fixed',
+        left: 0, top: 0, bottom: 0,
+        zIndex: 100,
+        borderRight: '1px solid var(--sidebar-border)',
+        transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'translateX(0)',
+        transition: 'transform 0.25s cubic-bezier(0.4,0,0.2,1)',
       }}>
-        {/* Close button — mobile only */}
-        {isMobile && onClose && (
-          <button
-            onClick={onClose}
-            style={{
-              position: 'absolute',
-              top: '16px',
-              right: '16px',
-              background: 'rgba(255,255,255,.15)',
-              border: 'none',
-              borderRadius: '50%',
-              width: '28px',
-              height: '28px',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontSize: '1rem',
-              cursor: 'pointer',
-              lineHeight: 1,
-            }}
-            aria-label="Sluiten"
-          >
-            <X size={16} />
-          </button>
-        )}
-        {logoUrl ? (
-          <img src={logoUrl} alt={agencyName} style={{ height: '32px', objectFit: 'contain' }} />
-        ) : (
-          <>
-            <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.1rem', color: '#fff', letterSpacing: '-0.5px' }}>
-              {agencyName}
-            </div>
-            <div style={{ fontSize: '0.72rem', color: 'rgba(255,255,255,.55)', marginTop: '2px', letterSpacing: '.05em', textTransform: 'uppercase' }}>
-              {isSuperAdmin ? 'Super Admin' : 'Portal'}
-            </div>
-          </>
-        )}
-      </div>
 
-      {/* Client switcher — admin only */}
-      {(isAdmin || isSuperAdmin) && (
-        <div style={{ padding: '10px 14px', borderBottom: '1px solid rgba(255,255,255,.12)', position: 'relative' }}>
-          <div style={{ fontSize: '.66rem', letterSpacing: '.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,.7)', fontWeight: 700, marginBottom: '6px' }}>
-            Filter op klant
-          </div>
-          <button
-            onClick={() => setClientDropOpen(v => !v)}
-            style={{
-              width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
-              background: selectedClient ? 'rgba(255,255,255,.18)' : 'rgba(255,255,255,.1)',
-              border: `1px solid ${selectedClient ? 'rgba(255,255,255,.35)' : 'rgba(255,255,255,.15)'}`,
-              borderRadius: '8px', padding: '7px 10px', cursor: 'pointer',
-              color: '#fff', fontSize: '.8rem', fontWeight: selectedClient ? 700 : 400,
-            }}
-          >
-            {selectedClient ? (
-              <>
-                <span style={{ width: '20px', height: '20px', borderRadius: '50%', background: 'rgba(255,255,255,.3)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.6rem', fontWeight: 800, flexShrink: 0 }}>
-                  {selectedClient.company_name.slice(0,2).toUpperCase()}
-                </span>
-                <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
-                  {selectedClient.company_name}
-                </span>
-                <span onClick={e => { e.stopPropagation(); setSelectedClientId(null) }} style={{ opacity: .7, display: 'flex', alignItems: 'center' }}>
-                  <X size={13} />
-                </span>
-              </>
-            ) : (
-              <>
-                <Users size={14} style={{ opacity: .7, flexShrink: 0 }} />
-                <span style={{ flex: 1, textAlign: 'left', opacity: .75 }}>Alle klanten</span>
-                <ChevronDown size={13} style={{ opacity: .6 }} />
-              </>
-            )}
-          </button>
-
-          {clientDropOpen && (
-            <div style={{
-              position: 'absolute', top: 'calc(100% - 2px)', left: '14px', right: '14px',
-              background: 'var(--card)', border: '1px solid var(--border)',
-              borderRadius: '10px', boxShadow: '0 8px 32px rgba(0,0,0,.18)',
-              zIndex: 200, maxHeight: '260px', overflowY: 'auto', padding: '4px',
+        {/* Logo */}
+        <div style={{ padding: '20px 20px 16px', borderBottom: '1px solid var(--sidebar-border)' }}>
+          {isMobile && onClose && (
+            <button onClick={onClose} style={{
+              position: 'absolute', top: '14px', right: '14px',
+              background: 'var(--sidebar-hover-bg)', border: 'none', borderRadius: '6px',
+              width: '28px', height: '28px', display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: 'var(--sidebar-text)', cursor: 'pointer',
             }}>
-              <button
-                onClick={() => { setSelectedClientId(null); setClientDropOpen(false) }}
-                style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '7px', border: 'none', background: !selectedClientId ? 'rgba(26,63,228,.07)' : 'transparent', color: !selectedClientId ? 'var(--accent1)' : 'var(--text)', fontSize: '.82rem', fontWeight: !selectedClientId ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}
-              >
-                <Users size={14} style={{ opacity: .5 }} /> Alle klanten
-              </button>
-              {filterClients.length > 0 && <div style={{ height: '1px', background: 'var(--border)', margin: '3px 0' }} />}
-              {filterClients.map(c => (
-                <button
-                  key={c.id}
-                  onClick={() => { setSelectedClientId(c.id); setClientDropOpen(false) }}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 10px', borderRadius: '7px', border: 'none', background: selectedClientId === c.id ? 'rgba(26,63,228,.07)' : 'transparent', color: selectedClientId === c.id ? 'var(--accent1)' : 'var(--text)', fontSize: '.82rem', fontWeight: selectedClientId === c.id ? 700 : 400, cursor: 'pointer', textAlign: 'left' }}
-                >
-                  <span style={{ width: '22px', height: '22px', borderRadius: '50%', background: 'var(--accent1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.6rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
-                    {c.company_name.slice(0,2).toUpperCase()}
-                  </span>
-                  <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company_name}</span>
-                </button>
-              ))}
-              {filterLoaded && filterClients.length === 0 && (
-                <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Geen klanten</div>
-              )}
-              {!filterLoaded && filterClients.length === 0 && (
-                <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Laden...</div>
-              )}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Navigation */}
-      <nav style={{ padding: '12px', flex: 1, overflowY: 'auto' }}>
-        {/* Zoeken — typ en klik, geen twijfel waar iets staat */}
-        <div style={{ position: 'relative', marginBottom: '6px' }}>
-          <Search size={14} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'rgba(255,255,255,.5)' }} />
-          <input
-            value={navQuery}
-            onChange={e => setNavQuery(e.target.value)}
-            placeholder="Zoeken..."
-            style={{ width: '100%', padding: '9px 26px 9px 30px', background: 'rgba(255,255,255,.14)', border: '1px solid rgba(255,255,255,.28)', borderRadius: '8px', color: '#fff', fontSize: '.85rem', fontWeight: 500, outline: 'none' }}
-          />
-          {navQuery && (
-            <button onClick={() => setNavQuery('')} aria-label="Wissen" style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'rgba(255,255,255,.6)', cursor: 'pointer', display: 'flex' }}>
-              <X size={13} />
+              <X size={15} />
             </button>
           )}
+          {logoUrl ? (
+            <img src={logoUrl} alt={agencyName} style={{ height: '28px', objectFit: 'contain' }} />
+          ) : (
+            <div>
+              <div style={{ fontFamily: 'var(--font-syne), sans-serif', fontWeight: 800, fontSize: '1.05rem', color: 'var(--text)', letterSpacing: '-0.4px' }}>
+                {agencyName}
+              </div>
+              <div style={{ fontSize: '0.68rem', color: 'var(--sidebar-muted)', marginTop: '1px', letterSpacing: '.06em', textTransform: 'uppercase', fontWeight: 600 }}>
+                {isSuperAdmin ? 'Super Admin' : 'Portal'}
+              </div>
+            </div>
+          )}
         </div>
 
-        {searchResults ? (
-          searchResults.length === 0 ? (
-            <div style={{ padding: '14px 12px', fontSize: '.8rem', color: 'rgba(255,255,255,.5)', textAlign: 'center' }}>Niets gevonden</div>
+        {/* Client switcher — admin only */}
+        {(isAdmin || isSuperAdmin) && (
+          <div style={{ padding: '10px 12px', borderBottom: '1px solid var(--sidebar-border)', position: 'relative' }}>
+            <button
+              onClick={() => setClientDropOpen(v => !v)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', gap: '8px',
+                background: selectedClient ? 'var(--sidebar-active-bg)' : 'transparent',
+                border: `1px solid ${selectedClient ? 'rgba(26,63,228,.2)' : 'var(--sidebar-border)'}`,
+                borderRadius: '8px', padding: '7px 10px', cursor: 'pointer',
+                color: selectedClient ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
+                fontSize: '.8rem', fontWeight: selectedClient ? 600 : 400,
+              }}
+            >
+              {selectedClient ? (
+                <>
+                  <span style={{ width: '18px', height: '18px', borderRadius: '4px', background: 'var(--accent1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.58rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                    {selectedClient.company_name.slice(0, 2).toUpperCase()}
+                  </span>
+                  <span style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'left' }}>
+                    {selectedClient.company_name}
+                  </span>
+                  <span onClick={e => { e.stopPropagation(); setSelectedClientId(null) }} style={{ opacity: .6, display: 'flex', alignItems: 'center' }}>
+                    <X size={12} />
+                  </span>
+                </>
+              ) : (
+                <>
+                  <Users size={13} style={{ opacity: .45, flexShrink: 0 }} />
+                  <span style={{ flex: 1, textAlign: 'left', color: 'var(--muted)' }}>Alle klanten</span>
+                  <ChevronDown size={12} style={{ opacity: .4 }} />
+                </>
+              )}
+            </button>
+
+            {clientDropOpen && (
+              <div style={{
+                position: 'absolute', top: 'calc(100% - 2px)', left: '12px', right: '12px',
+                background: '#fff', border: '1px solid var(--border)',
+                borderRadius: '10px', boxShadow: '0 8px 24px rgba(0,0,0,.10)',
+                zIndex: 200, maxHeight: '240px', overflowY: 'auto', padding: '4px',
+              }}>
+                <button
+                  onClick={() => { setSelectedClientId(null); setClientDropOpen(false) }}
+                  style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', border: 'none', background: !selectedClientId ? 'var(--sidebar-active-bg)' : 'transparent', color: !selectedClientId ? 'var(--accent1)' : 'var(--text)', fontSize: '.8rem', fontWeight: !selectedClientId ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}
+                >
+                  <Users size={13} style={{ opacity: .5 }} /> Alle klanten
+                </button>
+                {filterClients.length > 0 && <div style={{ height: '1px', background: 'var(--border)', margin: '3px 0' }} />}
+                {filterClients.map(c => (
+                  <button
+                    key={c.id}
+                    onClick={() => { setSelectedClientId(c.id); setClientDropOpen(false) }}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', gap: '8px', padding: '7px 10px', borderRadius: '7px', border: 'none', background: selectedClientId === c.id ? 'var(--sidebar-active-bg)' : 'transparent', color: selectedClientId === c.id ? 'var(--accent1)' : 'var(--text)', fontSize: '.8rem', fontWeight: selectedClientId === c.id ? 600 : 400, cursor: 'pointer', textAlign: 'left' }}
+                  >
+                    <span style={{ width: '20px', height: '20px', borderRadius: '4px', background: 'var(--accent1)', display: 'inline-flex', alignItems: 'center', justifyContent: 'center', fontSize: '.58rem', fontWeight: 800, color: '#fff', flexShrink: 0 }}>
+                      {c.company_name.slice(0, 2).toUpperCase()}
+                    </span>
+                    <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.company_name}</span>
+                  </button>
+                ))}
+                {filterLoaded && filterClients.length === 0 && (
+                  <div style={{ padding: '10px', fontSize: '.78rem', color: 'var(--muted)', textAlign: 'center' }}>Geen klanten</div>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Navigation */}
+        <nav style={{ padding: '10px', flex: 1, overflowY: 'auto' }}>
+          {/* Zoekbalk */}
+          <div style={{ position: 'relative', marginBottom: '4px' }}>
+            <Search size={13} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: 'var(--sidebar-muted)' }} />
+            <input
+              value={navQuery}
+              onChange={e => setNavQuery(e.target.value)}
+              placeholder="Zoeken..."
+              style={{ width: '100%', padding: '8px 26px 8px 30px', background: 'var(--sidebar-hover-bg)', border: '1px solid transparent', borderRadius: '8px', color: 'var(--text)', fontSize: '.82rem', fontWeight: 400, outline: 'none' }}
+            />
+            {navQuery && (
+              <button onClick={() => setNavQuery('')} style={{ position: 'absolute', right: '8px', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: 'var(--sidebar-muted)', cursor: 'pointer', display: 'flex' }}>
+                <X size={12} />
+              </button>
+            )}
+          </div>
+
+          {searchResults ? (
+            searchResults.length === 0 ? (
+              <div style={{ padding: '14px 10px', fontSize: '.8rem', color: 'var(--sidebar-muted)', textAlign: 'center' }}>Niets gevonden</div>
+            ) : (
+              searchResults.map(item => (
+                <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
+              ))
+            )
           ) : (
-            searchResults.map(item => (
-              <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
-            ))
-          )
-        ) : (
-          groups.map(group => {
-            // Primaire blok zonder kopje: altijd open, geen toggle.
-            if (!group.label) {
+            groups.map(group => {
+              if (!group.label) {
+                return (
+                  <div key="__primary" style={{ marginBottom: '2px' }}>
+                    {group.items.map(item => (
+                      <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
+                    ))}
+                  </div>
+                )
+              }
+              const isCollapsed = collapsed.has(group.label)
               return (
-                <div key="__primary" style={{ marginBottom: '4px' }}>
-                  {group.items.map(item => (
+                <div key={group.label}>
+                  <button
+                    onClick={() => toggleSection(group.label)}
+                    style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '12px 10px 4px', color: 'var(--sidebar-muted)' }}
+                  >
+                    <span style={{ fontSize: '.65rem', letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 700 }}>{group.label}</span>
+                    <ChevronDown size={12} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s', opacity: .7 }} />
+                  </button>
+                  {!isCollapsed && group.items.map(item => (
                     <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
                   ))}
                 </div>
               )
-            }
-            const isCollapsed = collapsed.has(group.label)
-            return (
-              <div key={group.label}>
-                <button
-                  onClick={() => toggleSection(group.label)}
-                  style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between', background: 'none', border: 'none', cursor: 'pointer', padding: '14px 10px 6px', color: 'rgba(255,255,255,.7)' }}
-                >
-                  <span style={{ fontSize: '.7rem', letterSpacing: '.1em', textTransform: 'uppercase', fontWeight: 800 }}>{group.label}</span>
-                  <ChevronDown size={14} style={{ transform: isCollapsed ? 'rotate(-90deg)' : 'none', transition: 'transform .15s', opacity: .8 }} />
-                </button>
-                {!isCollapsed && group.items.map(item => (
-                  <NavLink key={item.href} href={item.href} label={item.label} icon={item.icon} active={isActive(item)} />
-                ))}
-              </div>
-            )
-          })
-        )}
-      </nav>
+            })
+          )}
+        </nav>
 
-      {/* User chip */}
-      <div style={{ padding: '16px', borderTop: '1px solid rgba(255,255,255,.15)' }}>
-        <div
-          onClick={handleLogout}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: '10px',
-            padding: '10px 12px',
-            borderRadius: 'var(--radius-sm)',
-            background: 'rgba(255,255,255,.12)',
-            cursor: 'pointer',
-          }}
-        >
-          <div style={{
-            width: '32px', height: '32px', borderRadius: '50%',
-            background: profile.avatar_url ? 'none' : 'rgba(255,255,255,.25)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '.75rem', fontWeight: 700, color: '#fff',
-            border: '2px solid rgba(255,255,255,.4)',
-            flexShrink: 0,
-            overflow: 'hidden',
-          }}>
-            {profile.avatar_url ? (
-              <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-            ) : initials}
-          </div>
-          <div style={{ flex: 1, minWidth: 0 }}>
-            <div style={{ fontSize: '.82rem', fontWeight: 600, color: '#fff', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-              {profile.full_name}
+        {/* User chip */}
+        <div style={{ padding: '12px', borderTop: '1px solid var(--sidebar-border)' }}>
+          <div
+            onClick={handleLogout}
+            style={{
+              display: 'flex', alignItems: 'center', gap: '10px',
+              padding: '9px 11px', borderRadius: '9px',
+              background: 'var(--sidebar-hover-bg)',
+              cursor: 'pointer', transition: 'background .15s',
+            }}
+          >
+            <div style={{
+              width: '30px', height: '30px', borderRadius: '50%',
+              background: profile.avatar_url ? 'none' : 'var(--accent1)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              fontSize: '.7rem', fontWeight: 700, color: '#fff',
+              flexShrink: 0, overflow: 'hidden',
+            }}>
+              {profile.avatar_url
+                ? <img src={profile.avatar_url} alt="" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                : initials}
             </div>
-            <div style={{ fontSize: '.7rem', color: 'rgba(255,255,255,.55)', display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <LogOut size={14} />
-              Uitloggen
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ fontSize: '.8rem', fontWeight: 600, color: 'var(--text)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                {profile.full_name}
+              </div>
+              <div style={{ fontSize: '.68rem', color: 'var(--sidebar-muted)', display: 'flex', alignItems: 'center', gap: '3px' }}>
+                <LogOut size={11} /> Uitloggen
+              </div>
             </div>
           </div>
         </div>
-      </div>
-    </aside>
+      </aside>
     </>
   )
 }
@@ -417,22 +364,16 @@ function NavLink({ href, label, icon, active }: { href: string; label: string; i
     <Link
       href={href}
       style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: '11px',
-        padding: '10px 12px',
-        borderRadius: 'var(--radius-sm)',
-        fontSize: '.9rem',
-        color: active ? 'var(--accent1)' : 'rgba(255,255,255,.85)',
-        background: active ? '#fff' : 'transparent',
-        textDecoration: 'none',
-        transition: 'all .15s',
-        marginBottom: '3px',
-        fontWeight: active ? 700 : 500,
-        boxShadow: active ? '0 2px 8px rgba(0,0,0,.14)' : 'none',
+        display: 'flex', alignItems: 'center', gap: '10px',
+        padding: '8px 10px', borderRadius: '8px',
+        fontSize: '.85rem',
+        color: active ? 'var(--sidebar-active-text)' : 'var(--sidebar-text)',
+        background: active ? 'var(--sidebar-active-bg)' : 'transparent',
+        textDecoration: 'none', transition: 'background .12s, color .12s',
+        marginBottom: '1px', fontWeight: active ? 600 : 400,
       }}
     >
-      <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0 }}>{icon}</span>
+      <span style={{ display: 'inline-flex', alignItems: 'center', flexShrink: 0, opacity: active ? 1 : 0.65 }}>{icon}</span>
       {label}
     </Link>
   )

@@ -18,12 +18,14 @@
   --radius: 12px;
   --radius-sm: 8px;
   --radius-pill: 999px;
-  --sidebar-width: 248px;
-  /* Ingetogen, volwassen zijbalk: diep inkt-navy i.p.v. fel blauw.
-     De merkkleur (--accent1) blijft het accent voor actieve items/knoppen. */
-  --sidebar-bg: #0f1a30;
-  --sidebar-text: rgba(255, 255, 255, 0.72);
-  --sidebar-border: rgba(255, 255, 255, 0.08);
+  --sidebar-width: 240px;
+  --sidebar-bg: #ffffff;
+  --sidebar-text: #374151;
+  --sidebar-border: #e5e7eb;
+  --sidebar-active-bg: rgba(26, 63, 228, 0.07);
+  --sidebar-active-text: #1a3fe4;
+  --sidebar-hover-bg: #f3f4f6;
+  --sidebar-muted: #9ca3af;
   /* Neutrale, zachte schaduwen (corporate look, niet blauw-getint) */
   --shadow: 0 1px 2px rgba(16, 24, 40, 0.04), 0 1px 3px rgba(16, 24, 40, 0.06);
   --shadow-lg: 0 6px 22px rgba(16, 24, 40, 0.08);
