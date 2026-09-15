@@ -78,3 +78,101 @@ body {
 .animate-fade-up { animation: fadeUp 0.3s ease; }
 .animate-fade-in { animation: fadeIn 0.2s ease; }
 .animate-spin { animation: spin 1s linear infinite; }
+
+/* ── Global page layout ──────────────────────────────────────── */
+.page-wrap {
+  padding: 28px 28px 48px;
+  max-width: 1400px;
+}
+.page-header {
+  margin-bottom: 24px;
+}
+.page-title {
+  font-size: 1.6rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+  margin-bottom: 4px;
+}
+.page-subtitle {
+  font-size: .88rem;
+  color: var(--muted);
+}
+
+/* ── Consistent card ─────────────────────────────────────────── */
+.card {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+}
+.card-sm {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow);
+}
+
+/* ── Inputs ──────────────────────────────────────────────────── */
+input[type="text"],
+input[type="email"],
+input[type="tel"],
+input[type="number"],
+input[type="date"],
+input[type="time"],
+input[type="search"],
+textarea,
+select {
+  font-family: inherit;
+  font-size: .875rem;
+  color: var(--text);
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 9px 12px;
+  transition: border-color .12s, box-shadow .12s;
+}
+input:focus, textarea:focus, select:focus {
+  border-color: var(--accent1);
+  box-shadow: 0 0 0 3px rgba(26, 63, 228, 0.08);
+  outline: none;
+}
+
+/* ── Buttons ─────────────────────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 9px 16px;
+  border-radius: var(--radius-sm);
+  font-size: .875rem;
+  font-weight: 600;
+  cursor: pointer;
+  border: none;
+  transition: opacity .12s, box-shadow .12s;
+}
+.btn:hover { opacity: .88; }
+.btn-primary { background: var(--accent1); color: #fff; }
+.btn-ghost { background: transparent; color: var(--text); border: 1px solid var(--border); }
+.btn-ghost:hover { background: var(--sidebar-hover-bg); opacity: 1; }
+.btn-danger { background: var(--danger); color: #fff; }
+
+/* ── Stat chip ───────────────────────────────────────────────── */
+.stat-chip {
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  padding: 12px 16px;
+  box-shadow: var(--shadow);
+}
+.stat-chip .stat-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+.stat-chip .stat-label {
+  font-size: .72rem;
+  color: var(--muted);
+  margin-top: 2px;
+}

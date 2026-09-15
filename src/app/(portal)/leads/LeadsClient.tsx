@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check, Eye, Sparkles } from 'lucide-react'
+import { Target, MapPin, Globe, CheckCircle2, PauseCircle, Search, Pencil, RotateCw, Check, Eye, Sparkles, Phone, Mail } from 'lucide-react'
 import { Badge } from '@/components/ui'
 import type { LeadCampaign, LeadCompany, LeadContact, LeadOutreach } from '@/types/leadmachine'
 
@@ -570,23 +570,42 @@ function LeadCard({ row, onStatus, onConvert, onText }: {
 
   const inputBtn = { fontSize: '.7rem', padding: '4px 8px', borderRadius: '6px', cursor: busy ? 'wait' : 'pointer', border: '1px solid var(--border)', background: 'var(--bg)', color: 'var(--text)', fontWeight: 600 as const }
 
+  const phone = ct?.phone || co?.phone
+
   return (
-    <div style={{ background: 'var(--card)', border: `1px solid ${isReview ? 'var(--accent4)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', padding: '10px', boxShadow: 'var(--shadow)' }}>
-      <div style={{ fontWeight: 600, fontSize: '.85rem' }}>{co?.name || 'Bedrijf'}</div>
-      <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginTop: '2px' }}>
-        {co?.city && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--muted)', fontSize: '.7rem' }}><MapPin size={11} /> {co.city}</span>}
-        {co?.domain && <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', color: 'var(--muted)', fontSize: '.7rem' }}><Globe size={11} /> {co.domain}</span>}
-      </div>
-      {ct && (ct.full_name || ct.email) && (
-        <div style={{ marginTop: '6px', fontSize: '.74rem' }}>
-          {ct.full_name && <div style={{ fontWeight: 600 }}>{ct.full_name}{ct.role && <span style={{ color: 'var(--muted)', fontWeight: 400 }}> · {ct.role}</span>}</div>}
-          {ct.email && (
-            <div style={{ color: 'var(--muted)', wordBreak: 'break-all', display: 'flex', alignItems: 'center', gap: '6px', marginTop: '2px' }}>
-              {ct.email} {ct.email_verified && <Badge tone={verifyTone}>{ct.email_verified}</Badge>}
-            </div>
-          )}
+    <div style={{ background: 'var(--card)', border: `1px solid ${isReview ? 'var(--accent4)' : 'var(--border)'}`, borderRadius: 'var(--radius-sm)', padding: '14px', boxShadow: 'var(--shadow)' }}>
+      <div style={{ fontWeight: 700, fontSize: '.9rem', marginBottom: 6 }}>{co?.name || 'Bedrijf'}</div>
+
+      {ct?.full_name && (
+        <div style={{ fontSize: '.78rem', color: 'var(--muted)', marginBottom: 8 }}>
+          {ct.full_name}{ct.role ? ` · ${ct.role}` : ''}
         </div>
       )}
+
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 5, marginBottom: ct?.email || phone || co?.website_url ? 10 : 0 }}>
+        {phone && (
+          <a href={`tel:${phone}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '.76rem', color: 'var(--text)', textDecoration: 'none', fontWeight: 500 }}>
+            <Phone size={12} style={{ color: 'var(--accent1)' }} /> {phone}
+          </a>
+        )}
+        {ct?.email && (
+          <a href={`mailto:${ct.email}`} style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '.76rem', color: 'var(--text)', textDecoration: 'none', overflow: 'hidden' }}>
+            <Mail size={12} style={{ color: 'var(--accent1)' }} />
+            <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{ct.email}</span>
+            {ct.email_verified && <Badge tone={verifyTone}>{ct.email_verified}</Badge>}
+          </a>
+        )}
+        {co?.website_url && (
+          <a href={co.website_url} target="_blank" rel="noopener noreferrer" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '.76rem', color: 'var(--accent1)', textDecoration: 'none' }}>
+            <Globe size={12} /> {co.website_url.replace(/^https?:\/\//, '')}
+          </a>
+        )}
+        {co?.city && (
+          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 5, fontSize: '.76rem', color: 'var(--muted)' }}>
+            <MapPin size={12} /> {co.city}
+          </span>
+        )}
+      </div>
 
       {/* De mailtekst — bewerkbaar als 'ie nog beoordeeld moet worden */}
       {editing ? (
